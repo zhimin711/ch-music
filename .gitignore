@@ -53,3 +53,7 @@ target
 .local
 .m2
 .mvn
+
+*.log
+.snapshots
+Implementation Logs/

@@ -16,10 +16,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class MusicService {
     private final MusicFileRepository musicRepository;
     private final MusicStorageService storageService;
+    private final TranscodeCacheService transcodeCacheService;
 
-    public MusicService(MusicFileRepository musicRepository, MusicStorageService storageService) {
+    public MusicService(MusicFileRepository musicRepository, MusicStorageService storageService,
+            TranscodeCacheService transcodeCacheService) {
         this.musicRepository = musicRepository;
         this.storageService = storageService;
+        this.transcodeCacheService = transcodeCacheService;
     }
 
     @Transactional
@@ -58,6 +61,7 @@ public class MusicService {
     @Transactional
     public void delete(AppUser owner, Long musicId) {
         MusicFile music = requireOwnedMusic(owner, musicId);
+        transcodeCacheService.deleteForMusic(owner, music);
         musicRepository.delete(music);
         storageService.delete(music);
     }
