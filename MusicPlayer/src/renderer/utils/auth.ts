@@ -121,7 +121,7 @@ export function getLoginErrorMessage(requireAuth: boolean = false): string {
   }
 
   if (requireAuth && loginInfo.loginType === 'uid') {
-    return 'UID登录无法访问此功能，请使用 MusicServer 账号登录';
+    return 'UID登录无法访问此功能，请使用云端账号登录';
   }
 
   return '';

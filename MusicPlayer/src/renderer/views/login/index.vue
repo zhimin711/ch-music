@@ -1,68 +1,83 @@
 <template>
   <div class="login-page">
-    <div class="phone-login" :class="setAnimationClass('animate__fadeInDown')">
-      <div class="bg"></div>
-      <div class="content">
-        <div class="login-tabs" :class="setAnimationClass('animate__fadeInUp')">
-          <div
+    <div class="login-shell" :class="setAnimationClass('animate__fadeInUp')">
+      <section class="brand-panel">
+        <img :src="brandLogo" alt="朝华音乐" class="brand-logo" />
+        <div>
+          <div class="brand-name">朝华音乐</div>
+          <div class="brand-subtitle">欢迎回来</div>
+        </div>
+      </section>
+
+      <section class="auth-panel">
+        <div class="login-tabs">
+          <button
             v-for="tab in loginTabs"
             :key="tab.key"
+            type="button"
             class="tab-item"
             :class="{ active: activeMode === tab.key }"
             @click="switchToMode(tab.key)"
           >
             {{ tab.label }}
-          </div>
+          </button>
         </div>
 
-        <div class="login-content">
-          <transition
-            name="login-content"
-            mode="out-in"
-            enter-active-class="animate__animated animate__fadeIn"
-            leave-active-class="animate__animated animate__fadeOut"
+        <transition
+          name="login-content"
+          mode="out-in"
+          enter-active-class="animate__animated animate__fadeIn"
+          leave-active-class="animate__animated animate__fadeOut"
+        >
+          <form
+            v-if="!isTransitioning"
+            :key="activeMode"
+            class="login-form"
+            @submit.prevent="submit"
           >
-            <div
-              v-if="!isTransitioning"
-              :key="activeMode"
-              class="phone"
-            >
-              <div class="login-title">{{ activeMode === 'login' ? 'MusicServer 登录' : '注册 MusicServer' }}</div>
-              <div class="phone-page">
-                <input
-                  v-model="baseUrl"
-                  class="phone-input"
-                  type="text"
-                  placeholder="MusicServer 地址"
-                />
+            <div>
+              <div class="login-title">{{ activeMode === 'login' ? '账号登录' : '创建账号' }}</div>
+              <div class="login-hint">
+                {{ activeMode === 'login' ? '输入账号继续使用' : '填写信息完成注册' }}
+              </div>
+            </div>
+
+            <div class="form-fields">
+              <label class="field">
+                <i class="ri-user-line"></i>
                 <input
                   v-model="username"
-                  class="phone-input"
                   type="text"
+                  autocomplete="username"
                   placeholder="用户名（3-80 位）"
                 />
+              </label>
+              <label class="field">
+                <i class="ri-lock-line"></i>
                 <input
                   v-model="password"
-                  class="phone-input"
                   type="password"
+                  autocomplete="current-password"
                   placeholder="密码（8-120 位）"
                 />
+              </label>
+              <label v-if="activeMode === 'register'" class="field">
+                <i class="ri-id-card-line"></i>
                 <input
-                  v-if="activeMode === 'register'"
                   v-model="displayName"
-                  class="phone-input"
                   type="text"
+                  autocomplete="nickname"
                   placeholder="显示名称（可选）"
                 />
-              </div>
-              <div class="text">公开搜索、排行继续保留；账号、个人歌单和收藏使用 MusicServer。</div>
-              <n-button class="btn-login" :loading="loading" @click="submit">
-                {{ activeMode === 'login' ? t('login.button.login') : '注册并登录' }}
-              </n-button>
+              </label>
             </div>
-          </transition>
-        </div>
-      </div>
+
+            <n-button attr-type="submit" class="btn-login" type="primary" :loading="loading">
+              {{ activeMode === 'login' ? t('login.button.login') : '注册并登录' }}
+            </n-button>
+          </form>
+        </transition>
+      </section>
     </div>
   </div>
 </template>
@@ -74,6 +89,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+import brandLogo from '@/assets/chaohua-logo.svg';
 import { useMusicServerStore } from '@/store/modules/musicServer';
 import { usePlayerStore } from '@/store/modules/player';
 import { useUserStore } from '@/store/modules/user';
@@ -98,7 +114,6 @@ const loginTabs = computed(() => [
 ]);
 
 const loading = ref(false);
-const baseUrl = ref(musicServerStore.baseUrl);
 const username = ref('');
 const password = ref('');
 const displayName = ref('');
@@ -147,7 +162,6 @@ const submit = async () => {
   if (!validate()) return;
   loading.value = true;
   try {
-    musicServerStore.setBaseUrl(baseUrl.value);
     if (activeMode.value === 'login') {
       await musicServerStore.login({
         username: username.value.trim(),
@@ -176,101 +190,92 @@ const submit = async () => {
 
 <style lang="scss" scoped>
 .login-page {
-  @apply flex flex-col items-center justify-center;
-  @apply bg-light dark:bg-black;
+  @apply flex min-h-full items-center justify-center bg-neutral-100 px-6 py-10 transition-colors duration-300 dark:bg-black;
+}
+
+.login-shell {
+  @apply grid w-full max-w-[820px] grid-cols-[0.9fr_1.1fr] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl shadow-neutral-900/10 dark:border-neutral-800 dark:bg-neutral-950 dark:shadow-black/40;
+  min-height: 520px;
+}
+
+.brand-panel {
+  @apply flex flex-col justify-between bg-neutral-950 p-8 text-white;
+  background:
+    linear-gradient(135deg, rgba(34, 197, 94, 0.24), transparent 42%),
+    linear-gradient(180deg, #111827, #0a0f1a);
+
+  &::after {
+    content: '';
+    @apply mt-auto block h-1 w-24 rounded-full bg-green-400;
+  }
+}
+
+.brand-logo {
+  @apply h-20 w-20 rounded-2xl shadow-lg shadow-black/30;
+}
+
+.brand-name {
+  @apply mt-8 text-3xl font-extrabold leading-tight;
+}
+
+.brand-subtitle {
+  @apply mt-3 text-sm text-neutral-300;
+}
+
+.auth-panel {
+  @apply flex flex-col justify-center p-8;
+}
+
+.login-tabs {
+  @apply mb-10 grid grid-cols-2 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-900;
+}
+
+.tab-item {
+  @apply h-10 rounded-md text-sm font-medium text-neutral-500 transition-all duration-200 dark:text-neutral-400;
+
+  &:hover {
+    @apply text-neutral-900 dark:text-white;
+  }
+
+  &.active {
+    @apply bg-white text-neutral-950 shadow-sm dark:bg-neutral-800 dark:text-white;
+  }
+}
+
+.login-form {
+  @apply flex flex-col gap-7;
 }
 
 .login-title {
-  @apply text-2xl font-bold mb-6 text-white;
+  @apply text-2xl font-bold text-neutral-950 dark:text-white;
 }
 
-.text {
-  @apply mt-4 text-white text-xs;
+.login-hint {
+  @apply mt-2 text-sm text-neutral-500 dark:text-neutral-400;
 }
 
-.phone-login {
-  width: 350px;
-  height: 550px; /* 恢复原来的高度 */
-  @apply rounded-2xl rounded-b-none bg-cover bg-no-repeat relative overflow-hidden;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:svgjs='http://svgjs.dev/svgjs' width='400' height='560' preserveAspectRatio='none' viewBox='0 0 400 560'%3e%3cg mask='url(%26quot%3b%23SvgjsMask1066%26quot%3b)' fill='none'%3e%3crect width='400' height='560' x='0' y='0' fill='rgba(24%2c 106%2c 59%2c 1)'%3e%3c/rect%3e%3cpath d='M0%2c234.738C43.535%2c236.921%2c80.103%2c205.252%2c116.272%2c180.923C151.738%2c157.067%2c188.295%2c132.929%2c207.855%2c94.924C227.898%2c55.979%2c233.386%2c10.682%2c226.119%2c-32.511C218.952%2c-75.107%2c199.189%2c-115.793%2c167.469%2c-145.113C137.399%2c-172.909%2c92.499%2c-171.842%2c55.779%2c-189.967C8.719%2c-213.196%2c-28.344%2c-282.721%2c-78.217%2c-266.382C-128.725%2c-249.834%2c-111.35%2c-166.696%2c-143.781%2c-124.587C-173.232%2c-86.348%2c-244.72%2c-83.812%2c-255.129%2c-36.682C-265.368%2c9.678%2c-217.952%2c48.26%2c-190.512%2c87.004C-167.691%2c119.226%2c-140.216%2c145.431%2c-109.013%2c169.627C-74.874%2c196.1%2c-43.147%2c232.575%2c0%2c234.738' fill='%23114b2a'%3e%3c/path%3e%3cpath d='M400 800.9010000000001C443.973 795.023 480.102 765.6 513.011 735.848 541.923 709.71 561.585 676.6320000000001 577.037 640.85 592.211 605.712 606.958 568.912 601.458 531.035 595.962 493.182 568.394 464.36400000000003 546.825 432.775 522.317 396.88300000000004 507.656 347.475 466.528 333.426 425.366 319.366 384.338 352.414 342.111 362.847 297.497 373.869 242.385 362.645 211.294 396.486 180.212 430.318 192.333 483.83299999999997 188.872 529.644 185.656 572.218 178.696 614.453 191.757 655.101 205.885 699.068 227.92 742.4110000000001 265.75 768.898 304.214 795.829 353.459 807.1220000000001 400 800.9010000000001' fill='%231f894c'%3e%3c/path%3e%3c/g%3e%3cdefs%3e%3cmask id='SvgjsMask1066'%3e%3crect width='400' height='560' fill='white'%3e%3c/rect%3e%3c/mask%3e%3c/defs%3e%3c/svg%3e");
-  box-shadow: inset 0px 0px 20px 5px rgba(0, 0, 0, 0.37);
-  animation-duration: 0.8s;
+.form-fields {
+  @apply grid gap-3;
+}
 
-  .bg {
-    @apply absolute w-full h-full bg-light-100 dark:bg-dark-100 opacity-20;
+.field {
+  @apply flex h-12 items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 text-neutral-500 transition-all duration-200 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400;
+
+  &:focus-within {
+    @apply border-green-500 bg-white text-green-600 shadow-sm shadow-green-500/10 dark:bg-neutral-950 dark:text-green-400;
   }
 
-  .content {
-    @apply absolute w-full h-full p-4 flex flex-col items-center justify-center text-center;
-
-    .login-tabs {
-      @apply flex mb-6 bg-black bg-opacity-20 rounded-xl p-1;
-      width: 320px;
-      animation-duration: 0.6s;
-      animation-delay: 0.2s;
-
-      .tab-item {
-        @apply flex-1 py-2 px-3 text-sm text-white text-center cursor-pointer rounded-lg transition-all duration-300;
-        @apply hover:bg-white hover:bg-opacity-10;
-        transform: translateY(0);
-
-        &:hover {
-          transform: translateY(-2px);
-        }
-
-        &.active {
-          @apply bg-green-600 text-white font-medium;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-      }
-    }
-
-    .login-content {
-      @apply flex-1 flex items-center justify-center;
-      min-height: 300px;
-    }
-
-    .phone {
-      animation-duration: 0.5s;
-      width: 100%;
-      max-width: 300px;
-
-      &-page {
-        @apply bg-light dark:bg-gray-800 bg-opacity-90 dark:bg-opacity-90;
-        width: 250px;
-        @apply rounded-2xl overflow-hidden;
-        margin: 0 auto;
-      }
-
-      &-input {
-        height: 40px;
-        @apply w-full px-4 outline-none;
-        @apply text-gray-900 dark:text-white bg-transparent;
-        @apply border-b border-gray-200 dark:border-gray-700;
-        @apply placeholder-gray-500 dark:placeholder-gray-400;
-        transition: all 0.3s ease;
-
-        &:focus {
-          @apply border-green-500;
-          transform: translateY(-1px);
-        }
-      }
-    }
-
-    .btn-login {
-      width: 250px;
-      height: 40px;
-      @apply mt-10 text-white rounded-xl;
-      @apply bg-green-600 hover:bg-green-700 transition-all duration-300;
-      transform: translateY(0);
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(34, 197, 94, 0.3);
-      }
-    }
+  i {
+    @apply text-lg;
   }
+
+  input {
+    @apply h-full min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-white dark:placeholder:text-neutral-500;
+  }
+}
+
+.btn-login {
+  @apply h-12 rounded-lg text-sm font-semibold;
 }
 
 /* 登录内容切换动画 */
@@ -281,23 +286,46 @@ const submit = async () => {
 
 .login-content-enter-from {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(16px);
 }
 
 .login-content-leave-to {
   opacity: 0;
-  transform: translateY(-20px);
+  transform: translateY(-16px);
 }
 
 .mobile {
   .login-page {
-    @apply pt-0;
+    @apply px-4 py-6;
   }
 
-  .phone-login {
-    width: 90vw;
-    max-width: 350px;
-    height: 500px;
+  .login-shell {
+    @apply max-w-[420px] grid-cols-1;
+    min-height: auto;
+  }
+
+  .brand-panel {
+    @apply flex-row items-center justify-start gap-4 p-5;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  .brand-logo {
+    @apply h-14 w-14 rounded-xl;
+  }
+
+  .brand-name {
+    @apply mt-0 text-xl;
+  }
+
+  .brand-subtitle {
+    @apply mt-1;
+  }
+
+  .auth-panel {
+    @apply p-5;
   }
 }
 </style>

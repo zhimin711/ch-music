@@ -19,7 +19,6 @@ import {
   registerMusicServer,
   removeMusicServerFavorite,
   removeMusicServerPlaylistTrack,
-  setMusicServerBaseUrl,
   setMusicServerToken,
   updateMusicServerMe,
   uploadMusicServerAvatar,
@@ -84,11 +83,6 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     favorites.value = [];
     setMusicServerToken('');
     persistUser(null);
-  };
-
-  const setBaseUrl = (value: string) => {
-    setMusicServerBaseUrl(value);
-    baseUrl.value = getMusicServerBaseUrl();
   };
 
   const login = async (payload: { username: string; password: string }) => {
@@ -250,7 +244,6 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     songs,
     favoriteMusicIds,
     favoriteSongs,
-    setBaseUrl,
     login,
     register,
     logout,

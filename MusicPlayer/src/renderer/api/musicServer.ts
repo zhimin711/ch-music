@@ -9,7 +9,7 @@ import type {
 } from '@/types/musicServer';
 
 const DEFAULT_BASE_URL = 'http://localhost:8080';
-const BASE_URL_KEY = 'musicServerBaseUrl';
+const PACKAGED_BASE_URL = import.meta.env.VITE_MUSIC_SERVER_BASE_URL || DEFAULT_BASE_URL;
 const TOKEN_KEY = 'musicServerToken';
 
 const normalizeBaseUrl = (baseUrl: string) => {
@@ -17,12 +17,7 @@ const normalizeBaseUrl = (baseUrl: string) => {
   return trimmed.replace(/\/+$/, '');
 };
 
-export const getMusicServerBaseUrl = () =>
-  normalizeBaseUrl(localStorage.getItem(BASE_URL_KEY) || DEFAULT_BASE_URL);
-
-export const setMusicServerBaseUrl = (baseUrl: string) => {
-  localStorage.setItem(BASE_URL_KEY, normalizeBaseUrl(baseUrl));
-};
+export const getMusicServerBaseUrl = () => normalizeBaseUrl(PACKAGED_BASE_URL);
 
 export const getMusicServerToken = () => localStorage.getItem(TOKEN_KEY) || '';
 

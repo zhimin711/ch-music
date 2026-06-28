@@ -34,7 +34,7 @@
                 {{ song.name }}
               </div>
               <div class="mt-0.5 truncate text-xs text-neutral-400">
-                {{ song.source === 'musicServer' ? 'MusicServer' : '公开音乐' }}
+                {{ song.source === 'musicServer' ? '云端音乐' : '公开音乐' }}
               </div>
             </div>
           </div>

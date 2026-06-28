@@ -4,7 +4,7 @@ export default {
     phone: 'Phone Login',
     cookie: 'Cookie Login',
     uid: 'UID Login',
-    musicServer: 'MusicServer'
+    musicServer: 'Cloud Account'
   },
   qrTip: 'Scan with NetEase Cloud Music APP',
   phoneTip: 'Login with NetEase Cloud account',

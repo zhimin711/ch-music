@@ -40,7 +40,7 @@ const toUserData = (musicServerUser: MusicServerUser): UserData => ({
   nickname: musicServerUser.displayName || musicServerUser.username,
   avatarUrl: musicServerUser.avatarUrl || '',
   backgroundUrl: '',
-  signature: 'MusicServer 私有音乐库',
+  signature: '私有音乐库',
   vipType: 0,
   musicServerUser
 });

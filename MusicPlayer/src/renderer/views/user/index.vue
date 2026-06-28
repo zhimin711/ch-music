@@ -57,8 +57,8 @@
       <div
         v-if="userDetail && user"
         class="left"
-        :class="setAnimationClass('animate__fadeIn')"
-        :style="{ backgroundImage: `url(${getImgUrl(user.backgroundUrl)})` }"
+        :class="[setAnimationClass('animate__fadeIn'), { 'has-user-background': hasUserBackground }]"
+        :style="userBackgroundStyle"
       >
         <div class="page">
           <div class="user-name">
@@ -176,33 +176,69 @@
     >
       <login-component @login-success="handleLoginSuccess" />
     </div>
-    <n-modal v-model:show="profileModalVisible" preset="card" title="编辑个人资料" class="profile-modal">
-      <div class="profile-form">
-        <n-input v-model:value="profileForm.displayName" placeholder="显示名称" maxlength="120" />
-        <div class="avatar-upload-row">
-          <input
-            ref="avatarFileInput"
-            class="hidden"
-            type="file"
-            accept="image/*"
-            @change="handleAvatarFileChange"
-          />
-          <n-button @click="avatarFileInput?.click()">
-            <template #icon>
-              <i class="ri-upload-cloud-line" />
-            </template>
-            上传头像
-          </n-button>
-          <span class="avatar-file-name">{{ selectedAvatarFile?.name || '未选择图片' }}</span>
-        </div>
-        <n-input v-model:value="profileForm.avatarUrl" placeholder="头像 URL（可选，上传后自动填写）" />
-        <div class="profile-preview">
-          <n-avatar round :size="48" :src="getImgUrl(avatarPreviewUrl || profileForm.avatarUrl, '50y50')" />
-          <div class="profile-preview-text">
-            <div>{{ profileForm.displayName || user?.nickname }}</div>
-            <div>{{ selectedAvatarFile ? '保存后会上传到 MusicServer' : '保存后会同步到 MusicServer' }}</div>
+    <n-modal
+      v-model:show="profileModalVisible"
+      preset="card"
+      :bordered="false"
+      style="width: min(520px, calc(100vw - 32px))"
+      class="profile-modal"
+    >
+      <template #header>
+        <div class="profile-modal-title">
+          <div>
+            <div class="profile-modal-title-main">编辑个人资料</div>
+            <div class="profile-modal-title-sub">更新昵称和头像</div>
           </div>
         </div>
+      </template>
+      <div class="profile-form">
+        <div class="profile-preview">
+          <div class="profile-avatar-wrap">
+            <n-avatar
+              round
+              :size="88"
+              :src="getImgUrl(avatarPreviewUrl || profileForm.avatarUrl, '100y100')"
+              :img-props="{ class: 'profile-avatar-img' }"
+            />
+            <button type="button" class="profile-avatar-button" @click="avatarFileInput?.click()">
+              <i class="ri-camera-line" />
+            </button>
+          </div>
+          <div class="profile-preview-text">
+            <div>{{ profileForm.displayName || user?.nickname }}</div>
+            <div>{{ selectedAvatarFile ? '新头像将在保存后上传' : '头像和昵称将同步到云端' }}</div>
+            <div v-if="selectedAvatarFile" class="avatar-file-name">{{ selectedAvatarFile.name }}</div>
+          </div>
+        </div>
+        <input
+          ref="avatarFileInput"
+          class="hidden"
+          type="file"
+          accept="image/*"
+          @change="handleAvatarFileChange"
+        />
+        <label class="profile-field">
+          <span>显示名称</span>
+          <n-input v-model:value="profileForm.displayName" placeholder="填写你的昵称" maxlength="120" />
+        </label>
+        <n-collapse-transition :show="showAvatarUrlInput">
+          <label class="profile-field">
+            <span>头像链接</span>
+            <n-input
+              v-model:value="profileForm.avatarUrl"
+              placeholder="可选，上传头像后会自动填写"
+              clearable
+            />
+          </label>
+        </n-collapse-transition>
+        <button
+          type="button"
+          class="profile-link-toggle"
+          @click="showAvatarUrlInput = !showAvatarUrlInput"
+        >
+          <i :class="showAvatarUrlInput ? 'ri-arrow-up-s-line' : 'ri-link'" />
+          {{ showAvatarUrlInput ? '收起头像链接' : '手动填写头像链接' }}
+        </button>
         <div class="profile-actions">
           <n-button @click="profileModalVisible = false">取消</n-button>
           <n-button type="primary" :loading="profileSaving" @click="saveProfile">保存</n-button>
@@ -249,6 +285,7 @@ const profileForm = ref({
   displayName: '',
   avatarUrl: ''
 });
+const showAvatarUrlInput = ref(false);
 const avatarFileInput = ref<HTMLInputElement | null>(null);
 const selectedAvatarFile = ref<File | null>(null);
 const avatarPreviewUrl = ref('');
@@ -261,6 +298,13 @@ const tabs = [
 const currentTab = ref('created');
 
 const user = computed(() => userStore.user);
+const hasUserBackground = computed(() => Boolean(user.value?.backgroundUrl?.trim()));
+const userBackgroundStyle = computed(() => {
+  if (!hasUserBackground.value) return {};
+  return {
+    '--user-background-image': `url(${getImgUrl(user.value?.backgroundUrl)})`
+  };
+});
 
 // 创建的歌单（当前用户创建的）
 const createdPlaylists = computed(() => {
@@ -291,7 +335,7 @@ const getCoverUrl = (item: any) => {
 // 获取列表项描述
 const getItemDescription = (item: any) => {
   if (item.type === 'musicServerFavoriteSong') {
-    return item.ar?.[0]?.name || 'MusicServer';
+    return item.ar?.[0]?.name || '云端音乐';
   } else {
     return `${t('user.playlist.trackCount', { count: item.trackCount })}，${t('user.playlist.playCount', { count: item.playCount })}`;
   }
@@ -459,6 +503,7 @@ const handleLoginSuccess = () => {
 
 const openProfileEditor = () => {
   clearSelectedAvatarFile();
+  showAvatarUrlInput.value = false;
   profileForm.value = {
     displayName: user.value?.nickname || '',
     avatarUrl: user.value?.avatarUrl || ''
@@ -544,32 +589,74 @@ const currentLoginType = computed(() => userStore.loginType);
   @apply flex h-full;
   .left {
     max-width: 600px;
-    @apply flex-1 rounded-2xl overflow-hidden relative bg-no-repeat h-full;
-    @apply bg-gray-900 dark:bg-gray-800;
+    isolation: isolate;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+    @apply flex-1 rounded-2xl overflow-hidden relative h-full;
+    background:
+      linear-gradient(135deg, rgba(34, 197, 94, 0.22) 0%, transparent 38%),
+      linear-gradient(225deg, rgba(14, 165, 233, 0.18) 0%, transparent 34%),
+      linear-gradient(160deg, #111827 0%, #0f172a 58%, #07130f 100%);
+    background-position: center;
+    background-size: cover;
+
+    &.has-user-background {
+      background-image:
+        linear-gradient(160deg, rgba(8, 13, 23, 0.84), rgba(8, 13, 23, 0.46)),
+        var(--user-background-image);
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 100%),
+        linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 100%);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 82%);
+      opacity: 0.42;
+      pointer-events: none;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.28));
+      pointer-events: none;
+    }
 
     .page {
-      @apply p-4 w-full z-10 flex flex-col h-full;
-      @apply bg-black bg-opacity-40;
+      @apply p-5 w-full z-10 flex flex-col h-full relative;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.42));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
     .title {
       @apply text-lg font-bold flex items-center justify-between;
       @apply text-gray-900 dark:text-white;
     }
     .user-name {
-      @apply text-xl font-bold mb-4 flex justify-between;
-      @apply text-white text-opacity-70;
+      @apply text-2xl font-bold mb-4 flex items-center justify-between gap-3;
+      @apply text-white;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.28);
     }
 
     .uesr-signature {
-      @apply mt-4;
-      @apply text-white text-opacity-70;
+      @apply mt-4 rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/75;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
   .user-info {
-    @apply flex items-center;
+    @apply flex items-center rounded-2xl border border-white/10 bg-white/10 p-3;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     &-list {
-        @apply flex justify-around w-2/5 text-center;
-        @apply text-white text-opacity-70;
+        @apply flex flex-1 justify-around text-center;
+        @apply text-white/70;
 
         .label {
           @apply text-xl font-bold text-white;
@@ -582,10 +669,14 @@ const currentLoginType = computed(() => userStore.loginType);
     }
   }
   .avatar-editor {
-    @apply relative mr-4 flex h-[50px] w-[50px] flex-shrink-0;
+    @apply relative mr-4 flex h-[58px] w-[58px] flex-shrink-0;
+
+    :deep(.n-avatar) {
+      @apply ring-2 ring-white/40 shadow-lg;
+    }
   }
   .avatar-edit-btn {
-    @apply absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-white shadow-lg transition hover:bg-primary/90;
+    @apply absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs text-white shadow-lg ring-2 ring-white/70 transition hover:bg-primary/90;
   }
 
   .right {
@@ -617,8 +708,12 @@ const currentLoginType = computed(() => userStore.loginType);
 }
 
 .play-list {
-  @apply mt-4 py-4 px-2 rounded-xl flex-1 overflow-hidden;
-  @apply bg-light dark:bg-black;
+  @apply mt-4 py-4 px-2 rounded-2xl flex-1 overflow-hidden;
+  @apply bg-white/95 dark:bg-black/75;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 
   &-title {
     @apply text-lg;
@@ -686,30 +781,77 @@ const currentLoginType = computed(() => userStore.loginType);
 }
 
 .profile-modal {
-  width: min(420px, calc(100vw - 32px));
+  :deep(.n-card) {
+    @apply overflow-hidden rounded-2xl;
+  }
+
+  :deep(.n-card-header) {
+    @apply px-6 pt-6 pb-3;
+  }
+
+  :deep(.n-card__content) {
+    @apply px-6 pb-6;
+  }
+
+  :deep(.n-card-header__close) {
+    @apply mt-1;
+  }
 }
 
-.profile-form {
-  @apply flex flex-col gap-4;
-}
-
-.profile-preview {
-  @apply flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-neutral-800;
-}
-
-.avatar-upload-row {
+.profile-modal-title {
   @apply flex items-center gap-3;
 }
 
-.avatar-file-name {
-  @apply min-w-0 flex-1 truncate text-sm text-gray-400;
+.profile-modal-title-main {
+  @apply text-xl font-bold text-neutral-950 dark:text-white;
+}
+
+.profile-modal-title-sub {
+  @apply mt-1 text-sm text-neutral-500 dark:text-neutral-400;
+}
+
+.profile-form {
+  @apply flex flex-col gap-5;
+}
+
+.profile-preview {
+  @apply relative flex items-center gap-4 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900;
+
+  &::before {
+    content: '';
+    @apply absolute inset-0 opacity-80;
+    background:
+      linear-gradient(135deg, rgba(34, 197, 94, 0.18), transparent 42%),
+      linear-gradient(225deg, rgba(14, 165, 233, 0.14), transparent 36%);
+    pointer-events: none;
+  }
+
+  > * {
+    @apply relative z-10;
+  }
+}
+
+.profile-avatar-wrap {
+  @apply relative flex h-[78px] w-[78px] flex-shrink-0 items-center justify-center;
+
+  :deep(.n-avatar) {
+    @apply ring-4 ring-white shadow-xl dark:ring-neutral-950;
+  }
+
+  :deep(.profile-avatar-img) {
+    @apply h-full w-full object-cover;
+  }
+}
+
+.profile-avatar-button {
+  @apply absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-white shadow-lg ring-4 ring-neutral-50 transition hover:bg-primary/90 dark:ring-neutral-900;
 }
 
 .profile-preview-text {
-  @apply min-w-0 text-sm text-gray-700 dark:text-gray-200;
+  @apply min-w-0 flex-1 text-sm text-gray-700 dark:text-gray-200;
 
   > div:first-child {
-    @apply truncate font-medium;
+    @apply truncate text-base font-bold text-neutral-950 dark:text-white;
   }
 
   > div:last-child {
@@ -717,7 +859,23 @@ const currentLoginType = computed(() => userStore.loginType);
   }
 }
 
+.avatar-file-name {
+  @apply mt-2 max-w-full truncate rounded-full bg-white/75 px-3 py-1 text-xs text-neutral-500 dark:bg-black/30 dark:text-neutral-400;
+}
+
+.profile-field {
+  @apply flex flex-col gap-2;
+
+  > span {
+    @apply text-sm font-medium text-neutral-700 dark:text-neutral-200;
+  }
+}
+
+.profile-link-toggle {
+  @apply -mt-2 flex w-fit items-center gap-1 text-sm text-neutral-500 transition hover:text-primary dark:text-neutral-400 dark:hover:text-primary;
+}
+
 .profile-actions {
-  @apply flex justify-end gap-2;
+  @apply flex justify-end gap-3 border-t border-neutral-100 pt-5 dark:border-neutral-800;
 }
 </style>

@@ -4,7 +4,7 @@ export default {
     phone: '手机号登录',
     cookie: 'Cookie登录',
     uid: 'UID登录',
-    musicServer: 'MusicServer'
+    musicServer: '云端账号'
   },
   qrTip: '使用APP扫码登录',
   phoneTip: '使用账号登录',

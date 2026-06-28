@@ -4,7 +4,7 @@ export default {
     phone: '電話番号ログイン',
     cookie: 'Cookieログイン',
     uid: 'UIDログイン',
-    musicServer: 'MusicServer'
+    musicServer: 'クラウドアカウント'
   },
   qrTip: 'NetEase Cloudアプリでログイン',
   phoneTip: 'NetEase Cloudアカウントでログイン',

@@ -43,11 +43,12 @@
             class="max-w-xl rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5"
           >
             <div class="grid gap-4">
-              <n-input v-model:value="baseUrlForm" placeholder="MusicServer 地址">
-                <template #prefix>
-                  <i class="ri-server-line text-neutral-400" />
-                </template>
-              </n-input>
+              <div
+                class="flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400"
+              >
+                <i class="ri-server-line text-neutral-400" />
+                <span class="truncate">{{ cloudStore.baseUrl }}</span>
+              </div>
               <n-input v-model:value="username" placeholder="用户名（3-80 位）">
                 <template #prefix>
                   <i class="ri-user-line text-neutral-400" />
@@ -293,7 +294,6 @@ const playerStore = usePlayerStore();
 const activeTab = ref('music');
 const activePlaylistId = ref<number | null>(null);
 const authLoading = ref(false);
-const baseUrlForm = ref(cloudStore.baseUrl);
 const username = ref('');
 const password = ref('');
 const displayName = ref('');
@@ -351,13 +351,7 @@ watch(
   { immediate: true }
 );
 
-function applyBaseUrl() {
-  cloudStore.setBaseUrl(baseUrlForm.value);
-  baseUrlForm.value = cloudStore.baseUrl;
-}
-
 function validateAuthForm() {
-  applyBaseUrl();
   const trimmedUsername = username.value.trim();
   const trimmedDisplayName = displayName.value.trim();
   if (!trimmedUsername || !password.value) {
