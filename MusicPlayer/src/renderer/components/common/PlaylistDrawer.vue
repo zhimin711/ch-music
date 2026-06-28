@@ -172,7 +172,8 @@ import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@/store';
 import { useMusicServerStore } from '@/store/modules/musicServer';
 import type { SongResult } from '@/types/music';
-import { getImgUrl } from '@/utils';
+import { DEFAULT_COVER_URL, getImgUrl } from '@/utils';
+import { toMusicServerSongResult } from '@/utils/musicServerUtils';
 
 const store = useUserStore();
 const musicServerStore = useMusicServerStore();
@@ -226,8 +227,10 @@ const fetchUserPlaylists = async () => {
     playlists.value = musicServerStore.playlists.map((playlist) => ({
       ...playlist,
       trackCount: playlist.tracks.length,
-      coverImgUrl: '',
-      picUrl: ''
+      coverImgUrl: playlist.tracks[0]
+        ? toMusicServerSongResult(playlist.tracks[0]).picUrl
+        : DEFAULT_COVER_URL,
+      picUrl: playlist.tracks[0] ? toMusicServerSongResult(playlist.tracks[0]).picUrl : DEFAULT_COVER_URL
     }));
   } catch (error) {
     console.error('获取歌单失败:', error);

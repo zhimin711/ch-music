@@ -1,6 +1,19 @@
 import { computed } from 'vue';
 
+import defaultCoverUrl from '@/assets/logo.png';
 import { useSettingsStore } from '@/store/modules/settings';
+
+export const DEFAULT_COVER_URL = defaultCoverUrl;
+
+const LEGACY_DEFAULT_COVER = '/images/default_cover.png';
+
+export const normalizeCoverUrl = (url?: string | null) => {
+  const trimmed = url?.trim();
+  if (!trimmed || trimmed === LEGACY_DEFAULT_COVER) {
+    return DEFAULT_COVER_URL;
+  }
+  return trimmed;
+};
 
 // 设置歌手背景图片
 export const setBackgroundImg = (url: String) => {
@@ -73,18 +86,29 @@ export const formatNumber = (num: string | number) => {
   return num.toString();
 };
 
-export const getImgUrl = (url: string | undefined, size: string = '') => {
-  if (!url) return '';
+export const getImgUrl = (url: string | null | undefined, size: string = '') => {
+  const normalizedUrl = normalizeCoverUrl(url);
 
   // base64 Data URL 和本地文件路径不需要添加尺寸参数
-  if (url.startsWith('data:') || url.startsWith('local://')) return url;
-
-  if (url.includes('thumbnail')) {
-    // 只替换最后一个 thumbnail 参数的尺寸
-    return url.replace(/thumbnail=\d+y\d+(?!.*thumbnail)/, `thumbnail=${size}`);
+  if (
+    normalizedUrl.startsWith('data:') ||
+    normalizedUrl.startsWith('local://') ||
+    normalizedUrl.startsWith('blob:') ||
+    normalizedUrl === DEFAULT_COVER_URL
+  ) {
+    return normalizedUrl;
   }
 
-  const imgUrl = `${url}?param=${size}`;
+  if (normalizedUrl.startsWith('/') && !normalizedUrl.startsWith('//')) {
+    return normalizedUrl;
+  }
+
+  if (normalizedUrl.includes('thumbnail')) {
+    // 只替换最后一个 thumbnail 参数的尺寸
+    return normalizedUrl.replace(/thumbnail=\d+y\d+(?!.*thumbnail)/, `thumbnail=${size}`);
+  }
+
+  const imgUrl = `${normalizedUrl}?param=${size}`;
   return imgUrl;
 };
 

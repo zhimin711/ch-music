@@ -4,6 +4,7 @@
 import type { LocalMusicEntry, LocalMusicMeta } from '@/types/localMusic';
 import { SUPPORTED_AUDIO_FORMATS } from '@/types/localMusic';
 import type { ILyric, ILyricText, IWordData, SongResult } from '@/types/music';
+import { DEFAULT_COVER_URL } from '@/utils';
 import { parseLyrics as parseYrcLyrics } from '@/utils/yrcParser';
 
 /**
@@ -114,7 +115,7 @@ export function toSongResult(entry: LocalMusicEntry): SongResult {
   return {
     id: entry.id,
     name: entry.title,
-    picUrl: entry.cover || '/images/default_cover.png',
+    picUrl: entry.cover || DEFAULT_COVER_URL,
     ar: [
       {
         name: entry.artist,
@@ -122,7 +123,7 @@ export function toSongResult(entry: LocalMusicEntry): SongResult {
         picId: 0,
         img1v1Id: 0,
         briefDesc: '',
-        picUrl: '',
+        picUrl: entry.cover || DEFAULT_COVER_URL,
         img1v1Url: '',
         albumSize: 0,
         alias: [],
@@ -140,7 +141,7 @@ export function toSongResult(entry: LocalMusicEntry): SongResult {
       blurPicUrl: '',
       companyId: 0,
       pic: 0,
-      picUrl: entry.cover || '',
+      picUrl: entry.cover || DEFAULT_COVER_URL,
       publishTime: 0,
       description: '',
       tags: '',
@@ -152,7 +153,7 @@ export function toSongResult(entry: LocalMusicEntry): SongResult {
         picId: 0,
         img1v1Id: 0,
         briefDesc: '',
-        picUrl: '',
+          picUrl: entry.cover || DEFAULT_COVER_URL,
         img1v1Url: '',
         albumSize: 0,
         alias: [],

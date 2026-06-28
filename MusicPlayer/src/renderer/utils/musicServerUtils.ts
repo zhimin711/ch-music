@@ -1,10 +1,10 @@
 import type { MusicServerMusic } from '@/types/musicServer';
 import type { Artist, SongResult } from '@/types/music';
 import { buildMusicServerStreamUrl } from '@/api/musicServer';
+import { DEFAULT_COVER_URL } from '@/utils';
 
 const UNKNOWN_ARTIST = '未知艺术家';
 const UNKNOWN_ALBUM = '私有音乐';
-const DEFAULT_COVER = '/images/default_cover.png';
 
 const createArtist = (name: string): Artist => ({
   name,
@@ -29,7 +29,7 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
   return {
     id: music.id,
     name: music.title,
-    picUrl: DEFAULT_COVER,
+    picUrl: DEFAULT_COVER_URL,
     ar: [artist],
     artists: [artist],
     al: {
@@ -41,7 +41,7 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
       blurPicUrl: '',
       companyId: 0,
       pic: 0,
-      picUrl: '',
+      picUrl: DEFAULT_COVER_URL,
       publishTime: 0,
       description: '',
       tags: '',
@@ -64,7 +64,7 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
       id: music.id,
       name: music.title,
       artists: [artist],
-      album: { name: albumName }
+      album: { name: albumName, picUrl: DEFAULT_COVER_URL }
     },
     playMusicUrl: buildMusicServerStreamUrl(music.id),
     source: 'musicServer',

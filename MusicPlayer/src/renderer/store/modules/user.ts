@@ -12,6 +12,7 @@ import type { IUserDetail } from '@/types/user';
 import type { MusicServerPlaylist, MusicServerUser } from '@/types/musicServer';
 import { clearLoginStatus } from '@/utils/auth';
 import { toMusicServerSongResult } from '@/utils/musicServerUtils';
+import { DEFAULT_COVER_URL } from '@/utils';
 
 interface UserData {
   userId: number;
@@ -63,8 +64,8 @@ const toPlaylistItem = (playlist: MusicServerPlaylist, owner: UserData) => ({
   id: playlist.id,
   name: playlist.name,
   description: playlist.description || '',
-  coverImgUrl: '',
-  picUrl: '',
+  coverImgUrl: playlist.tracks[0] ? toMusicServerSongResult(playlist.tracks[0]).picUrl : DEFAULT_COVER_URL,
+  picUrl: playlist.tracks[0] ? toMusicServerSongResult(playlist.tracks[0]).picUrl : DEFAULT_COVER_URL,
   trackCount: playlist.tracks.length,
   playCount: 0,
   source: 'musicServer',

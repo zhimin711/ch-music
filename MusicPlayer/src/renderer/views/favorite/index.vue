@@ -164,7 +164,7 @@ import { useProgressiveRender } from '@/hooks/useProgressiveRender';
 import { useLocalMusicStore, usePlayerStore } from '@/store';
 import { useMusicServerStore } from '@/store/modules/musicServer';
 import type { SongResult } from '@/types/music';
-import { isElectron, setAnimationClass, setAnimationDelay } from '@/utils';
+import { DEFAULT_COVER_URL, isElectron, setAnimationClass, setAnimationDelay } from '@/utils';
 import { toSongResult as toLocalSongResult } from '@/utils/localMusicUtils';
 
 const { t } = useI18n();
@@ -312,7 +312,7 @@ const resolveFavoriteSongs = async (ids: Array<number | string>) => {
     if (res.data.songs) {
       neteaseSongs = res.data.songs.map((song: SongResult) => ({
         ...song,
-        picUrl: song.al?.picUrl || '',
+        picUrl: song.al?.picUrl || DEFAULT_COVER_URL,
         source: 'netease'
       }));
     }

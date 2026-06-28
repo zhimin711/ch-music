@@ -237,7 +237,7 @@ import SongItem from '@/components/common/SongItem.vue';
 import { usePlayerStore } from '@/store/modules/player';
 import { usePlayHistoryStore } from '@/store/modules/playHistory';
 import type { SongResult } from '@/types/music';
-import { isMobile, setAnimationClass, setAnimationDelay } from '@/utils';
+import { DEFAULT_COVER_URL, isMobile, setAnimationClass, setAnimationDelay } from '@/utils';
 import { mapDjProgramToSongResult } from '@/utils/podcastUtils';
 
 const { t } = useI18n();
@@ -409,7 +409,7 @@ const loadHistoryData = async () => {
               const historyItem = neteaseItems.find((item) => item.id === song.id);
               return {
                 ...song,
-                picUrl: song.al?.picUrl || '',
+                picUrl: song.al?.picUrl || DEFAULT_COVER_URL,
                 count: historyItem?.count || 0,
                 source: 'netease'
               };

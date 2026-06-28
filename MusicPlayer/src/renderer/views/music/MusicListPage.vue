@@ -348,7 +348,7 @@ import { useMusicStore, usePlayerStore, useRecommendStore, useUserStore } from '
 import { useMusicServerStore } from '@/store/modules/musicServer';
 import { usePlayHistoryStore } from '@/store/modules/playHistory';
 import { SongResult } from '@/types/music';
-import { calculateAnimationDelay, getImgUrl, isElectron, isMobile } from '@/utils';
+import { calculateAnimationDelay, DEFAULT_COVER_URL, getImgUrl, isElectron, isMobile } from '@/utils';
 import { getLoginErrorMessage, hasPermission } from '@/utils/auth';
 import { toMusicServerSongResult } from '@/utils/musicServerUtils';
 
@@ -512,7 +512,7 @@ const getCoverImgUrl = computed(() => {
   const coverImgUrl = listInfo.value?.coverImgUrl || listInfo.value?.picUrl;
   if (coverImgUrl) return coverImgUrl;
   const song = songList.value[0];
-  return song?.picUrl || song?.al?.picUrl || song?.album?.picUrl || '';
+  return song?.picUrl || song?.al?.picUrl || song?.album?.picUrl || DEFAULT_COVER_URL;
 });
 
 // 全量歌曲列表（用于"播放全部"等操作）
