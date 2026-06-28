@@ -15,6 +15,10 @@ import code.name.monkey.retromusic.network.provideDefaultCache
 import code.name.monkey.retromusic.network.provideLastFmRest
 import code.name.monkey.retromusic.network.provideLastFmRetrofit
 import code.name.monkey.retromusic.network.provideOkHttp
+import code.name.monkey.retromusic.musicserver.MusicServerRepository
+import code.name.monkey.retromusic.musicserver.MusicServerSession
+import code.name.monkey.retromusic.musicserver.provideMusicServerApi
+import code.name.monkey.retromusic.musicserver.provideMusicServerOkHttp
 import code.name.monkey.retromusic.repository.*
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -144,6 +148,17 @@ private val dataModule = module {
     single {
         RealLocalDataRepository(get())
     } bind LocalDataRepository::class
+
+    single {
+        MusicServerSession(androidContext())
+    }
+
+    single {
+        MusicServerRepository(
+            provideMusicServerApi(provideMusicServerOkHttp(get())),
+            get()
+        )
+    }
 }
 
 private val viewModules = module {

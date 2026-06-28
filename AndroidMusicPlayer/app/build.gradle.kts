@@ -11,6 +11,7 @@ plugins {
 android {
     compileSdk = 35
     namespace = "code.name.monkey.retromusic"
+    val configuredMusicServerBaseUrl = providers.gradleProperty("MUSIC_SERVER_BASE_URL")
 
     defaultConfig {
         minSdk = 24
@@ -42,6 +43,11 @@ android {
         getByName("release") {
             isShrinkResources = true
             isMinifyEnabled = true
+            buildConfigField(
+                "String",
+                "MUSIC_SERVER_BASE_URL",
+                "\"${configuredMusicServerBaseUrl.orElse("https://music-server.example.invalid").get()}\""
+            )
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -52,6 +58,11 @@ android {
             signingConfig = theSigningConfig
             applicationIdSuffix = ".debug"
             versionNameSuffix = " DEBUG"
+            buildConfigField(
+                "String",
+                "MUSIC_SERVER_BASE_URL",
+                "\"${configuredMusicServerBaseUrl.orElse("http://10.0.2.2:8080").get()}\""
+            )
         }
     }
 

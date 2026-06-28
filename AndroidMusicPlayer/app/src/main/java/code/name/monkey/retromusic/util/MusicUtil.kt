@@ -24,6 +24,8 @@ import code.name.monkey.retromusic.helper.MusicPlayerRemote.removeFromQueue
 import code.name.monkey.retromusic.model.Artist
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.model.lyrics.AbsSynchronizedLyrics
+import code.name.monkey.retromusic.musicserver.MusicServerRepository
+import code.name.monkey.retromusic.musicserver.MusicServerSongMapper
 import code.name.monkey.retromusic.repository.Repository
 import code.name.monkey.retromusic.repository.SongRepository
 import kotlinx.coroutines.Dispatchers
@@ -367,6 +369,15 @@ object MusicUtil : KoinComponent {
 
     private val repository = get<Repository>()
     suspend fun toggleFavorite(song: Song) {
+        if (MusicServerSongMapper.isRemoteSong(song)) {
+            val musicId = MusicServerSongMapper.musicIdFromSong(song) ?: return
+            val musicServerRepository: MusicServerRepository = get()
+            val music = musicServerRepository.state.value.music.firstOrNull { it.stableMusicId == musicId }
+                ?: musicServerRepository.state.value.favorites.firstOrNull { it.music.stableMusicId == musicId }?.music
+                ?: return
+            musicServerRepository.toggleFavorite(music)
+            return
+        }
         withContext(IO) {
             val playlist: PlaylistEntity = repository.favoritePlaylist()
             val songEntity = song.toSongEntity(playlist.playListId)
@@ -379,7 +390,14 @@ object MusicUtil : KoinComponent {
         }
     }
 
-    suspend fun isFavorite(song: Song) = repository.isSongFavorite(song.id)
+    suspend fun isFavorite(song: Song): Boolean {
+        if (MusicServerSongMapper.isRemoteSong(song)) {
+            val musicId = MusicServerSongMapper.musicIdFromSong(song) ?: return false
+            val musicServerRepository: MusicServerRepository = get()
+            return musicServerRepository.state.value.favorites.any { it.music.stableMusicId == musicId }
+        }
+        return repository.isSongFavorite(song.id)
+    }
 
     fun deleteTracks(
         activity: FragmentActivity,

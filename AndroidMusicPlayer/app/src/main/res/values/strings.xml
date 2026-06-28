@@ -244,6 +244,7 @@
     <string name="listing_files">Listing files</string>
     <string name="loading_products">Loading products…</string>
     <string name="login">Login</string>
+    <string name="logout">Logout</string>
     <string name="lyrics">Lyrics</string>
     <string name="made_with_love">Made with ❤️ in India</string>
     <string name="material">Material</string>
@@ -316,6 +317,13 @@
     <string name="playlist_is_empty">Playlist is empty</string>
     <string name="playlist_name_empty">Playlist name</string>
     <string name="playlists">Playlists</string>
+    <string name="private_music">Private music</string>
+    <string name="display_name">Display name</string>
+    <string name="music_server">MusicServer</string>
+    <string name="register">Register</string>
+    <string name="upload_avatar">Upload avatar</string>
+    <string name="upload_music">Upload music</string>
+    <string name="action_refresh">Refresh</string>
     <string name="pref_blur_amount_summary">Amount of blur applied for blur themes, lower is faster</string>
     <string name="pref_blur_amount_title">Blur amount</string>
     <string name="pref_filter_song_summary">Filter songs by length</string>
