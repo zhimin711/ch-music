@@ -55,20 +55,39 @@ public class PlaylistService {
     }
 
     @Transactional
-    public PlaylistResponse addTrack(AppUser owner, Long playlistId, Long musicId) {
+    public PlaylistResponse addTrack(AppUser owner, Long playlistId, PlaylistRequestPayload payload) {
         Playlist playlist = requireOwnedPlaylist(owner, playlistId);
-        MusicFile music = musicService.requireOwnedMusic(owner, musicId);
-        if (!trackRepository.existsByPlaylistAndMusic(playlist, music)) {
-            playlist.getTracks().add(new PlaylistTrack(playlist, music, playlist.getTracks().size()));
-            playlistRepository.save(playlist);
+        if (payload.musicId() != null) {
+            MusicFile music = musicService.requireOwnedMusic(owner, payload.musicId());
+            if (!trackRepository.existsByPlaylistAndMusic(playlist, music)) {
+                playlist.getTracks().add(new PlaylistTrack(playlist, music, playlist.getTracks().size()));
+                playlistRepository.save(playlist);
+            }
+        } else {
+            String source = blankToDefault(payload.source(), "netease");
+            String externalId = blankToNull(payload.externalId());
+            if (externalId == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External song id is required");
+            }
+            if (!trackRepository.existsByPlaylistAndExternalSourceAndExternalId(playlist, source, externalId)) {
+                playlist.getTracks().add(new PlaylistTrack(playlist, source, externalId,
+                        blankToDefault(payload.title(), "未知歌曲"),
+                        blankToNull(payload.artist()),
+                        blankToNull(payload.album()),
+                        blankToNull(payload.picUrl()),
+                        payload.duration(),
+                        playlist.getTracks().size()));
+                playlistRepository.save(playlist);
+            }
         }
         return PlaylistResponse.details(requireOwnedPlaylistWithTracks(owner, playlistId));
     }
 
     @Transactional
-    public PlaylistResponse removeTrack(AppUser owner, Long playlistId, Long musicId) {
+    public PlaylistResponse removeTrack(AppUser owner, Long playlistId, Long trackId) {
         Playlist playlist = requireOwnedPlaylist(owner, playlistId);
-        trackRepository.findByPlaylistAndMusicId(playlist, musicId).ifPresent(trackRepository::delete);
+        trackRepository.findByIdAndPlaylist(trackId, playlist).ifPresentOrElse(trackRepository::delete,
+                () -> trackRepository.findByPlaylistAndMusicId(playlist, trackId).ifPresent(trackRepository::delete));
         return PlaylistResponse.details(requireOwnedPlaylistWithTracks(owner, playlistId));
     }
 
@@ -84,5 +103,13 @@ public class PlaylistService {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static String blankToDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
+    public record PlaylistRequestPayload(Long musicId, String source, String externalId, String title, String artist,
+            String album, String picUrl, Long duration) {
     }
 }

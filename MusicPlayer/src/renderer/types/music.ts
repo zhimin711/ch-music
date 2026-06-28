@@ -73,6 +73,7 @@ export interface SongResult {
   dt?: number;
   isFirstPlay?: boolean;
   isPodcast?: boolean;
+  musicServerTrackId?: number;
 }
 
 export interface Song {

@@ -25,11 +25,16 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
   const artistName = music.artist || UNKNOWN_ARTIST;
   const albumName = music.album || UNKNOWN_ALBUM;
   const artist = createArtist(artistName);
+  const source = music.source || 'musicServer';
+  const isPrivateMusic = source === 'musicServer';
+  const musicId = music.musicId ?? music.id;
+  const externalId = music.externalId || String(music.id);
+  const picUrl = music.picUrl || DEFAULT_COVER_URL;
 
   return {
-    id: music.id,
+    id: isPrivateMusic ? Number(musicId) : externalId,
     name: music.title,
-    picUrl: DEFAULT_COVER_URL,
+    picUrl,
     ar: [artist],
     artists: [artist],
     al: {
@@ -41,7 +46,7 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
       blurPicUrl: '',
       companyId: 0,
       pic: 0,
-      picUrl: DEFAULT_COVER_URL,
+      picUrl,
       publishTime: 0,
       description: '',
       tags: '',
@@ -64,11 +69,14 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
       id: music.id,
       name: music.title,
       artists: [artist],
-      album: { name: albumName, picUrl: DEFAULT_COVER_URL }
+      album: { name: albumName, picUrl }
     },
-    playMusicUrl: buildMusicServerStreamUrl(music.id),
-    source: 'musicServer',
+    playMusicUrl: isPrivateMusic ? buildMusicServerStreamUrl(Number(musicId)) : undefined,
+    source: isPrivateMusic ? 'musicServer' : 'netease',
     count: 0,
+    duration: music.duration || undefined,
+    dt: music.duration || undefined,
+    musicServerTrackId: music.trackId || undefined,
     createdAt: Date.now(),
     expiredAt: Date.now() + 30 * 24 * 60 * 60 * 1000
   };

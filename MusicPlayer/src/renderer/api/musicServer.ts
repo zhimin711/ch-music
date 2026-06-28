@@ -131,9 +131,24 @@ export function addMusicServerPlaylistTrack(playlistId: number, musicId: number)
   });
 }
 
-export function removeMusicServerPlaylistTrack(playlistId: number, musicId: number) {
+export function addMusicServerPlaylistExternalTrack(
+  playlistId: number,
+  payload: {
+    source: string;
+    externalId: string;
+    title: string;
+    artist?: string | null;
+    album?: string | null;
+    picUrl?: string | null;
+    duration?: number | null;
+  }
+) {
+  return musicServerRequest.post<MusicServerPlaylist>(`/api/playlists/${playlistId}/tracks`, payload);
+}
+
+export function removeMusicServerPlaylistTrack(playlistId: number, trackId: number) {
   return musicServerRequest.delete<MusicServerPlaylist>(
-    `/api/playlists/${playlistId}/tracks/${musicId}`
+    `/api/playlists/${playlistId}/tracks/${trackId}`
   );
 }
 

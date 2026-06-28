@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 
 import {
   addMusicServerFavorite,
+  addMusicServerPlaylistExternalTrack,
   addMusicServerPlaylistTrack,
   createMusicServerPlaylist,
   deleteMusicServerMusic,
@@ -206,8 +207,24 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     await loadPlaylists();
   };
 
-  const removeTrackFromPlaylist = async (playlistId: number, musicId: number) => {
-    await removeMusicServerPlaylistTrack(playlistId, musicId);
+  const addExternalTrackToPlaylist = async (
+    playlistId: number,
+    payload: {
+      source: string;
+      externalId: string;
+      title: string;
+      artist?: string | null;
+      album?: string | null;
+      picUrl?: string | null;
+      duration?: number | null;
+    }
+  ) => {
+    await addMusicServerPlaylistExternalTrack(playlistId, payload);
+    await loadPlaylists();
+  };
+
+  const removeTrackFromPlaylist = async (playlistId: number, trackId: number) => {
+    await removeMusicServerPlaylistTrack(playlistId, trackId);
     await loadPlaylists();
   };
 
@@ -249,6 +266,7 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     createPlaylist,
     deletePlaylist,
     addTrackToPlaylist,
+    addExternalTrackToPlaylist,
     removeTrackFromPlaylist,
     isFavorite,
     toggleFavorite

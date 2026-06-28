@@ -58,12 +58,14 @@ public class PlaylistController {
     @PostMapping("/{playlistId}/tracks")
     public PlaylistResponse addTrack(Authentication authentication, @PathVariable Long playlistId,
             @Valid @RequestBody AddTrackRequest request) {
-        return playlistService.addTrack(CurrentUser.from(authentication), playlistId, request.musicId());
+        return playlistService.addTrack(CurrentUser.from(authentication), playlistId,
+                new PlaylistService.PlaylistRequestPayload(request.musicId(), request.source(), request.externalId(),
+                        request.title(), request.artist(), request.album(), request.picUrl(), request.duration()));
     }
 
-    @DeleteMapping("/{playlistId}/tracks/{musicId}")
+    @DeleteMapping("/{playlistId}/tracks/{trackId}")
     public PlaylistResponse removeTrack(Authentication authentication, @PathVariable Long playlistId,
-            @PathVariable Long musicId) {
-        return playlistService.removeTrack(CurrentUser.from(authentication), playlistId, musicId);
+            @PathVariable Long trackId) {
+        return playlistService.removeTrack(CurrentUser.from(authentication), playlistId, trackId);
     }
 }

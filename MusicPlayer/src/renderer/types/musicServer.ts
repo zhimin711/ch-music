@@ -13,10 +13,16 @@ export interface MusicServerAuthResponse {
 }
 
 export interface MusicServerMusic {
-  id: number;
+  id: number | string;
+  musicId?: number | null;
+  trackId?: number | null;
+  source?: 'musicServer' | 'netease' | string | null;
+  externalId?: string | null;
   title: string;
   artist?: string | null;
   album?: string | null;
+  picUrl?: string | null;
+  duration?: number | null;
   originalFilename: string;
   contentType: string;
   fileSize: number;

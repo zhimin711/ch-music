@@ -12,7 +12,7 @@ public record PlaylistResponse(Long id, String name, String description, Instant
 
     public static PlaylistResponse details(Playlist playlist) {
         List<MusicResponse> tracks = playlist.getTracks().stream()
-                .map(track -> MusicResponse.from(track.getMusic()))
+                .map(MusicResponse::from)
                 .toList();
         return new PlaylistResponse(playlist.getId(), playlist.getName(), playlist.getDescription(),
                 playlist.getCreatedAt(), tracks);
