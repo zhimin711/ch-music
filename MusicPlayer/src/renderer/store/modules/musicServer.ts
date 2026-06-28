@@ -162,7 +162,7 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     }
   };
 
-  const upload = async (
+  const uploadRequest = async (
     file: File,
     metadata: { title?: string; artist?: string; album?: string } = {}
   ) => {
@@ -171,10 +171,33 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     if (metadata.title?.trim()) formData.append('title', metadata.title.trim());
     if (metadata.artist?.trim()) formData.append('artist', metadata.artist.trim());
     if (metadata.album?.trim()) formData.append('album', metadata.album.trim());
+    await uploadMusicServerMusic(formData);
+  };
+
+  const upload = async (
+    file: File,
+    metadata: { title?: string; artist?: string; album?: string } = {}
+  ) => {
+    uploading.value = true;
+    try {
+      await uploadRequest(file, metadata);
+      await loadMusic();
+    } finally {
+      uploading.value = false;
+    }
+  };
+
+  const uploadMany = async (
+    files: File[],
+    getMetadata: (file: File, index: number) => { title?: string; artist?: string; album?: string } = () => ({})
+  ) => {
+    if (!files.length) return;
 
     uploading.value = true;
     try {
-      await uploadMusicServerMusic(formData);
+      for (const [index, file] of files.entries()) {
+        await uploadRequest(file, getMetadata(file, index));
+      }
       await loadMusic();
     } finally {
       uploading.value = false;
@@ -255,6 +278,7 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     loadFavorites,
     loadAll,
     upload,
+    uploadMany,
     deleteMusic,
     createPlaylist,
     deletePlaylist,
