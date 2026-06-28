@@ -256,7 +256,7 @@
                         compact
                         can-remove
                         @play="handlePlaySongResult(song, activePlaylistSongResults)"
-                        @remove-song="handleRemoveTrack(activePlaylist.id, Number($event))"
+                        @remove-song="handleRemoveTrack(activePlaylist.id, song.musicServerTrackId || Number($event))"
                       />
                     </div>
                   </div>
@@ -522,9 +522,9 @@ async function handleAddTrackToActivePlaylist() {
   }
 }
 
-async function handleRemoveTrack(playlistId: number, musicId: number) {
+async function handleRemoveTrack(playlistId: number, trackId: number) {
   try {
-    await cloudStore.removeTrackFromPlaylist(playlistId, musicId);
+    await cloudStore.removeTrackFromPlaylist(playlistId, trackId);
     message.success('已移除');
   } catch (error) {
     console.error('移除云端歌单歌曲失败:', error);

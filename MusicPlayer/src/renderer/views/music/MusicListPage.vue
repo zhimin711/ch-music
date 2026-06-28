@@ -295,7 +295,7 @@
                 :selectable="isSelecting"
                 :selected="selectedSongs.includes(item.id as number)"
                 @play="handlePlayItem(item)"
-                @remove-song="handleRemoveSong"
+                @remove-song="handleRemoveSong(formatSong(item))"
                 @select="(id, selected) => handleSelect(id, selected)"
               />
             </div>
@@ -644,11 +644,15 @@ const handlePlayItem = (item: any) => {
   }
 };
 
-const handleRemoveSong = async (songId: number) => {
+const handleRemoveSong = async (song: SongResult) => {
   if (!listInfo.value?.id || !canRemove.value) return;
+  const songId = song.id;
   try {
     if (route.query.type === 'musicServerPlaylist') {
-      await musicServerStore.removeTrackFromPlaylist(listInfo.value.id, songId);
+      await musicServerStore.removeTrackFromPlaylist(
+        listInfo.value.id,
+        song.musicServerTrackId || Number(songId)
+      );
       message.success(t('user.message.deleteSuccess'));
       displayedSongs.value = displayedSongs.value.filter((s) => s.id !== songId);
       completePlaylist.value = completePlaylist.value.filter((s) => s.id !== songId);

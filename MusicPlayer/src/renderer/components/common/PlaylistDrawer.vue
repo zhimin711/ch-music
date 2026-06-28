@@ -204,6 +204,21 @@ const musicServerSongId = computed(() => {
   return Number(props.song.id);
 });
 
+const getArtistText = (song: SongResult) => {
+  return (song.ar || song.artists || song.song?.artists || [])
+    .map((artist: any) => artist.name)
+    .filter(Boolean)
+    .join(' / ');
+};
+
+const getAlbumText = (song: SongResult) => {
+  return song.al?.name || song.album?.name || song.song?.album?.name || '';
+};
+
+const getSongDuration = (song: SongResult) => {
+  return song.duration || song.dt || undefined;
+};
+
 const toggleCreateForm = () => {
   if (creating.value) return;
   isCreating.value = !isCreating.value;
@@ -243,11 +258,19 @@ const handleAddToPlaylist = async (playlist: any) => {
   if (!props.song) return;
 
   try {
-    if (!musicServerSongId.value) {
-      message.warning('请先将歌曲上传到 MusicServer 云音乐库，再加入个人歌单');
-      return;
+    if (musicServerSongId.value) {
+      await musicServerStore.addTrackToPlaylist(playlist.id, musicServerSongId.value);
+    } else {
+      await musicServerStore.addExternalTrackToPlaylist(playlist.id, {
+        source: props.song.source || 'netease',
+        externalId: String(props.song.id),
+        title: props.song.name,
+        artist: getArtistText(props.song) || null,
+        album: getAlbumText(props.song) || null,
+        picUrl: props.song.picUrl || props.song.al?.picUrl || props.song.album?.picUrl || null,
+        duration: getSongDuration(props.song) || null
+      });
     }
-    await musicServerStore.addTrackToPlaylist(playlist.id, musicServerSongId.value);
     await store.initializePlaylist();
     message.success(t('comp.playlistDrawer.addSuccess'));
     emit('update:modelValue', false);
