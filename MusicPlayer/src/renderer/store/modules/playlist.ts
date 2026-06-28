@@ -38,6 +38,11 @@ const minifySong = (s: SongResult) => ({
 
 const minifySongList = (list: SongResult[] | undefined) => list?.map(minifySong) ?? [];
 
+const getSongSource = (song: SongResult | undefined) => song?.source || 'netease';
+
+const isSameSong = (a: SongResult | undefined, b: SongResult | undefined) =>
+  Boolean(a && b && a.id === b.id && getSongSource(a) === getSongSource(b));
+
 /**
  * 防抖 localStorage 包装，降低写入频率
  * 通过 pendingWrites 跟踪未写入数据，beforeunload 时刷新
@@ -120,7 +125,11 @@ export const usePlaylistStore = defineStore(
         );
 
         const nextSong = detailedSongs[0];
-        if (nextSong && !(nextSong.lyric && nextSong.lyric.lrcTimeArray.length > 0)) {
+        if (
+          nextSong &&
+          nextSong.source !== 'musicServer' &&
+          !(nextSong.lyric && nextSong.lyric.lrcTimeArray.length > 0)
+        ) {
           try {
             const { useLyrics } = await import('@/hooks/usePlayerHooks');
             const { loadLrc } = useLyrics();
@@ -230,7 +239,7 @@ export const usePlaylistStore = defineStore(
 
       // 找到当前歌曲在原始列表中的索引
       if (currentSong) {
-        const index = playList.value.findIndex((s) => s.id === currentSong.id);
+        const index = playList.value.findIndex((s) => isSameSong(s, currentSong));
         if (index !== -1) {
           playListIndex.value = index;
         }
@@ -291,7 +300,7 @@ export const usePlaylistStore = defineStore(
         const shuffledList = performShuffle(list, currentSong);
 
         if (currentSong && currentSong.id) {
-          const currentSongIndex = shuffledList.findIndex((song) => song.id === currentSong.id);
+          const currentSongIndex = shuffledList.findIndex((song) => isSameSong(song, currentSong));
           playListIndex.value =
             currentSongIndex !== -1 ? 0 : keepIndex ? Math.max(0, playListIndex.value) : 0;
         } else {
@@ -306,7 +315,7 @@ export const usePlaylistStore = defineStore(
         }
 
         if (!keepIndex) {
-          const foundIndex = list.findIndex((item) => item.id === playMusic.value.id);
+          const foundIndex = list.findIndex((item) => isSameSong(item, playMusic.value));
           playListIndex.value = foundIndex !== -1 ? foundIndex : 0;
         }
 
@@ -323,7 +332,7 @@ export const usePlaylistStore = defineStore(
       const currentIndex = playListIndex.value;
 
       // 如果歌曲已在播放列表中，先移除
-      const existingIndex = list.findIndex((item) => item.id === song.id);
+      const existingIndex = list.findIndex((item) => isSameSong(item, song));
       if (existingIndex !== -1) {
         list.splice(existingIndex, 1);
         if (existingIndex <= currentIndex) {

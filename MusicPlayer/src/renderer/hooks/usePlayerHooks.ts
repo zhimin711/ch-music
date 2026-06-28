@@ -68,6 +68,10 @@ export const getSongUrl = async (
 ) => {
   const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
 
+  if (songData.source === 'musicServer' && songData.playMusicUrl) {
+    return songData.playMusicUrl;
+  }
+
   // 动态导入 settingsStore
   const { useSettingsStore } = await import('@/store/modules/settings');
   const settingsStore = useSettingsStore();
@@ -386,7 +390,7 @@ export const useSongDetail = () => {
 
     if (playMusic.expiredAt && playMusic.expiredAt < Date.now()) {
       // 本地音乐（local:// 协议）不会过期，跳过清除
-      if (!playMusic.playMusicUrl?.startsWith('local://')) {
+      if (!playMusic.playMusicUrl?.startsWith('local://') && playMusic.source !== 'musicServer') {
         console.info(`歌曲已过期，重新获取: ${playMusic.name}`);
         playMusic.playMusicUrl = undefined;
       }
@@ -403,8 +407,10 @@ export const useSongDetail = () => {
       }
 
       playMusic.createdAt = Date.now();
-      // 半小时后过期
-      playMusic.expiredAt = playMusic.createdAt + 1800000;
+      playMusic.expiredAt =
+        playMusic.source === 'musicServer'
+          ? playMusic.createdAt + 30 * 24 * 60 * 60 * 1000
+          : playMusic.createdAt + 1800000;
       const { backgroundColor, primaryColor } =
         playMusic.backgroundColor && playMusic.primaryColor
           ? playMusic

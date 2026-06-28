@@ -303,6 +303,7 @@ export default {
   search: '検索',
   album: 'アルバム',
   localMusic: 'ローカル音楽',
+  cloudMusic: 'クラウド音楽',
   pages: {
     toplist: {
       desc: '最も権威ある音楽チャート、今一番ホットな音楽を発見'

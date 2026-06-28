@@ -104,6 +104,17 @@ const layoutRouter = [
     component: () => import('@/views/local-music/index.vue')
   },
   {
+    path: '/cloud-music',
+    name: 'cloudMusic',
+    meta: {
+      title: 'comp.cloudMusic',
+      icon: 'ri-cloud-fill',
+      keepAlive: true,
+      isMobile: true
+    },
+    component: () => import('@/views/cloud-music/index.vue')
+  },
+  {
     path: '/user',
     name: 'user',
     meta: {

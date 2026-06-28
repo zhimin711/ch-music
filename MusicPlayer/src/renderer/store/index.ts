@@ -22,6 +22,7 @@ export * from './modules/localMusic';
 export * from './modules/lyric';
 export * from './modules/menu';
 export * from './modules/music';
+export * from './modules/musicServer';
 export * from './modules/navTitle';
 export * from './modules/player';
 export * from './modules/playerCore';

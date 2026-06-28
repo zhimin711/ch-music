@@ -303,6 +303,7 @@ export default {
   search: 'Search',
   album: 'Album',
   localMusic: 'Local Music',
+  cloudMusic: 'Cloud Music',
   pages: {
     toplist: {
       desc: 'The most authoritative music charts, discover the hottest music'

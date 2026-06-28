@@ -302,6 +302,7 @@ export default {
   search: '검색',
   album: '앨범',
   localMusic: '로컬 음악',
+  cloudMusic: '클라우드 음악',
   pages: {
     toplist: {
       desc: '가장 권위 있는 음악 차트, 지금 가장 핫한 음악을 발견하세요'

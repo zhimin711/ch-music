@@ -63,7 +63,7 @@ export interface SongResult {
   lyric?: ILyric;
   backgroundColor?: string;
   primaryColor?: string;
-  source?: 'netease';
+  source?: 'netease' | 'musicServer';
   // 过期时间
   expiredAt?: number;
   // 获取时间

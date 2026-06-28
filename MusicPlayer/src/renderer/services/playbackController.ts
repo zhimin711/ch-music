@@ -22,6 +22,11 @@ import { getImgUrl } from '@/utils';
 import { getImageLinearBackground } from '@/utils/linearColor';
 
 const { message } = createDiscreteApi(['message']);
+const EMPTY_LYRIC: SongResult['lyric'] = {
+  lrcTimeArray: [],
+  lrcArray: [],
+  hasWordByWord: false
+};
 
 // Generation counter for cancellation
 let generation = 0;
@@ -67,6 +72,9 @@ const loadMetadata = async (
 }> => {
   const [lyrics, { backgroundColor, primaryColor }] = await Promise.all([
     (async () => {
+      if (music.source === 'musicServer') {
+        return music.lyric || EMPTY_LYRIC;
+      }
       if (music.lyric && music.lyric.lrcTimeArray.length > 0) {
         return music.lyric;
       }
