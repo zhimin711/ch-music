@@ -4,7 +4,7 @@
     <div class="app-menu" :class="{ 'app-menu-expanded': settingsStore.setData.isMenuExpanded }">
       <div class="app-menu-header">
         <div class="app-menu-logo" @click="toggleMenu">
-          <img :src="icon" class="w-9 h-9" alt="logo" />
+          <img :src="brandLogo" class="app-menu-brand" alt="朝华音乐" />
         </div>
       </div>
       <div class="app-menu-list">
@@ -42,7 +42,7 @@ import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
-import icon from '@/assets/icon.png';
+import brandLogo from '@/assets/chaohua-logo.svg';
 import { useSettingsStore } from '@/store';
 import { isMobile } from '@/utils';
 
@@ -154,6 +154,18 @@ const toggleMenu = () => {
 
 .app-menu-header {
   @apply ml-1;
+}
+
+.app-menu-logo {
+  @apply flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl transition-all duration-200;
+
+  &:hover {
+    @apply bg-green-50 dark:bg-green-500/10;
+  }
+}
+
+.app-menu-brand {
+  @apply h-10 w-10 rounded-2xl object-cover shadow-sm;
 }
 
 .app-menu-item-link {

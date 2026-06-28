@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import defaultCoverUrl from '@/assets/logo.png';
+import defaultCoverUrl from '@/assets/chaohua-logo.svg';
 import { useSettingsStore } from '@/store/modules/settings';
 
 export const DEFAULT_COVER_URL = defaultCoverUrl;

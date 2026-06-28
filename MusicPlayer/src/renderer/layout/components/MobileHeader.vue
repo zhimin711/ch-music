@@ -5,8 +5,9 @@
       <div v-if="showBack" class="header-btn" @click="goBack">
         <i class="ri-arrow-left-s-line"></i>
       </div>
-      <div v-else class="header-logo">
-        <span class="logo-text">Alger</span>
+      <div v-else class="header-logo" aria-label="朝华音乐">
+        <span class="logo-mark">朝</span>
+        <span class="logo-text">朝华</span>
       </div>
     </div>
 
@@ -82,7 +83,11 @@ const openSettings = () => {
 }
 
 .header-logo {
-  @apply flex items-center;
+  @apply flex items-center gap-2;
+
+  .logo-mark {
+    @apply flex h-8 w-8 items-center justify-center rounded-xl bg-gray-900 text-sm font-extrabold text-white shadow-sm dark:bg-white dark:text-gray-950;
+  }
 
   .logo-text {
     @apply text-lg font-bold text-green-500;
