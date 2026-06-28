@@ -78,6 +78,10 @@ export function getMusicServerMe() {
   return musicServerRequest.get<MusicServerUser>('/api/auth/me');
 }
 
+export function updateMusicServerMe(payload: { displayName: string; avatarUrl?: string | null }) {
+  return musicServerRequest.put<MusicServerUser>('/api/auth/me', payload);
+}
+
 export function listMusicServerMusic() {
   return musicServerRequest.get<MusicServerMusic[]>('/api/music');
 }

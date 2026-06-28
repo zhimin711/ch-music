@@ -19,6 +19,26 @@
 
       <n-scrollbar class="h-full">
         <div class="flex flex-col gap-5 px-5 py-4">
+          <div
+            v-if="song"
+            class="flex items-center gap-3 rounded-xl bg-neutral-50 p-3 dark:bg-neutral-800/60"
+          >
+            <n-image
+              :src="getImgUrl(song.picUrl || song.al?.picUrl, '100y100')"
+              class="h-11 w-11 rounded-lg"
+              preview-disabled
+              :img-props="{ crossorigin: 'anonymous' }"
+            />
+            <div class="min-w-0 flex-1">
+              <div class="truncate text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                {{ song.name }}
+              </div>
+              <div class="mt-0.5 truncate text-xs text-neutral-400">
+                {{ song.source === 'musicServer' ? 'MusicServer' : '公开音乐' }}
+              </div>
+            </div>
+          </div>
+
           <!-- 创建新歌单 -->
           <div class="flex flex-col">
             <button
@@ -149,17 +169,17 @@ import { useMessage } from 'naive-ui';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { createPlaylist, updatePlaylistTracks } from '@/api/music';
-import { getUserPlaylist } from '@/api/user';
 import { useUserStore } from '@/store';
+import { useMusicServerStore } from '@/store/modules/musicServer';
+import type { SongResult } from '@/types/music';
 import { getImgUrl } from '@/utils';
-import { getLoginErrorMessage, hasPermission } from '@/utils/auth';
 
 const store = useUserStore();
+const musicServerStore = useMusicServerStore();
 const { t } = useI18n();
 const props = defineProps<{
   modelValue: boolean;
-  songId?: number;
+  song?: SongResult;
 }>();
 
 const emit = defineEmits(['update:modelValue']);
@@ -176,6 +196,11 @@ const formValue = ref({
 
 const inputError = computed(() => {
   return isCreating.value && !formValue.value.name;
+});
+
+const musicServerSongId = computed(() => {
+  if (!props.song || props.song.source !== 'musicServer') return null;
+  return Number(props.song.id);
 });
 
 const toggleCreateForm = () => {
@@ -197,17 +222,13 @@ const fetchUserPlaylists = async () => {
       return;
     }
 
-    // 检查是否有真实登录权限
-    if (!hasPermission(true)) {
-      message.error(getLoginErrorMessage(true));
-      emit('update:modelValue', false);
-      return;
-    }
-
-    const res = await getUserPlaylist(user.userId, 999);
-    if (res.data?.playlist) {
-      playlists.value = res.data.playlist.filter((item: any) => item.userId === user.userId);
-    }
+    await musicServerStore.loadPlaylists();
+    playlists.value = musicServerStore.playlists.map((playlist) => ({
+      ...playlist,
+      trackCount: playlist.tracks.length,
+      coverImgUrl: '',
+      picUrl: ''
+    }));
   } catch (error) {
     console.error('获取歌单失败:', error);
     message.error(t('comp.playlistDrawer.getPlaylistFailed'));
@@ -216,28 +237,17 @@ const fetchUserPlaylists = async () => {
 
 // 添加到歌单
 const handleAddToPlaylist = async (playlist: any) => {
-  if (!props.songId) return;
-
-  // 检查是否有真实登录权限
-  if (!hasPermission(true)) {
-    message.error(getLoginErrorMessage(true));
-    return;
-  }
+  if (!props.song) return;
 
   try {
-    const res = await updatePlaylistTracks({
-      op: 'add',
-      pid: playlist.id,
-      tracks: props.songId.toString()
-    });
-    console.log('res.data', res.data);
-
-    if (res.status === 200) {
-      message.success(t('comp.playlistDrawer.addSuccess'));
-      emit('update:modelValue', false);
-    } else {
-      throw new Error(res.data?.msg || t('comp.playlistDrawer.addFailed'));
+    if (!musicServerSongId.value) {
+      message.warning('请先将歌曲上传到 MusicServer 云音乐库，再加入个人歌单');
+      return;
     }
+    await musicServerStore.addTrackToPlaylist(playlist.id, musicServerSongId.value);
+    await store.initializePlaylist();
+    message.success(t('comp.playlistDrawer.addSuccess'));
+    emit('update:modelValue', false);
   } catch (error: any) {
     console.error('添加到歌单失败:', error);
     message.error(error.message || t('comp.playlistDrawer.addFailed'));
@@ -251,27 +261,20 @@ const handleCreatePlaylist = async () => {
     return;
   }
 
-  // 检查是否有真实登录权限
-  if (!hasPermission(true)) {
-    message.error(getLoginErrorMessage(true));
-    return;
-  }
-
   try {
     creating.value = true;
 
-    const res = await createPlaylist({
+    await musicServerStore.createPlaylist({
       name: formValue.value.name,
-      privacy: formValue.value.privacy ? 10 : 0
+      description: formValue.value.privacy ? 'private' : undefined
     });
 
-    if (res.data?.id) {
-      message.success(t('comp.playlistDrawer.createSuccess'));
-      isCreating.value = false;
-      formValue.value.name = '';
-      formValue.value.privacy = false;
-      await fetchUserPlaylists();
-    }
+    message.success(t('comp.playlistDrawer.createSuccess'));
+    isCreating.value = false;
+    formValue.value.name = '';
+    formValue.value.privacy = false;
+    await fetchUserPlaylists();
+    await store.initializePlaylist();
   } catch (error) {
     console.error('创建歌单失败:', error);
     message.error(t('comp.playlistDrawer.createFailed'));

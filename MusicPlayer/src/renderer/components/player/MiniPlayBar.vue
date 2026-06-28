@@ -182,8 +182,8 @@ const palyListRef = useTemplateRef('palyListRef') as any;
 const isPlaylistOpen = ref(false);
 
 // 提供 openPlaylistDrawer 给子组件
-provide('openPlaylistDrawer', (songId: number) => {
-  console.log('打开歌单抽屉', songId);
+provide('openPlaylistDrawer', (song: SongResult) => {
+  console.log('打开歌单抽屉', song);
   // 由于在迷你模式不处理这个功能，所以只记录日志
 });
 

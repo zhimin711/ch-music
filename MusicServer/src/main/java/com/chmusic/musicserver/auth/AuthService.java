@@ -2,6 +2,7 @@ package com.chmusic.musicserver.auth;
 
 import com.chmusic.musicserver.api.dto.AuthRequest;
 import com.chmusic.musicserver.api.dto.AuthResponse;
+import com.chmusic.musicserver.api.dto.ProfileUpdateRequest;
 import com.chmusic.musicserver.api.dto.UserResponse;
 import com.chmusic.musicserver.user.AppUser;
 import com.chmusic.musicserver.user.AppUserRepository;
@@ -48,11 +49,23 @@ public class AuthService {
         return new AuthResponse("Bearer", token.token(), token.expiresAt(), UserResponse.from(user));
     }
 
+    @Transactional
+    public UserResponse updateProfile(AppUser currentUser, ProfileUpdateRequest request) {
+        AppUser user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        user.updateProfile(request.displayName().trim(), blankToNull(request.avatarUrl()));
+        return UserResponse.from(user);
+    }
+
     private static String normalizeUsername(String username) {
         return username.trim().toLowerCase(Locale.ROOT);
     }
 
     private static String blankToDefault(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

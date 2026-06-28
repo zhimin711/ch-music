@@ -2,6 +2,7 @@ export interface MusicServerUser {
   id: number;
   username: string;
   displayName: string;
+  avatarUrl?: string | null;
 }
 
 export interface MusicServerAuthResponse {

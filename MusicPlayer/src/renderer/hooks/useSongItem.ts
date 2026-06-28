@@ -35,9 +35,9 @@ export function useSongItem(props: { item: SongResult; canRemove?: boolean }) {
 
   // 收藏与不喜欢状态
   const isFavorite = computed(() => {
-    const numericId =
-      typeof props.item.id === 'string' ? parseInt(props.item.id, 10) : props.item.id;
-    return playerStore.favoriteList.includes(numericId);
+    const favoriteKey =
+      props.item.source === 'musicServer' ? `musicServer:${props.item.id}` : props.item.id;
+    return playerStore.favoriteList.includes(favoriteKey);
   });
 
   const isDislike = computed(() => {
@@ -77,13 +77,10 @@ export function useSongItem(props: { item: SongResult; canRemove?: boolean }) {
   // 切换收藏状态
   const toggleFavorite = async (e: Event) => {
     e && e.stopPropagation();
-    const numericId =
-      typeof props.item.id === 'string' ? parseInt(props.item.id, 10) : props.item.id;
-
     if (isFavorite.value) {
-      playerStore.removeFromFavorite(numericId);
+      playerStore.removeFromFavorite(props.item);
     } else {
-      playerStore.addToFavorite(numericId);
+      playerStore.addToFavorite(props.item);
     }
   };
 

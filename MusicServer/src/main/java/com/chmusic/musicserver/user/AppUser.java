@@ -26,6 +26,9 @@ public class AppUser {
     @Column(nullable = false, length = 120)
     private String displayName;
 
+    @Column(length = 1000)
+    private String avatarUrl;
+
     @Column(nullable = false)
     private Instant createdAt;
 
@@ -67,6 +70,15 @@ public class AppUser {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void updateProfile(String displayName, String avatarUrl) {
+        this.displayName = displayName;
+        this.avatarUrl = avatarUrl;
     }
 
     public Instant getCreatedAt() {

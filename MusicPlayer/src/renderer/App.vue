@@ -4,8 +4,6 @@
       <n-dialog-provider>
         <n-message-provider>
           <router-view></router-view>
-          <traffic-warning-drawer v-if="!isElectron"></traffic-warning-drawer>
-          <disclaimer-modal></disclaimer-modal>
         </n-message-provider>
       </n-dialog-provider>
     </n-config-provider>
@@ -19,8 +17,6 @@ import { computed, nextTick, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-import DisclaimerModal from '@/components/common/DisclaimerModal.vue';
-import TrafficWarningDrawer from '@/components/TrafficWarningDrawer.vue';
 import { usePlayerStore } from '@/store/modules/player';
 import { usePlayerCoreStore } from '@/store/modules/playerCore';
 import { useSettingsStore } from '@/store/modules/settings';
@@ -83,7 +79,9 @@ if (!isLyricWindow.value) {
 
   // 初始化登录状态 - 从 localStorage 恢复用户信息和登录类型
   const loginInfo = checkLoginStatus();
-  if (loginInfo.isLoggedIn) {
+  if (loginInfo.loginType === 'musicServer') {
+    userStore.initializeUser();
+  } else if (loginInfo.isLoggedIn) {
     if (loginInfo.user && !userStore.user) {
       userStore.setUser(loginInfo.user);
     }
@@ -150,6 +148,7 @@ onMounted(async () => {
   setupUrlExpiredHandler();
   // 初始化播放状态
   await playerStore.initializePlayState();
+  await playerStore.initializeFavoriteList();
 
   // 初始化音频设备变化监听器
   playerCoreStore.initAudioDeviceListener();

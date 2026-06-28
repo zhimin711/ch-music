@@ -3,7 +3,8 @@ export default {
     qr: '扫码登录',
     phone: '手机号登录',
     cookie: 'Cookie登录',
-    uid: 'UID登录'
+    uid: 'UID登录',
+    musicServer: 'MusicServer'
   },
   qrTip: '使用APP扫码登录',
   phoneTip: '使用账号登录',

@@ -1,14 +1,26 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
-import { logout } from '@/api/login';
-import { getLikedList } from '@/api/music';
-import { getUserAlbumSublist, getUserPlaylist } from '@/api/user';
+import {
+  getMusicServerMe,
+  getMusicServerToken,
+  listMusicServerPlaylists,
+  logoutMusicServer,
+  updateMusicServerMe
+} from '@/api/musicServer';
 import type { IUserDetail } from '@/types/user';
+import type { MusicServerPlaylist, MusicServerUser } from '@/types/musicServer';
 import { clearLoginStatus } from '@/utils/auth';
+import { toMusicServerSongResult } from '@/utils/musicServerUtils';
 
 interface UserData {
   userId: number;
+  nickname: string;
+  avatarUrl: string;
+  backgroundUrl: string;
+  signature: string;
+  vipType: number;
+  musicServerUser?: MusicServerUser;
   [key: string]: any;
 }
 
@@ -21,12 +33,57 @@ function getLocalStorageItem<T>(key: string, defaultValue: T): T {
   }
 }
 
+const toUserData = (musicServerUser: MusicServerUser): UserData => ({
+  userId: musicServerUser.id,
+  nickname: musicServerUser.displayName || musicServerUser.username,
+  avatarUrl: musicServerUser.avatarUrl || '',
+  backgroundUrl: '',
+  signature: 'MusicServer 私有音乐库',
+  vipType: 0,
+  musicServerUser
+});
+
+const toUserDetail = (userData: UserData): IUserDetail =>
+  ({
+    level: 0,
+    listenSongs: 0,
+    profile: {
+      userId: userData.userId,
+      nickname: userData.nickname,
+      avatarUrl: userData.avatarUrl,
+      backgroundUrl: userData.backgroundUrl,
+      signature: userData.signature,
+      followeds: 0,
+      follows: 0,
+      vipType: 0
+    }
+  }) as IUserDetail;
+
+const toPlaylistItem = (playlist: MusicServerPlaylist, owner: UserData) => ({
+  id: playlist.id,
+  name: playlist.name,
+  description: playlist.description || '',
+  coverImgUrl: '',
+  picUrl: '',
+  trackCount: playlist.tracks.length,
+  playCount: 0,
+  source: 'musicServer',
+  userId: owner.userId,
+  creator: {
+    userId: owner.userId,
+    nickname: owner.nickname,
+    avatarUrl: owner.avatarUrl
+  },
+  tracks: playlist.tracks.map(toMusicServerSongResult),
+  raw: playlist
+});
+
 export const useUserStore = defineStore('user', () => {
   // 状态
   const user = ref<UserData | null>(getLocalStorageItem('user', null));
   const userDetail = ref<IUserDetail | null>(null);
   const recordList = ref<any[]>([]);
-  const loginType = ref<'token' | 'cookie' | 'qr' | 'uid' | null>(
+  const loginType = ref<'token' | 'cookie' | 'qr' | 'uid' | 'musicServer' | null>(
     getLocalStorageItem('loginType', null)
   );
   const searchValue = ref('');
@@ -55,26 +112,21 @@ export const useUserStore = defineStore('user', () => {
 
   const handleLogout = async () => {
     try {
-      await logout();
-      user.value = null;
-      loginType.value = null;
-      collectedAlbumIds.value.clear();
-      playList.value = [];
-      albumList.value = [];
-      clearLoginStatus();
-      // 刷新
-      window.location.reload();
+      if (getMusicServerToken()) {
+        await logoutMusicServer();
+      }
     } catch (error) {
-      console.error('登出失败:', error);
-      // 即使API调用失败，也要清除本地状态
-      user.value = null;
-      loginType.value = null;
-      collectedAlbumIds.value.clear();
-      playList.value = [];
-      albumList.value = [];
-      clearLoginStatus();
-      window.location.reload();
+      console.error('MusicServer 登出失败，继续清理本地状态:', error);
     }
+    user.value = null;
+    userDetail.value = null;
+    recordList.value = [];
+    loginType.value = null;
+    collectedAlbumIds.value.clear();
+    playList.value = [];
+    albumList.value = [];
+    clearLoginStatus();
+    window.location.reload();
   };
 
   const setSearchValue = (value: string) => {
@@ -93,8 +145,8 @@ export const useUserStore = defineStore('user', () => {
     }
 
     try {
-      const { data } = await getUserPlaylist(user.value.userId, 1000, 0);
-      playList.value = data?.playlist || [];
+      const { data } = await listMusicServerPlaylists();
+      playList.value = data.map((playlist) => toPlaylistItem(playlist, user.value!));
       console.log(`已加载 ${playList.value.length} 个歌单`);
     } catch (error) {
       console.error('获取歌单列表失败:', error);
@@ -102,39 +154,29 @@ export const useUserStore = defineStore('user', () => {
     }
   };
 
+  const updateMusicServerProfile = async (payload: { displayName: string; avatarUrl?: string }) => {
+    const { data } = await updateMusicServerMe({
+      displayName: payload.displayName,
+      avatarUrl: payload.avatarUrl || null
+    });
+    const nextUser = toUserData(data);
+    user.value = nextUser;
+    userDetail.value = toUserDetail(nextUser);
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    localStorage.setItem('musicServerUser', JSON.stringify(data));
+    const { useMusicServerStore } = await import('./musicServer');
+    useMusicServerStore().user = data;
+    return nextUser;
+  };
+
   // 初始化专辑列表
   const initializeAlbumList = async () => {
-    if (!user.value || !localStorage.getItem('token')) {
-      albumList.value = [];
-      return;
-    }
-
-    try {
-      const { data } = await getUserAlbumSublist({ limit: 1000, offset: 0 });
-      albumList.value = data?.data || [];
-      console.log(`已加载 ${albumList.value.length} 个收藏专辑`);
-    } catch (error) {
-      console.error('获取专辑列表失败:', error);
-      albumList.value = [];
-    }
+    albumList.value = [];
   };
 
   // 初始化收藏的专辑ID列表
   const initializeCollectedAlbums = async () => {
-    if (!user.value || !localStorage.getItem('token')) {
-      collectedAlbumIds.value.clear();
-      return;
-    }
-
-    try {
-      const { data } = await getUserAlbumSublist({ limit: 1000, offset: 0 });
-      const albumIds = (data?.data || []).map((album: any) => album.id);
-      collectedAlbumIds.value = new Set(albumIds);
-      console.log(`已加载 ${albumIds.length} 个收藏专辑ID`);
-    } catch (error) {
-      console.error('获取收藏专辑列表失败:', error);
-      collectedAlbumIds.value.clear();
-    }
+    collectedAlbumIds.value.clear();
   };
 
   // 添加收藏专辑
@@ -161,26 +203,22 @@ export const useUserStore = defineStore('user', () => {
 
   // 初始化
   const initializeUser = async () => {
-    const savedUser = getLocalStorageItem<UserData | null>('user', null);
-    if (savedUser) {
-      user.value = savedUser;
-      // 如果用户已登录，获取收藏列表
-      if (localStorage.getItem('token')) {
-        try {
-          // 并行加载歌单、专辑和收藏ID列表
-          await Promise.all([
-            initializePlaylist(),
-            initializeAlbumList(),
-            initializeCollectedAlbums()
-          ]);
+    if (!getMusicServerToken()) {
+      return [];
+    }
 
-          const { data } = await getLikedList(savedUser.userId);
-          return data?.ids || [];
-        } catch (error) {
-          console.error('获取收藏列表失败:', error);
-          return [];
-        }
-      }
+    try {
+      const { data } = await getMusicServerMe();
+      const musicServerUser = toUserData(data);
+      user.value = musicServerUser;
+      userDetail.value = toUserDetail(musicServerUser);
+      loginType.value = 'musicServer';
+      localStorage.setItem('user', JSON.stringify(musicServerUser));
+      localStorage.setItem('loginType', 'musicServer');
+      await initializePlaylist();
+    } catch (error) {
+      console.error('恢复 MusicServer 登录失败:', error);
+      handleLogout();
     }
     return [];
   };
@@ -203,6 +241,7 @@ export const useUserStore = defineStore('user', () => {
     setSearchValue,
     setSearchType,
     initializeUser,
+    updateMusicServerProfile,
     initializePlaylist,
     initializeAlbumList,
     initializeCollectedAlbums,

@@ -3,7 +3,6 @@
     <div class="phone-login" :class="setAnimationClass('animate__fadeInDown')">
       <div class="bg"></div>
       <div class="content">
-        <!-- Tab导航 -->
         <div class="login-tabs" :class="setAnimationClass('animate__fadeInUp')">
           <div
             v-for="tab in loginTabs"
@@ -16,63 +15,50 @@
           </div>
         </div>
 
-        <!-- 登录内容区域 -->
         <div class="login-content">
-          <!-- 过渡动画包装器 -->
           <transition
             name="login-content"
             mode="out-in"
             enter-active-class="animate__animated animate__fadeIn"
             leave-active-class="animate__animated animate__fadeOut"
           >
-            <!-- 二维码登录组件 -->
-            <div v-if="activeMode === LoginMode.QR && !isTransitioning" key="qr" class="phone">
-              <qr-login @login-success="handleLoginSuccess" @login-error="handleLoginError" />
-            </div>
-
-            <!-- 手机号登录 -->
             <div
-              v-else-if="activeMode === LoginMode.PHONE && !isTransitioning"
-              key="phone"
+              v-if="!isTransitioning"
+              :key="activeMode"
               class="phone"
             >
-              <div class="login-title">{{ t('login.title.phone') }}</div>
+              <div class="login-title">{{ activeMode === 'login' ? 'MusicServer 登录' : '注册 MusicServer' }}</div>
               <div class="phone-page">
                 <input
-                  v-model="phone"
+                  v-model="baseUrl"
                   class="phone-input"
                   type="text"
-                  :placeholder="t('login.placeholder.phone')"
+                  placeholder="MusicServer 地址"
+                />
+                <input
+                  v-model="username"
+                  class="phone-input"
+                  type="text"
+                  placeholder="用户名（3-80 位）"
                 />
                 <input
                   v-model="password"
                   class="phone-input"
                   type="password"
-                  :placeholder="t('login.placeholder.password')"
+                  placeholder="密码（8-120 位）"
+                />
+                <input
+                  v-if="activeMode === 'register'"
+                  v-model="displayName"
+                  class="phone-input"
+                  type="text"
+                  placeholder="显示名称（可选）"
                 />
               </div>
-              <div class="text">{{ t('login.phoneTip') }}</div>
-              <n-button class="btn-login" @click="loginPhone()">{{
-                t('login.button.login')
-              }}</n-button>
-            </div>
-
-            <!-- UID登录组件 -->
-            <div
-              v-else-if="activeMode === LoginMode.UID && !isTransitioning"
-              key="uid"
-              class="phone"
-            >
-              <uid-login @login-success="handleLoginSuccess" @login-error="handleLoginError" />
-            </div>
-
-            <!-- Cookie登录组件 -->
-            <div
-              v-else-if="activeMode === LoginMode.COOKIE && !isTransitioning"
-              key="token"
-              class="phone"
-            >
-              <cookie-login @login-success="handleLoginSuccess" @login-error="handleLoginError" />
+              <div class="text">公开搜索、排行继续保留；账号、个人歌单和收藏使用 MusicServer。</div>
+              <n-button class="btn-login" :loading="loading" @click="submit">
+                {{ activeMode === 'login' ? t('login.button.login') : '注册并登录' }}
+              </n-button>
             </div>
           </transition>
         </div>
@@ -82,14 +68,14 @@
 </template>
 
 <script lang="ts" setup>
+import axios from 'axios';
 import { useMessage } from 'naive-ui';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-import { loginByCellphone } from '@/api/login';
-import CookieLogin from '@/components/login/CookieLogin.vue';
-import QrLogin from '@/components/login/QrLogin.vue';
-import UidLogin from '@/components/login/UidLogin.vue';
+import { useMusicServerStore } from '@/store/modules/musicServer';
+import { usePlayerStore } from '@/store/modules/player';
 import { useUserStore } from '@/store/modules/user';
 import { setAnimationClass } from '@/utils';
 
@@ -97,64 +83,27 @@ defineOptions({
   name: 'Login'
 });
 
-// 登录模式枚举
-enum LoginMode {
-  QR = 'qr',
-  PHONE = 'phone',
-  UID = 'uid',
-  COOKIE = 'cookie'
-}
-
 const { t } = useI18n();
 const message = useMessage();
 const router = useRouter();
 const userStore = useUserStore();
+const musicServerStore = useMusicServerStore();
+const playerStore = usePlayerStore();
 
-// 当前激活的登录模式
-const activeMode = ref<LoginMode>(LoginMode.QR);
-// 用于控制内容切换动画
+const activeMode = ref<'login' | 'register'>('login');
 const isTransitioning = ref(false);
-
-// 登录选项配置
 const loginTabs = computed(() => [
-  { key: LoginMode.QR, label: t('login.title.qr') },
-  { key: LoginMode.COOKIE, label: t('login.title.cookie') },
-  { key: LoginMode.UID, label: t('login.title.uid') }
+  { key: 'login' as const, label: '登录' },
+  { key: 'register' as const, label: '注册' }
 ]);
 
-// 手机号登录
-const phone = ref('');
+const loading = ref(false);
+const baseUrl = ref(musicServerStore.baseUrl);
+const username = ref('');
 const password = ref('');
-const loginPhone = async () => {
-  try {
-    if (!phone.value.trim()) {
-      message.error(t('login.message.phoneRequired'));
-      return;
-    }
-    if (!password.value.trim()) {
-      message.error(t('login.message.passwordRequired'));
-      return;
-    }
+const displayName = ref('');
 
-    const { data } = await loginByCellphone(phone.value, password.value);
-    if (data.code === 200) {
-      message.success(t('login.message.loginSuccess'));
-      userStore.setUser(data.profile);
-      localStorage.setItem('token', data.cookie);
-      setTimeout(() => {
-        router.push('/user');
-      }, 1000);
-    } else {
-      message.error(t('login.message.phoneLoginFailed'));
-    }
-  } catch (error) {
-    message.error(t('login.message.phoneLoginFailed'));
-    console.error(t('login.message.loginFailed') + ':', error);
-  }
-};
-
-// 切换登录模式（带动画效果）
-const switchToMode = (mode: LoginMode) => {
+const switchToMode = (mode: 'login' | 'register') => {
   if (mode === activeMode.value) return;
 
   isTransitioning.value = true;
@@ -166,33 +115,62 @@ const switchToMode = (mode: LoginMode) => {
   }, 150);
 };
 
-// 通用登录成功处理
-const handleLoginSuccess = (userProfile: any, loginType: string) => {
-  // 更新 userStore（这会同时更新 store 状态和 localStorage 中的用户数据）
-  userStore.setUser(userProfile);
-
-  // 设置登录类型到 userStore 和 localStorage
-  userStore.setLoginType(loginType as any);
-
-  // 设置其他相关状态
-  const token = loginType !== 'uid' ? localStorage.getItem('token') : undefined;
-
-  if (token) {
-    localStorage.setItem('token', token);
+const validate = () => {
+  const trimmedUsername = username.value.trim();
+  if (!trimmedUsername || !password.value) {
+    message.error('请填写用户名和密码');
+    return false;
   }
-
-  if (loginType === 'uid') {
-    localStorage.setItem('uidLogin', 'true');
+  if (trimmedUsername.length < 3 || trimmedUsername.length > 80) {
+    message.error('用户名长度需在 3 到 80 位之间');
+    return false;
   }
-
-  setTimeout(() => {
-    router.push('/user');
-  }, 1000);
+  if (password.value.length < 8 || password.value.length > 120) {
+    message.error('密码长度需在 8 到 120 位之间');
+    return false;
+  }
+  if (displayName.value.trim().length > 120) {
+    message.error('显示名称不能超过 120 位');
+    return false;
+  }
+  return true;
 };
 
-// 通用登录错误处理
-const handleLoginError = (error: string) => {
-  console.error(t('login.message.loginFailed') + ':', error);
+const getErrorMessage = (error: unknown) => {
+  if (axios.isAxiosError<{ message?: string }>(error)) {
+    return error.response?.data?.message || error.message || t('login.message.loginFailed');
+  }
+  return error instanceof Error ? error.message : t('login.message.loginFailed');
+};
+
+const submit = async () => {
+  if (!validate()) return;
+  loading.value = true;
+  try {
+    musicServerStore.setBaseUrl(baseUrl.value);
+    if (activeMode.value === 'login') {
+      await musicServerStore.login({
+        username: username.value.trim(),
+        password: password.value
+      });
+    } else {
+      await musicServerStore.register({
+        username: username.value.trim(),
+        password: password.value,
+        displayName: displayName.value.trim() || undefined
+      });
+    }
+    await userStore.initializeUser();
+    await musicServerStore.loadFavorites();
+    await playerStore.initializeFavoriteList();
+    message.success(t('login.message.loginSuccess'));
+    router.push('/user');
+  } catch (error) {
+    console.error(t('login.message.loginFailed') + ':', error);
+    message.error(getErrorMessage(error));
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 

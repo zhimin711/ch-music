@@ -3,7 +3,8 @@ export default {
     qr: 'QR코드 로그인',
     phone: '휴대폰 번호 로그인',
     cookie: 'Cookie 로그인',
-    uid: 'UID 로그인'
+    uid: 'UID 로그인',
+    musicServer: 'MusicServer'
   },
   qrTip: '넷이즈 클라우드 뮤직 앱으로 QR코드를 스캔하여 로그인',
   phoneTip: '넷이즈 클라우드 계정으로 로그인',

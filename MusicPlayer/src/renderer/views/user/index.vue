@@ -68,7 +68,12 @@
             }}</span>
           </div>
           <div class="user-info">
-            <n-avatar round :size="50" :src="getImgUrl(user.avatarUrl, '50y50')" />
+            <div class="avatar-editor">
+              <n-avatar round :size="50" :src="getImgUrl(user.avatarUrl, '50y50')" />
+              <button class="avatar-edit-btn" @click="openProfileEditor">
+                <i class="ri-pencil-line"></i>
+              </button>
+            </div>
             <div class="user-info-list">
               <div class="user-info-item">
                 <div class="label">{{ userDetail.profile.followeds }}</div>
@@ -104,7 +109,7 @@
                   <button
                     class="play-list-item"
                     @click="goToImportPlaylist"
-                    v-if="isElectron && currentTab === 'created'"
+                    v-if="false && isElectron && currentTab === 'created'"
                   >
                     <div class="play-list-item-img"><i class="icon iconfont ri-add-line"></i></div>
                     <div class="play-list-item-info">
@@ -171,6 +176,23 @@
     >
       <login-component @login-success="handleLoginSuccess" />
     </div>
+    <n-modal v-model:show="profileModalVisible" preset="card" title="编辑个人资料" class="profile-modal">
+      <div class="profile-form">
+        <n-input v-model:value="profileForm.displayName" placeholder="显示名称" maxlength="120" />
+        <n-input v-model:value="profileForm.avatarUrl" placeholder="头像 URL（可选）" />
+        <div class="profile-preview">
+          <n-avatar round :size="48" :src="getImgUrl(profileForm.avatarUrl, '50y50')" />
+          <div class="profile-preview-text">
+            <div>{{ profileForm.displayName || user?.nickname }}</div>
+            <div>保存后会同步到 MusicServer</div>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <n-button @click="profileModalVisible = false">取消</n-button>
+          <n-button type="primary" :loading="profileSaving" @click="saveProfile">保存</n-button>
+        </div>
+      </div>
+    </n-modal>
   </div>
 </template>
 
@@ -181,10 +203,10 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-import { getUserAlbumSublist, getUserDetail, getUserPlaylist, getUserRecord } from '@/api/user';
 import { navigateToMusicList } from '@/components/common/MusicListNavigator';
 import PlayBottom from '@/components/common/PlayBottom.vue';
 import SongItem from '@/components/common/SongItem.vue';
+import { useMusicServerStore } from '@/store/modules/musicServer';
 import { usePlayerStore } from '@/store/modules/player';
 import { useUserStore } from '@/store/modules/user';
 import { getImgUrl, isElectron, isMobile, setAnimationClass, setAnimationDelay } from '@/utils';
@@ -197,6 +219,7 @@ defineOptions({
 
 const { t } = useI18n();
 const userStore = useUserStore();
+const musicServerStore = useMusicServerStore();
 const playerStore = usePlayerStore();
 const router = useRouter();
 const { userDetail, recordList } = storeToRefs(userStore);
@@ -204,12 +227,17 @@ const infoLoading = ref(false);
 const albumLoading = ref(false);
 const mounted = ref(true);
 const message = useMessage();
+const profileModalVisible = ref(false);
+const profileSaving = ref(false);
+const profileForm = ref({
+  displayName: '',
+  avatarUrl: ''
+});
 
 // Tab 相关
 const tabs = [
   { key: 'created', label: 'user.tabs.created' },
-  { key: 'favorite', label: 'user.tabs.favorite' },
-  { key: 'album', label: 'user.tabs.album' }
+  { key: 'favorite', label: 'user.tabs.favorite' }
 ];
 const currentTab = ref('created');
 
@@ -218,21 +246,22 @@ const user = computed(() => userStore.user);
 // 创建的歌单（当前用户创建的）
 const createdPlaylists = computed(() => {
   if (!user.value) return [];
-  return userStore.playList.filter((item) => item.creator?.userId === user.value!.userId);
+  return userStore.playList;
 });
 
-// 收藏的歌单（当前用户收藏的）
-const favoritePlaylists = computed(() => {
-  if (!user.value) return [];
-  return userStore.playList.filter((item) => item.creator?.userId !== user.value!.userId);
-});
+const favoriteSongs = computed(() =>
+  musicServerStore.favoriteSongs.map((song) => ({
+    ...song,
+    name: song.name,
+    trackCount: 1,
+    playCount: 0,
+    type: 'musicServerFavoriteSong'
+  }))
+);
 
 // 当前显示的列表（根据 tab 切换）
 const currentList = computed(() => {
-  if (currentTab.value === 'album') {
-    return userStore.albumList;
-  }
-  return currentTab.value === 'created' ? createdPlaylists.value : favoritePlaylists.value;
+  return currentTab.value === 'created' ? createdPlaylists.value : favoriteSongs.value;
 });
 
 // 获取封面图片 URL
@@ -242,21 +271,18 @@ const getCoverUrl = (item: any) => {
 
 // 获取列表项描述
 const getItemDescription = (item: any) => {
-  if (currentTab.value === 'album') {
-    // 专辑：显示艺术家和歌曲数量
-    const artist = item.artist?.name || '';
-    const size = item.size ? ` · ${item.size}首` : '';
-    return `${artist}${size}`;
+  if (item.type === 'musicServerFavoriteSong') {
+    return item.ar?.[0]?.name || 'MusicServer';
   } else {
-    // 歌单：显示曲目数和播放量
     return `${t('user.playlist.trackCount', { count: item.trackCount })}，${t('user.playlist.playCount', { count: item.playCount })}`;
   }
 };
 
 // 统一处理列表项点击
 const handleItemClick = (item: any) => {
-  if (currentTab.value === 'album') {
-    openAlbum(item);
+  if (item.type === 'musicServerFavoriteSong') {
+    playerStore.setPlayList(musicServerStore.favoriteSongs);
+    playerStore.setPlay(item);
   } else {
     openPlaylist(item);
   }
@@ -309,28 +335,21 @@ const loadData = async () => {
       return;
     }
 
-    // 如果 store 中还没有数据，则加载
-    const promises = [getUserDetail(user.value.userId), getUserRecord(user.value.userId)];
-
-    if (userStore.playList.length === 0) {
-      promises.push(getUserPlaylist(user.value.userId));
-    }
-
-    const results = await Promise.all(promises);
+    await Promise.all([userStore.initializePlaylist(), playerStore.initializeFavoriteList()]);
 
     if (!mounted.value) return;
 
-    userDetail.value = results[0].data;
-    recordList.value = results[1].data.allData.map((item: any) => ({
-      ...item,
-      ...item.song,
-      picUrl: item.song.al.picUrl
-    }));
-
-    // 如果加载了歌单，更新 store
-    if (results.length > 2 && results[2].data?.playlist) {
-      userStore.playList = results[2].data.playlist;
-    }
+    userDetail.value =
+      userDetail.value ||
+      ({
+        level: 0,
+        profile: {
+          ...user.value,
+          followeds: 0,
+          follows: 0
+        }
+      } as any);
+    recordList.value = musicServerStore.favoriteSongs;
   } catch (error: any) {
     console.error('加载用户页面失败:', error);
     if (error.response?.status === 401) {
@@ -343,29 +362,6 @@ const loadData = async () => {
   } finally {
     if (mounted.value) {
       infoLoading.value = false;
-    }
-  }
-};
-
-// 加载专辑列表
-const loadAlbumList = async () => {
-  // 如果 store 中已经有数据，直接返回
-  if (userStore.albumList.length > 0) {
-    return;
-  }
-
-  try {
-    albumLoading.value = true;
-    const res = await getUserAlbumSublist({ limit: 100, offset: 0 });
-    if (!mounted.value) return;
-    // 更新 store 中的专辑列表
-    userStore.albumList = res.data.data || [];
-  } catch (error: any) {
-    console.error('加载专辑列表失败:', error);
-    message.error('加载专辑列表失败');
-  } finally {
-    if (mounted.value) {
-      albumLoading.value = false;
     }
   }
 };
@@ -396,13 +392,8 @@ watch(
 
 // 监听 tab 切换
 watch(currentTab, async (newTab) => {
-  if (newTab === 'album') {
-    // 刷新收藏专辑列表到 store
-    await userStore.initializeCollectedAlbums();
-    // 如果 store 中列表为空，则加载
-    if (userStore.albumList.length === 0) {
-      loadAlbumList();
-    }
+  if (newTab === 'favorite') {
+    await playerStore.initializeFavoriteList();
   }
 });
 
@@ -415,24 +406,11 @@ onMounted(() => {
 const openPlaylist = (item: any) => {
   navigateToMusicList(router, {
     id: item.id,
-    type: 'playlist',
+    type: 'musicServerPlaylist',
     name: item.name,
+    songList: item.tracks || [],
     listInfo: item,
     canRemove: true // 保留可移除功能
-  });
-};
-
-// 打开专辑
-const openAlbum = async (item: any) => {
-  navigateToMusicList(router, {
-    id: item.id,
-    type: 'album',
-    name: item.name,
-    listInfo: {
-      ...item,
-      coverImgUrl: item.picUrl || item.coverImgUrl
-    },
-    canRemove: false // 专辑不支持移除歌曲
   });
 };
 
@@ -457,6 +435,37 @@ const handleLoginSuccess = () => {
   // 处理登录成功后的逻辑
   checkLoginStatus();
   loadData();
+};
+
+const openProfileEditor = () => {
+  profileForm.value = {
+    displayName: user.value?.nickname || '',
+    avatarUrl: user.value?.avatarUrl || ''
+  };
+  profileModalVisible.value = true;
+};
+
+const saveProfile = async () => {
+  const displayName = profileForm.value.displayName.trim();
+  if (!displayName) {
+    message.warning('请填写显示名称');
+    return;
+  }
+
+  profileSaving.value = true;
+  try {
+    await userStore.updateMusicServerProfile({
+      displayName,
+      avatarUrl: profileForm.value.avatarUrl.trim()
+    });
+    profileModalVisible.value = false;
+    message.success('个人资料已更新');
+  } catch (error: any) {
+    console.error('更新个人资料失败:', error);
+    message.error(error?.response?.data?.message || error?.message || '更新失败');
+  } finally {
+    profileSaving.value = false;
+  }
 };
 
 const isLoggedIn = computed(() => userStore.user);
@@ -489,9 +498,9 @@ const currentLoginType = computed(() => userStore.loginType);
       @apply text-white text-opacity-70;
     }
 
-    .user-info {
-      @apply flex items-center;
-      &-list {
+  .user-info {
+    @apply flex items-center;
+    &-list {
         @apply flex justify-around w-2/5 text-center;
         @apply text-white text-opacity-70;
 
@@ -504,6 +513,12 @@ const currentLoginType = computed(() => userStore.loginType);
         @apply cursor-pointer;
       }
     }
+  }
+  .avatar-editor {
+    @apply relative mr-4 flex h-[50px] w-[50px] flex-shrink-0;
+  }
+  .avatar-edit-btn {
+    @apply absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-white shadow-lg transition hover:bg-primary/90;
   }
 
   .right {
@@ -601,5 +616,33 @@ const currentLoginType = computed(() => userStore.loginType);
   .n-tabs-capsule {
     @apply rounded-xl !important;
   }
+}
+
+.profile-modal {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.profile-form {
+  @apply flex flex-col gap-4;
+}
+
+.profile-preview {
+  @apply flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-neutral-800;
+}
+
+.profile-preview-text {
+  @apply min-w-0 text-sm text-gray-700 dark:text-gray-200;
+
+  > div:first-child {
+    @apply truncate font-medium;
+  }
+
+  > div:last-child {
+    @apply mt-1 text-xs text-gray-400;
+  }
+}
+
+.profile-actions {
+  @apply flex justify-end gap-2;
 }
 </style>

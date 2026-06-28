@@ -215,7 +215,6 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
 import { getSearchKeyword } from '@/api/home';
-import { getUserDetail } from '@/api/login';
 import { getSearchSuggestions } from '@/api/search';
 import alipay from '@/assets/alipay.png';
 import wechat from '@/assets/wechat.png';
@@ -256,7 +255,7 @@ const { zoomFactor, initZoomFactor, increaseZoom, decreaseZoom, resetZoom, isZoo
 
 // ── 心动模式 ─────────────────────────────────────────
 const isIntelligenceMode = computed(() => intelligenceModeStore.isIntelligenceMode);
-const showIntelligenceBtn = computed(() => userStore.user && userStore.loginType === 'cookie');
+const showIntelligenceBtn = computed(() => false);
 const toggleIntelligenceMode = async () => {
   if (isIntelligenceMode.value) {
     intelligenceModeStore.clearIntelligenceMode();
@@ -435,11 +434,8 @@ const loadHotSearch = async () => {
   hotSearchValue.value = data.data.realkeyword;
 };
 const loadPage = async () => {
-  if (!localStorage.getItem('token')) return;
-  const { data } = await getUserDetail();
-  userStore.user =
-    data.profile || userStore.user || JSON.parse(localStorage.getItem('user') || '{}');
-  localStorage.setItem('user', JSON.stringify(userStore.user));
+  if (!localStorage.getItem('musicServerToken')) return;
+  await userStore.initializeUser();
 };
 loadPage();
 watchEffect(() => {

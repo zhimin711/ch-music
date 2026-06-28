@@ -148,69 +148,16 @@
                   <i class="ri-cloud-off-line text-5xl mb-3 block text-neutral-200 dark:text-neutral-800" />
                   暂无云端音乐
                 </div>
-                <div v-else class="divide-y divide-neutral-100 dark:divide-neutral-900">
-                  <div
-                    v-for="music in filteredMusic"
-                    :key="music.id"
-                    class="grid grid-cols-[1fr_auto] xl:grid-cols-[1fr_auto_auto_auto_auto] gap-3 py-3 items-center"
-                  >
-                    <button class="text-left min-w-0" @click="handlePlaySong(music, filteredMusic)">
-                      <div class="font-medium text-neutral-900 dark:text-white truncate">
-                        {{ music.title }}
-                      </div>
-                      <div class="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-1">
-                        {{ music.artist || '未知艺术家' }} · {{ music.album || '私有音乐' }}
-                      </div>
-                    </button>
-                    <div class="flex items-center justify-end gap-1">
-                      <n-button quaternary circle size="small" @click="handlePlaySong(music, filteredMusic)">
-                        <template #icon>
-                          <i class="ri-play-fill" />
-                        </template>
-                      </n-button>
-                      <n-button quaternary circle size="small" @click="handleAddNext(music)">
-                        <template #icon>
-                          <i class="ri-play-list-add-line" />
-                        </template>
-                      </n-button>
-                      <n-button quaternary circle size="small" @click="handleToggleFavorite(music.id)">
-                        <template #icon>
-                          <i
-                            :class="
-                              cloudStore.isFavorite(music.id)
-                                ? 'ri-heart-fill text-red-500'
-                                : 'ri-heart-line'
-                            "
-                          />
-                        </template>
-                      </n-button>
-                    </div>
-                    <n-select
-                      v-model:value="selectedPlaylistIds[music.id]"
-                      :options="playlistOptions"
-                      size="small"
-                      placeholder="选择歌单"
-                      class="hidden xl:block w-40"
-                    />
-                    <n-button
-                      size="small"
-                      class="hidden xl:flex"
-                      :disabled="!selectedPlaylistIds[music.id]"
-                      @click="handleAddToPlaylist(music.id)"
-                    >
-                      加入歌单
-                    </n-button>
-                    <n-popconfirm @positive-click="handleDeleteMusic(music.id)">
-                      <template #trigger>
-                        <n-button quaternary circle size="small">
-                          <template #icon>
-                            <i class="ri-delete-bin-line" />
-                          </template>
-                        </n-button>
-                      </template>
-                      删除这首云端音乐？
-                    </n-popconfirm>
-                  </div>
+                <div v-else class="song-list-container">
+                  <song-item
+                    v-for="(song, index) in filteredSongResults"
+                    :key="song.id"
+                    :item="song"
+                    :index="index"
+                    can-remove
+                    @play="handlePlaySongResult(song, filteredSongResults)"
+                    @remove-song="handleDeleteMusic(Number($event))"
+                  />
                 </div>
               </n-tab-pane>
 
@@ -219,26 +166,14 @@
                   <i class="ri-heart-line text-5xl mb-3 block text-neutral-200 dark:text-neutral-800" />
                   暂无收藏
                 </div>
-                <div v-else class="divide-y divide-neutral-100 dark:divide-neutral-900">
-                  <div
-                    v-for="favorite in cloudStore.favorites"
-                    :key="favorite.id"
-                    class="grid grid-cols-[1fr_auto] gap-3 py-3 items-center"
-                  >
-                    <button class="text-left min-w-0" @click="handlePlaySong(favorite.music, favoriteMusics)">
-                      <div class="font-medium text-neutral-900 dark:text-white truncate">
-                        {{ favorite.music.title }}
-                      </div>
-                      <div class="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-1">
-                        {{ favorite.music.artist || '未知艺术家' }}
-                      </div>
-                    </button>
-                    <n-button quaternary circle size="small" @click="handleToggleFavorite(favorite.music.id)">
-                      <template #icon>
-                        <i class="ri-heart-fill text-red-500" />
-                      </template>
-                    </n-button>
-                  </div>
+                <div v-else class="song-list-container">
+                  <song-item
+                    v-for="(song, index) in favoriteSongResults"
+                    :key="song.id"
+                    :item="song"
+                    :index="index"
+                    @play="handlePlaySongResult(song, favoriteSongResults)"
+                  />
                 </div>
               </n-tab-pane>
 
@@ -312,36 +247,17 @@
                     <div v-if="activePlaylist.tracks.length === 0" class="py-16 text-center text-neutral-400">
                       暂无歌曲
                     </div>
-                    <div v-else class="divide-y divide-neutral-100 dark:divide-neutral-900">
-                      <div
-                        v-for="track in activePlaylist.tracks"
-                        :key="track.id"
-                        class="grid grid-cols-[1fr_auto_auto] gap-2 py-3 items-center"
-                      >
-                        <button class="text-left min-w-0" @click="handlePlaySong(track, activePlaylist.tracks)">
-                          <div class="font-medium text-neutral-900 dark:text-white truncate">
-                            {{ track.title }}
-                          </div>
-                          <div class="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-1">
-                            {{ track.artist || '未知艺术家' }}
-                          </div>
-                        </button>
-                        <n-button quaternary circle size="small" @click="handleAddNext(track)">
-                          <template #icon>
-                            <i class="ri-play-list-add-line" />
-                          </template>
-                        </n-button>
-                        <n-button
-                          quaternary
-                          circle
-                          size="small"
-                          @click="handleRemoveTrack(activePlaylist.id, track.id)"
-                        >
-                          <template #icon>
-                            <i class="ri-close-line" />
-                          </template>
-                        </n-button>
-                      </div>
+                    <div v-else class="song-list-container">
+                      <song-item
+                        v-for="(song, index) in activePlaylistSongResults"
+                        :key="song.id"
+                        :item="song"
+                        :index="index"
+                        compact
+                        can-remove
+                        @play="handlePlaySongResult(song, activePlaylistSongResults)"
+                        @remove-song="handleRemoveTrack(activePlaylist.id, Number($event))"
+                      />
                     </div>
                   </div>
 
@@ -363,8 +279,10 @@ import axios from 'axios';
 import { createDiscreteApi } from 'naive-ui';
 import { computed, onMounted, ref, watch } from 'vue';
 
+import SongItem from '@/components/common/SongItem.vue';
 import { useMusicServerStore } from '@/store/modules/musicServer';
 import { usePlayerStore } from '@/store/modules/player';
+import type { SongResult } from '@/types/music';
 import type { MusicServerMusic } from '@/types/musicServer';
 import { toMusicServerSongResult } from '@/utils/musicServerUtils';
 
@@ -386,7 +304,6 @@ const uploadTitle = ref('');
 const uploadArtist = ref('');
 const uploadAlbum = ref('');
 const newPlaylistName = ref('');
-const selectedPlaylistIds = ref<Record<number, number | null>>({});
 const playlistTrackMusicId = ref<number | null>(null);
 
 const filteredMusic = computed(() => {
@@ -401,12 +318,9 @@ const filteredMusic = computed(() => {
 
 const favoriteMusics = computed(() => cloudStore.favorites.map((item) => item.music));
 
-const playlistOptions = computed(() =>
-  cloudStore.playlists.map((playlist) => ({
-    label: playlist.name,
-    value: playlist.id
-  }))
-);
+const filteredSongResults = computed(() => filteredMusic.value.map(toMusicServerSongResult));
+
+const favoriteSongResults = computed(() => favoriteMusics.value.map(toMusicServerSongResult));
 
 const musicOptions = computed(() =>
   cloudStore.musicList.map((music) => ({
@@ -417,6 +331,10 @@ const musicOptions = computed(() =>
 
 const activePlaylist = computed(
   () => cloudStore.playlists.find((playlist) => playlist.id === activePlaylistId.value) || null
+);
+
+const activePlaylistSongResults = computed(() =>
+  activePlaylist.value ? activePlaylist.value.tracks.map(toMusicServerSongResult) : []
 );
 
 watch(
@@ -476,6 +394,7 @@ async function handleLogin() {
       username: username.value.trim(),
       password: password.value
     });
+    await playerStore.initializeFavoriteList();
     message.success('登录成功');
   } catch (error) {
     console.error('MusicServer 登录失败:', error);
@@ -494,6 +413,7 @@ async function handleRegister() {
       password: password.value,
       displayName: displayName.value.trim() || undefined
     });
+    await playerStore.initializeFavoriteList();
     message.success('注册成功');
   } catch (error) {
     console.error('MusicServer 注册失败:', error);
@@ -511,6 +431,7 @@ async function handleLogout() {
 async function handleRefresh() {
   try {
     await cloudStore.loadAll();
+    await playerStore.initializeFavoriteList();
     message.success('已刷新');
   } catch (error) {
     console.error('刷新云音乐库失败:', error);
@@ -559,24 +480,9 @@ async function handlePlayAll(musicList: MusicServerMusic[]) {
   await playerStore.setPlay(songs[0]);
 }
 
-async function handlePlaySong(music: MusicServerMusic, context: MusicServerMusic[]) {
-  const songs = toSongs(context);
-  playerStore.setPlayList(songs);
-  await playerStore.setPlay(toMusicServerSongResult(music));
-}
-
-function handleAddNext(music: MusicServerMusic) {
-  playerStore.addToNextPlay(toMusicServerSongResult(music));
-  message.success('已添加到下一首');
-}
-
-async function handleToggleFavorite(musicId: number) {
-  try {
-    await cloudStore.toggleFavorite(musicId);
-  } catch (error) {
-    console.error('更新云端收藏失败:', error);
-    message.error(getErrorMessage(error, '操作失败'));
-  }
+async function handlePlaySongResult(song: SongResult, context: SongResult[]) {
+  playerStore.setPlayList(context);
+  await playerStore.setPlay(song);
 }
 
 async function handleDeleteMusic(musicId: number) {
@@ -600,20 +506,6 @@ async function handleCreatePlaylist() {
   } catch (error) {
     console.error('创建云端歌单失败:', error);
     message.error(getErrorMessage(error, '创建失败'));
-  }
-}
-
-async function handleAddToPlaylist(musicId: number) {
-  const playlistId = selectedPlaylistIds.value[musicId];
-  if (!playlistId) return;
-
-  try {
-    await cloudStore.addTrackToPlaylist(playlistId, musicId);
-    selectedPlaylistIds.value[musicId] = null;
-    message.success('已加入歌单');
-  } catch (error) {
-    console.error('添加到云端歌单失败:', error);
-    message.error(getErrorMessage(error, '添加失败'));
   }
 }
 
@@ -654,6 +546,7 @@ onMounted(async () => {
   if (!cloudStore.token) return;
   try {
     await cloudStore.restoreSession();
+    await playerStore.initializeFavoriteList();
   } catch {
     message.warning('云音乐库登录已失效');
   }

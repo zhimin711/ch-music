@@ -20,6 +20,7 @@ import {
   removeMusicServerPlaylistTrack,
   setMusicServerBaseUrl,
   setMusicServerToken,
+  updateMusicServerMe,
   uploadMusicServerMusic
 } from '@/api/musicServer';
 import type {
@@ -124,6 +125,13 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     }
   };
 
+  const updateProfile = async (payload: { displayName: string; avatarUrl?: string | null }) => {
+    const { data } = await updateMusicServerMe(payload);
+    user.value = data;
+    persistUser(data);
+    return data;
+  };
+
   const loadMusic = async () => {
     const { data } = await listMusicServerMusic();
     musicList.value = data;
@@ -220,6 +228,7 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     register,
     logout,
     restoreSession,
+    updateProfile,
     loadMusic,
     loadPlaylists,
     loadFavorites,

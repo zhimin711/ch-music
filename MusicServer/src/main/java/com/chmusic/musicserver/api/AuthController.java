@@ -2,6 +2,7 @@ package com.chmusic.musicserver.api;
 
 import com.chmusic.musicserver.api.dto.AuthRequest;
 import com.chmusic.musicserver.api.dto.AuthResponse;
+import com.chmusic.musicserver.api.dto.ProfileUpdateRequest;
 import com.chmusic.musicserver.api.dto.UserResponse;
 import com.chmusic.musicserver.auth.AuthService;
 import com.chmusic.musicserver.auth.TokenService;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,5 +52,10 @@ public class AuthController {
     @GetMapping("/me")
     public UserResponse me(Authentication authentication) {
         return UserResponse.from(CurrentUser.from(authentication));
+    }
+
+    @PutMapping("/me")
+    public UserResponse updateMe(Authentication authentication, @Valid @RequestBody ProfileUpdateRequest request) {
+        return authService.updateProfile(CurrentUser.from(authentication), request);
     }
 }

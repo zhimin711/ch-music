@@ -131,13 +131,15 @@ export async function handleShortcutAction(action: ShortcutAction) {
           return;
         }
 
-        const currentSongId = Number(playerStore.playMusic.id);
-        const isFavorite = playerStore.favoriteList.includes(currentSongId);
+        const currentSong = playerStore.playMusic;
+        const favoriteKey =
+          currentSong.source === 'musicServer' ? `musicServer:${currentSong.id}` : currentSong.id;
+        const isFavorite = playerStore.favoriteList.includes(favoriteKey);
 
         if (isFavorite) {
-          playerStore.removeFromFavorite(currentSongId);
+          playerStore.removeFromFavorite(currentSong);
         } else {
-          playerStore.addToFavorite(currentSongId);
+          playerStore.addToFavorite(currentSong);
         }
 
         showToast(

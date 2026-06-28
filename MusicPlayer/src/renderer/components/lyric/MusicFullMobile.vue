@@ -482,14 +482,16 @@ const showPlaylist = () => {
 
 // 喜欢歌曲
 const isFavorite = computed(() => {
-  return playerStore.favoriteList.includes(playMusic.value.id as number);
+  const favoriteKey =
+    playMusic.value.source === 'musicServer' ? `musicServer:${playMusic.value.id}` : playMusic.value.id;
+  return playerStore.favoriteList.includes(favoriteKey);
 });
 
 const toggleFavorite = () => {
   if (isFavorite.value) {
-    playerStore.removeFromFavorite(playMusic.value.id as number);
+    playerStore.removeFromFavorite(playMusic.value);
   } else {
-    playerStore.addToFavorite(playMusic.value.id as number);
+    playerStore.addToFavorite(playMusic.value);
   }
 };
 

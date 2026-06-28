@@ -3,7 +3,8 @@ export default {
     qr: '掃碼登入',
     phone: '手機號登入',
     cookie: 'Cookie登入',
-    uid: 'UID登入'
+    uid: 'UID登入',
+    musicServer: 'MusicServer'
   },
   qrTip: '使用網易雲APP掃碼登入',
   phoneTip: '使用網易雲帳號登入',

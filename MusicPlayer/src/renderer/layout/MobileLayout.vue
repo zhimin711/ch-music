@@ -23,7 +23,7 @@
       <app-menu class="mobile-menu" :menus="menuStore.menus" />
     </div>
     <!-- 其他弹窗/抽屉 -->
-    <playlist-drawer v-model="showPlaylistDrawer" :song-id="currentSongId" />
+    <playlist-drawer v-model="showPlaylistDrawer" :song="currentPlaylistSong" />
     <playing-list-drawer />
   </div>
 </template>
@@ -36,6 +36,7 @@ import homeRouter from '@/router/home';
 import otherRouter from '@/router/other';
 import { useMenuStore } from '@/store/modules/menu';
 import { usePlayerStore } from '@/store/modules/player';
+import type { SongResult } from '@/types/music';
 
 import AppMenu from './components/AppMenu.vue';
 import MobileHeader from './components/MobileHeader.vue';
@@ -81,11 +82,11 @@ const keepAliveInclude = computed(() => {
 
 // 歌单抽屉
 const showPlaylistDrawer = ref(false);
-const currentSongId = ref<number | undefined>();
+const currentPlaylistSong = ref<SongResult | undefined>();
 
 // 提供打开歌单抽屉的方法
-const openPlaylistDrawer = (songId: number, isOpen: boolean = true) => {
-  currentSongId.value = songId;
+const openPlaylistDrawer = (song: SongResult, isOpen: boolean = true) => {
+  currentPlaylistSong.value = song;
   showPlaylistDrawer.value = isOpen;
   playerStore.setMusicFull(false);
   playerStore.setPlayListDrawerVisible(!isOpen);

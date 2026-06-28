@@ -7,7 +7,7 @@
 
 export interface LoginInfo {
   isLoggedIn: boolean;
-  loginType: 'token' | 'cookie' | 'qr' | 'uid' | null;
+  loginType: 'token' | 'cookie' | 'qr' | 'uid' | 'musicServer' | null;
   hasToken: boolean;
   hasUser: boolean;
   user: any;
@@ -18,9 +18,13 @@ export interface LoginInfo {
  * @returns 登录信息对象
  */
 export function checkLoginStatus(): LoginInfo {
-  const token = localStorage.getItem('token');
-  const userData = localStorage.getItem('user');
-  const loginType = localStorage.getItem('loginType') as LoginInfo['loginType'];
+  const musicServerToken = localStorage.getItem('musicServerToken');
+  const musicServerUserData = localStorage.getItem('musicServerUser');
+  const token = musicServerToken || localStorage.getItem('token');
+  const userData = musicServerUserData || localStorage.getItem('user');
+  const loginType = (musicServerToken ? 'musicServer' : localStorage.getItem('loginType')) as
+    | LoginInfo['loginType']
+    | null;
   const uidLogin = localStorage.getItem('uidLogin');
 
   const hasToken = !!token;
@@ -83,6 +87,8 @@ export function clearLoginStatus(): void {
   localStorage.removeItem('user');
   localStorage.removeItem('loginType');
   localStorage.removeItem('uidLogin');
+  localStorage.removeItem('musicServerToken');
+  localStorage.removeItem('musicServerUser');
 }
 
 /**
@@ -115,7 +121,7 @@ export function getLoginErrorMessage(requireAuth: boolean = false): string {
   }
 
   if (requireAuth && loginInfo.loginType === 'uid') {
-    return 'UID登录无法访问此功能，请使用Cookie或二维码登录';
+    return 'UID登录无法访问此功能，请使用 MusicServer 账号登录';
   }
 
   return '';

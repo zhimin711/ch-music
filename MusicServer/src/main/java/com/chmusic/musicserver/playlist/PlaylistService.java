@@ -26,8 +26,8 @@ public class PlaylistService {
 
     @Transactional(readOnly = true)
     public List<PlaylistResponse> list(AppUser owner) {
-        return playlistRepository.findByOwnerOrderByCreatedAtDesc(owner).stream()
-                .map(PlaylistResponse::summary)
+        return playlistRepository.findWithTracksByOwnerOrderByCreatedAtDesc(owner).stream()
+                .map(PlaylistResponse::details)
                 .toList();
     }
 

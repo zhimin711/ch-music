@@ -12,7 +12,11 @@ export function useFavorite() {
   /** 当前歌曲是否已收藏 */
   const isFavorite = computed(() => {
     if (!playMusic?.value?.id) return false;
-    return playerStore.favoriteList.includes(playMusic.value.id);
+    const favoriteKey =
+      playMusic.value.source === 'musicServer'
+        ? `musicServer:${playMusic.value.id}`
+        : playMusic.value.id;
+    return playerStore.favoriteList.includes(favoriteKey);
   });
 
   /** 切换收藏状态 */
@@ -20,11 +24,10 @@ export function useFavorite() {
     e?.stopPropagation();
     if (!playMusic?.value?.id) return;
 
-    const favoriteId = playMusic.value.id;
     if (isFavorite.value) {
-      playerStore.removeFromFavorite(favoriteId);
+      playerStore.removeFromFavorite(playMusic.value);
     } else {
-      playerStore.addToFavorite(favoriteId);
+      playerStore.addToFavorite(playMusic.value);
     }
   };
 

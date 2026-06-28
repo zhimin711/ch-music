@@ -329,11 +329,12 @@
 <script setup lang="ts">
 import { useMessage } from 'naive-ui';
 import PinyinMatch from 'pinyin-match';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 import { getAlbum, getListDetail } from '@/api/list';
+import { getMusicServerPlaylist } from '@/api/musicServer';
 import {
   getMusicDetail,
   subscribeAlbum,
@@ -344,10 +345,12 @@ import SongItem from '@/components/common/SongItem.vue';
 import { useDownload } from '@/hooks/useDownload';
 import { useScrollTitle } from '@/hooks/useScrollTitle';
 import { useMusicStore, usePlayerStore, useRecommendStore, useUserStore } from '@/store';
+import { useMusicServerStore } from '@/store/modules/musicServer';
 import { usePlayHistoryStore } from '@/store/modules/playHistory';
 import { SongResult } from '@/types/music';
 import { calculateAnimationDelay, getImgUrl, isElectron, isMobile } from '@/utils';
 import { getLoginErrorMessage, hasPermission } from '@/utils/auth';
+import { toMusicServerSongResult } from '@/utils/musicServerUtils';
 
 defineOptions({
   name: 'MusicList'
@@ -359,6 +362,7 @@ const playerStore = usePlayerStore();
 const musicStore = useMusicStore();
 const recommendStore = useRecommendStore();
 const userStore = useUserStore();
+const musicServerStore = useMusicServerStore();
 const message = useMessage();
 const playHistoryStore = usePlayHistoryStore();
 
@@ -413,6 +417,27 @@ const fetchData = async () => {
       } else {
         message.error(t('common.loadFailed'));
       }
+    } else if (type === 'musicServerPlaylist') {
+      const res = await getMusicServerPlaylist(Number(id));
+      const playlist = res.data;
+      musicStore.setCurrentMusicList(
+        playlist.tracks.map(toMusicServerSongResult),
+        playlist.name,
+        {
+          ...playlist,
+          source: 'musicServer',
+          trackCount: playlist.tracks.length,
+          playCount: 0,
+          creator: userStore.user
+            ? {
+                userId: userStore.user.userId,
+                nickname: userStore.user.nickname,
+                avatarUrl: userStore.user.avatarUrl
+              }
+            : undefined
+        },
+        true
+      );
     }
   } catch (error) {
     console.error('加载列表数据失败:', error);
@@ -472,6 +497,7 @@ const isFullPlaylistLoaded = ref(false);
 const isSelecting = ref(false);
 const selectedSongs = ref<number[]>([]);
 const { isDownloading, batchDownloadMusic } = useDownload();
+const openPlaylistDrawer = inject<(song: SongResult) => void>('openPlaylistDrawer');
 
 const isCompactLayout = ref(
   isMobile.value ? false : localStorage.getItem('musicListLayout') === 'compact'
@@ -621,6 +647,15 @@ const handlePlayItem = (item: any) => {
 const handleRemoveSong = async (songId: number) => {
   if (!listInfo.value?.id || !canRemove.value) return;
   try {
+    if (route.query.type === 'musicServerPlaylist') {
+      await musicServerStore.removeTrackFromPlaylist(listInfo.value.id, songId);
+      message.success(t('user.message.deleteSuccess'));
+      displayedSongs.value = displayedSongs.value.filter((s) => s.id !== songId);
+      completePlaylist.value = completePlaylist.value.filter((s) => s.id !== songId);
+      musicStore.removeSongFromList(songId);
+      return;
+    }
+
     const res = await updatePlaylistTracks({
       op: 'del',
       pid: listInfo.value.id,
@@ -789,16 +824,11 @@ const handleAddToPlaylist = () => {
     .map((s) => formatSong(s))
     .filter((s) => s) as SongResult[];
   if (songs.length === 0) return;
-
-  const currentList = playerStore.playList;
-  const newSongs = songs.filter((s) => !currentList.some((item) => item.id === s.id));
-  if (newSongs.length === 0) {
-    message.warning(t('comp.musicList.songsAlreadyInPlaylist'));
+  if (songs.length > 1) {
+    message.warning('暂不支持批量添加到个人歌单，请先选择单首歌曲');
     return;
   }
-
-  playerStore.setPlayList([...currentList, ...newSongs], true);
-  message.success(t('comp.musicList.addToPlaylistSuccess', { count: newSongs.length }));
+  openPlaylistDrawer?.(songs[0]);
   cancelSelect();
 };
 

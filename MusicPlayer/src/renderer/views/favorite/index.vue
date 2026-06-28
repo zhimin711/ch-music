@@ -109,11 +109,11 @@
               class="rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
               :class="[
                 index < 20 ? setAnimationClass('animate__bounceInLeft') : '',
-                { '!bg-primary/10': selectedSongs.includes(song.id as number) }
+                { '!bg-primary/10': selectedSongs.includes(song.id) }
               ]"
               :style="index < 20 ? getItemAnimationDelay(index) : undefined"
               :selectable="isSelecting"
-              :selected="selectedSongs.includes(song.id as number)"
+              :selected="selectedSongs.includes(song.id)"
               @play="handlePlay"
               @select="handleSelect"
             />
@@ -161,12 +161,16 @@ import { getMusicDetail } from '@/api/music';
 import SongItem from '@/components/common/SongItem.vue';
 import { useDownload } from '@/hooks/useDownload';
 import { useProgressiveRender } from '@/hooks/useProgressiveRender';
-import { usePlayerStore } from '@/store';
+import { useLocalMusicStore, usePlayerStore } from '@/store';
+import { useMusicServerStore } from '@/store/modules/musicServer';
 import type { SongResult } from '@/types/music';
 import { isElectron, setAnimationClass, setAnimationDelay } from '@/utils';
+import { toSongResult as toLocalSongResult } from '@/utils/localMusicUtils';
 
 const { t } = useI18n();
 const playerStore = usePlayerStore();
+const musicServerStore = useMusicServerStore();
+const localMusicStore = useLocalMusicStore();
 const favoriteList = computed(() => playerStore.favoriteList);
 const favoriteSongs = ref<SongResult[]>([]);
 const loading = ref(false);
@@ -199,7 +203,7 @@ const handleScroll = (e: Event) => {
 
 // 多选相关
 const isSelecting = ref(false);
-const selectedSongs = ref<number[]>([]);
+const selectedSongs = ref<Array<number | string>>([]);
 const { batchDownloadMusic } = useDownload();
 
 // 开始多选
@@ -215,7 +219,7 @@ const cancelSelect = () => {
 };
 
 // 处理选择
-const handleSelect = (songId: number, selected: boolean) => {
+const handleSelect = (songId: number | string, selected: boolean) => {
   if (selected) {
     selectedSongs.value.push(songId);
   } else {
@@ -257,20 +261,81 @@ const props = defineProps({
   }
 });
 
-// 获取当前页的收藏歌曲ID
-const getCurrentPageIds = () => {
-  let ids = [...favoriteList.value];
+const isMusicServerFavoriteKey = (id: number | string) =>
+  typeof id === 'string' && id.startsWith('musicServer:');
 
+const getMusicServerFavoriteId = (id: number | string) => {
+  if (!isMusicServerFavoriteKey(id)) return null;
+  const musicId = Number(String(id).replace('musicServer:', ''));
+  return Number.isFinite(musicId) ? musicId : null;
+};
+
+const isNumericFavoriteId = (id: number | string) => {
+  if (typeof id === 'number') return Number.isFinite(id);
+  return /^\d+$/.test(id);
+};
+
+const getOrderedFavoriteKeys = () => {
+  let ids = [...favoriteList.value];
   if (isDescending.value) {
     ids = ids.reverse();
   }
-
-  const startIndex = (currentPage.value - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  return ids.slice(startIndex, endIndex);
+  return ids;
 };
 
-// 获取收藏歌曲详情
+const getCurrentPageIds = () => {
+  const ids = getOrderedFavoriteKeys();
+  const startIndex = (currentPage.value - 1) * pageSize;
+  return ids.slice(startIndex, startIndex + pageSize);
+};
+
+const ensureLocalMusicLoaded = async () => {
+  if (localMusicStore.musicList.length === 0) {
+    await localMusicStore.loadFromCache();
+  }
+};
+
+const resolveFavoriteSongs = async (ids: Array<number | string>) => {
+  const localSongMap = new Map(
+    localMusicStore.musicList.map((entry) => [entry.id, toLocalSongResult(entry)])
+  );
+
+  const neteaseIds = ids
+    .filter((id) => !isMusicServerFavoriteKey(id))
+    .filter((id) => !localSongMap.has(String(id)))
+    .filter(isNumericFavoriteId)
+    .map((id) => Number(id));
+
+  let neteaseSongs: SongResult[] = [];
+  if (neteaseIds.length > 0) {
+    const res = await getMusicDetail(neteaseIds);
+    if (res.data.songs) {
+      neteaseSongs = res.data.songs.map((song: SongResult) => ({
+        ...song,
+        picUrl: song.al?.picUrl || '',
+        source: 'netease'
+      }));
+    }
+  }
+
+  return ids
+    .map((id) => {
+      const musicServerId = getMusicServerFavoriteId(id);
+      if (musicServerId) {
+        return musicServerStore.favoriteSongs.find((song) => Number(song.id) === musicServerId);
+      }
+
+      const localSong = localSongMap.get(String(id));
+      if (localSong) {
+        return localSong;
+      }
+
+      return neteaseSongs.find((song) => String(song.id) === String(id));
+    })
+    .filter((song): song is SongResult => !!song);
+};
+
+// 获取收藏歌曲详情，本地收藏从本地缓存/公开歌曲详情还原，云端收藏从 MusicServer 获取
 const getFavoriteSongs = async () => {
   if (favoriteList.value.length === 0) {
     favoriteSongs.value = [];
@@ -283,29 +348,13 @@ const getFavoriteSongs = async () => {
 
   loading.value = true;
   try {
-    const currentIds = getCurrentPageIds();
-
-    const musicIds = currentIds.filter((id) => typeof id === 'number') as number[];
-
-    let neteaseSongs: SongResult[] = [];
-    if (musicIds.length > 0) {
-      const res = await getMusicDetail(musicIds);
-      if (res.data.songs) {
-        neteaseSongs = res.data.songs.map((song: SongResult) => ({
-          ...song,
-          picUrl: song.al?.picUrl || '',
-          source: 'netease'
-        }));
-      }
+    await ensureLocalMusicLoaded();
+    if (localStorage.getItem('musicServerToken')) {
+      await musicServerStore.loadFavorites();
     }
 
-    const newSongs = currentIds
-      .map((id) => {
-        const strId = String(id);
-        const found = neteaseSongs.find((song) => String(song.id) === strId);
-        return found;
-      })
-      .filter((song): song is SongResult => !!song);
+    const currentIds = getCurrentPageIds();
+    const newSongs = await resolveFavoriteSongs(currentIds);
 
     if (currentPage.value === 1) {
       favoriteSongs.value = newSongs;
@@ -313,7 +362,7 @@ const getFavoriteSongs = async () => {
       favoriteSongs.value = [...favoriteSongs.value, ...newSongs];
     }
 
-    noMore.value = favoriteSongs.value.length >= favoriteList.value.length;
+    noMore.value = currentPage.value * pageSize >= getOrderedFavoriteKeys().length;
   } catch (error) {
     console.error('获取收藏歌曲失败:', error);
   } finally {
@@ -370,7 +419,7 @@ const isIndeterminate = computed(() => {
 
 const handleSelectAll = (checked: boolean) => {
   if (checked) {
-    selectedSongs.value = favoriteSongs.value.map((song) => song.id as number);
+    selectedSongs.value = favoriteSongs.value.map((song) => song.id);
   } else {
     selectedSongs.value = [];
   }

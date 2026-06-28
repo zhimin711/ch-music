@@ -48,7 +48,7 @@
       </template>
     </div>
     <update-modal v-if="isElectron" />
-    <playlist-drawer v-model="showPlaylistDrawer" :song-id="currentSongId" />
+    <playlist-drawer v-model="showPlaylistDrawer" :song="currentPlaylistSong" />
     <sleep-timer-top v-if="!settingsStore.isMobile" />
     <!-- 播放列表抽屉 -->
     <playing-list-drawer />
@@ -67,6 +67,7 @@ import otherRouter from '@/router/other';
 import { useMenuStore } from '@/store/modules/menu';
 import { usePlayerStore } from '@/store/modules/player';
 import { useSettingsStore } from '@/store/modules/settings';
+import type { SongResult } from '@/types/music';
 import { isElectron } from '@/utils';
 
 // 关键布局组件同步导入（始终可见，避免加载闪烁）
@@ -125,11 +126,11 @@ onMounted(() => {
 });
 
 const showPlaylistDrawer = ref(false);
-const currentSongId = ref<number | undefined>();
+const currentPlaylistSong = ref<SongResult | undefined>();
 
 // 提供一个方法来打开歌单抽屉
-const openPlaylistDrawer = (songId: number, isOpen: boolean = true) => {
-  currentSongId.value = songId;
+const openPlaylistDrawer = (song: SongResult, isOpen: boolean = true) => {
+  currentPlaylistSong.value = song;
   showPlaylistDrawer.value = isOpen;
   playerStore.setMusicFull(false);
   playerStore.setPlayListDrawerVisible(!isOpen);

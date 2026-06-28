@@ -37,35 +37,6 @@
             {{ t(`history.categoryTabs.${tab}`) }}
           </div>
         </div>
-
-        <!-- Source Tabs (Local/Cloud) -->
-        <div
-          v-if="currentCategory !== 'podcasts'"
-          class="flex items-center bg-gray-100 dark:bg-neutral-800 rounded-full p-1 h-9 flex-shrink-0"
-        >
-          <button
-            class="px-3 h-7 rounded-full text-xs font-medium transition-all duration-300"
-            :class="
-              currentTab === 'local'
-                ? 'bg-white dark:bg-neutral-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-            "
-            @click="handleTabChange('local')"
-          >
-            {{ t('history.tabs.local') }}
-          </button>
-          <button
-            class="px-3 h-7 rounded-full text-xs font-medium transition-all duration-300"
-            :class="
-              currentTab === 'cloud'
-                ? 'bg-white dark:bg-neutral-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-            "
-            @click="handleTabChange('cloud')"
-          >
-            {{ t('history.tabs.cloud') }}
-          </button>
-        </div>
       </div>
     </div>
 
@@ -90,13 +61,11 @@
               <template v-if="!isMobile">
                 <div
                   class="px-4 text-xs text-gray-400 dark:text-gray-600 font-medium min-w-[60px] text-right"
-                  v-show="currentTab === 'local'"
                 >
                   {{ t('history.playCount', { count: item.count }) }}
                 </div>
                 <div
                   class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
-                  v-show="currentTab === 'local'"
                   @click="handleDelMusic(item)"
                 >
                   <i class="ri-close-line text-lg"></i>
@@ -111,8 +80,8 @@
               v-for="(item, index) in displayList"
               :key="item.id"
               :item="item"
-              :show-count="currentTab === 'local'"
-              :show-delete="currentTab === 'local'"
+              :show-count="true"
+              :show-delete="true"
               class="rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
               :class="setAnimationClass('animate__bounceInRight')"
               :style="setAnimationDelay(index, 30)"
@@ -127,8 +96,8 @@
               v-for="(item, index) in displayList"
               :key="item.id"
               :item="item"
-              :show-count="currentTab === 'local'"
-              :show-delete="currentTab === 'local'"
+              :show-count="true"
+              :show-delete="true"
               class="rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
               :class="setAnimationClass('animate__bounceInRight')"
               :style="setAnimationDelay(index, 30)"
@@ -261,34 +230,20 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import { getMusicDetail } from '@/api/music';
-import { getRecentAlbums, getRecentPlaylists, getRecentSongs } from '@/api/user';
 import AlbumItem from '@/components/common/AlbumItem.vue';
 import { navigateToMusicList } from '@/components/common/MusicListNavigator';
 import PlaylistItem from '@/components/common/PlaylistItem.vue';
 import SongItem from '@/components/common/SongItem.vue';
 import { usePlayerStore } from '@/store/modules/player';
 import { usePlayHistoryStore } from '@/store/modules/playHistory';
-import { useUserStore } from '@/store/modules/user';
 import type { SongResult } from '@/types/music';
 import { isMobile, setAnimationClass, setAnimationDelay } from '@/utils';
 import { mapDjProgramToSongResult } from '@/utils/podcastUtils';
-
-// 扩展历史记录类型以包含 playTime
-interface HistoryRecord extends Partial<SongResult> {
-  id: string | number;
-  playTime?: number;
-  score?: number;
-  source?: 'netease';
-  count?: number;
-  recordSource?: 'local' | 'cloud';
-  sources?: ('local' | 'cloud')[];
-}
 
 const { t } = useI18n();
 const message = useMessage();
 const router = useRouter();
 const playHistoryStore = usePlayHistoryStore();
-const userStore = useUserStore();
 const scrollbarRef = ref();
 const loading = ref(false);
 const noMore = ref(false);
@@ -296,127 +251,20 @@ const displayList = ref<any[]>([]);
 const playerStore = usePlayerStore();
 const hasLoaded = ref(false);
 const currentCategory = ref<'songs' | 'playlists' | 'albums' | 'podcasts'>('songs');
-const currentTab = ref<'local' | 'cloud'>('local');
-const cloudRecords = ref<HistoryRecord[]>([]);
-const cloudPlaylists = ref<any[]>([]);
-const cloudAlbums = ref<any[]>([]);
 const currentPodcastSubTab = ref<'episodes' | 'radios'>('episodes');
 
 // 无限滚动相关配置
 const pageSize = 100;
 const currentPage = ref(1);
 
-// 获取云端播放记录
-const getCloudRecords = async () => {
-  if (!userStore.user?.userId || userStore.loginType !== 'cookie') {
-    message.warning(t('history.needLogin'));
-    return [];
-  }
-
-  try {
-    const res = await getRecentSongs(1000);
-    if (res.data?.data?.list) {
-      return res.data.data.list.map((item: any) => ({
-        id: item.data?.id,
-        playTime: item.playTime,
-        source: 'netease',
-        count: 1,
-        data: item.data
-      }));
-    }
-    return [];
-  } catch (error: any) {
-    console.error(t('history.getCloudRecordFailed'), error);
-    if (error?.response?.status !== 301 && error?.response?.data?.code !== -2) {
-      message.error(t('history.getCloudRecordFailed'));
-    }
-    return [];
-  }
-};
-
-// 获取云端歌单播放记录
-const getCloudPlaylists = async () => {
-  if (!userStore.user?.userId || userStore.loginType !== 'cookie') {
-    message.warning(t('history.needLogin'));
-    return [];
-  }
-
-  try {
-    const res = await getRecentPlaylists(100);
-    if (res.data?.data?.list) {
-      return res.data.data.list.map((item: any) => ({
-        id: item.data?.id,
-        name: item.data?.name,
-        coverImgUrl: item.data?.coverImgUrl,
-        picUrl: item.data?.picUrl,
-        trackCount: item.data?.trackCount,
-        playCount: item.data?.playCount,
-        creator: item.data?.creator,
-        playTime: item.playTime
-      }));
-    }
-    return [];
-  } catch (error: any) {
-    console.error(t('history.getCloudRecordFailed'), error);
-    if (error?.response?.status !== 301 && error?.response?.data?.code !== -2) {
-      message.error(t('history.getCloudRecordFailed'));
-    }
-    return [];
-  }
-};
-
-// 获取云端专辑播放记录
-const getCloudAlbums = async () => {
-  if (!userStore.user?.userId || userStore.loginType !== 'cookie') {
-    message.warning(t('history.needLogin'));
-    return [];
-  }
-
-  try {
-    const res = await getRecentAlbums(100);
-    if (res.data?.data?.list) {
-      return res.data.data.list.map((item: any) => ({
-        id: item.data?.id,
-        name: item.data?.name,
-        picUrl: item.data?.picUrl,
-        size: item.data?.size,
-        artist: item.data?.artist,
-        playTime: item.playTime
-      }));
-    }
-    return [];
-  } catch (error: any) {
-    console.error(t('history.getCloudRecordFailed'), error);
-    if (error?.response?.status !== 301 && error?.response?.data?.code !== -2) {
-      message.error(t('history.getCloudRecordFailed'));
-    }
-    return [];
-  }
-};
-
-// 根据当前分类和tab获取要显示的列表
+// 根据当前分类获取本地历史列表
 const getCurrentList = (): any[] => {
   if (currentCategory.value === 'songs') {
-    switch (currentTab.value) {
-      case 'local':
-        return playHistoryStore.musicHistory;
-      case 'cloud':
-        return cloudRecords.value.filter((item) => item.id);
-    }
+    return playHistoryStore.musicHistory;
   } else if (currentCategory.value === 'playlists') {
-    switch (currentTab.value) {
-      case 'local':
-        return playHistoryStore.playlistHistory;
-      case 'cloud':
-        return cloudPlaylists.value;
-    }
+    return playHistoryStore.playlistHistory;
   } else if (currentCategory.value === 'albums') {
-    switch (currentTab.value) {
-      case 'local':
-        return playHistoryStore.albumHistory;
-      case 'cloud':
-        return cloudAlbums.value;
-    }
+    return playHistoryStore.albumHistory;
   } else if (currentCategory.value === 'podcasts') {
     if (currentPodcastSubTab.value === 'episodes') {
       return playHistoryStore.podcastHistory;
@@ -433,23 +281,6 @@ const handleCategoryChange = async (value: 'songs' | 'playlists' | 'albums' | 'p
   currentPage.value = 1;
   noMore.value = false;
   displayList.value = [];
-
-  if (value === 'podcasts') {
-    currentTab.value = 'local';
-  }
-
-  // 如果切换到云端，且还没有加载对应的云端数据，则加载
-  if (currentTab.value === 'cloud') {
-    loading.value = true;
-    if (value === 'songs' && cloudRecords.value.length === 0) {
-      cloudRecords.value = await getCloudRecords();
-    } else if (value === 'playlists' && cloudPlaylists.value.length === 0) {
-      cloudPlaylists.value = await getCloudPlaylists();
-    } else if (value === 'albums' && cloudAlbums.value.length === 0) {
-      cloudAlbums.value = await getCloudAlbums();
-    }
-    loading.value = false;
-  }
 
   await loadHistoryData();
 };
@@ -637,29 +468,6 @@ const handleScroll = (e: any) => {
 // 播放全部
 const handlePlay = () => {
   playerStore.setPlayList(displayList.value);
-};
-
-// 处理 tab 切换
-const handleTabChange = async (value: 'local' | 'cloud') => {
-  currentTab.value = value;
-  currentPage.value = 1;
-  noMore.value = false;
-  displayList.value = [];
-
-  // 如果切换到云端，且还没有加载对应的云端数据，则加载
-  if (value === 'cloud') {
-    loading.value = true;
-    if (currentCategory.value === 'songs' && cloudRecords.value.length === 0) {
-      cloudRecords.value = await getCloudRecords();
-    } else if (currentCategory.value === 'playlists' && cloudPlaylists.value.length === 0) {
-      cloudPlaylists.value = await getCloudPlaylists();
-    } else if (currentCategory.value === 'albums' && cloudAlbums.value.length === 0) {
-      cloudAlbums.value = await getCloudAlbums();
-    }
-    loading.value = false;
-  }
-
-  await loadHistoryData();
 };
 
 onMounted(async () => {

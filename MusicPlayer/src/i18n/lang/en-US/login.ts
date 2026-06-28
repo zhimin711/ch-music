@@ -3,7 +3,8 @@ export default {
     qr: 'QR Code Login',
     phone: 'Phone Login',
     cookie: 'Cookie Login',
-    uid: 'UID Login'
+    uid: 'UID Login',
+    musicServer: 'MusicServer'
   },
   qrTip: 'Scan with NetEase Cloud Music APP',
   phoneTip: 'Login with NetEase Cloud account',
