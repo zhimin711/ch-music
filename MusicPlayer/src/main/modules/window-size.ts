@@ -286,6 +286,7 @@ class WindowSizeManager {
       height: savedState?.height || DEFAULT_MAIN_HEIGHT,
       minWidth: MIN_WIDTH,
       minHeight: MIN_HEIGHT,
+      title: '朝华音乐',
       show: false,
       frame: false,
       webPreferences: {

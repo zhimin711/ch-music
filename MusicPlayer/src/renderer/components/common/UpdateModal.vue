@@ -13,7 +13,7 @@
         <div
           class="mr-5 h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl shadow-lg ring-2 ring-neutral-100 dark:ring-neutral-800"
         >
-          <img src="@/assets/logo.png" alt="App Icon" class="h-full w-full object-cover" />
+          <img src="@/assets/chaohua-logo.svg" alt="朝华音乐" class="h-full w-full object-cover" />
         </div>
         <div class="min-w-0 flex-1">
           <h2 class="mb-1.5 text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">

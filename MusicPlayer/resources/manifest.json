@@ -1,7 +1,7 @@
 {
-  "name": "Alger Music Player",
-  "short_name": "AlgerMusic",
-  "description": "AlgerMusicPlayer 音乐播放器，支持在线播放、歌词显示、音乐下载等功能。",
+  "name": "朝华音乐",
+  "short_name": "朝华音乐",
+  "description": "朝华音乐，支持在线音乐、私有云音乐库、歌词显示和播放管理。",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

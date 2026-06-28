@@ -1,7 +1,7 @@
 {
-  "name": "AlgerMusicPlayer",
+  "name": "chaohua-music",
   "version": "5.1.0",
-  "description": "Alger Music Player",
+  "description": "朝华音乐",
   "author": "Alger <algerkc@qq.com>",
   "main": "./out/main/index.js",
   "homepage": "https://github.com/algerkong/AlgerMusicPlayer",
@@ -123,7 +123,8 @@
   },
   "build": {
     "appId": "com.alger.music",
-    "productName": "AlgerMusicPlayer",
+    "productName": "朝华音乐",
+    "executableName": "ChaohuaMusic",
     "publish": [
       {
         "provider": "github",
@@ -161,7 +162,7 @@
       "identity": null,
       "type": "distribution",
       "binaries": [
-        "Contents/MacOS/AlgerMusicPlayer"
+        "Contents/MacOS/ChaohuaMusic"
       ]
     },
     "win": {
@@ -215,10 +216,10 @@
       "uninstallerIcon": "resources/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "AlgerMusicPlayer",
+      "shortcutName": "朝华音乐",
       "include": "build/installer.nsh",
       "deleteAppDataOnUninstall": true,
-      "uninstallDisplayName": "AlgerMusicPlayer"
+      "uninstallDisplayName": "朝华音乐"
     }
   },
   "pnpm": {

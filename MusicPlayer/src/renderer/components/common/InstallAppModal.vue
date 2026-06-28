@@ -9,10 +9,10 @@
     <div class="modal-content">
       <div class="modal-header">
         <div class="app-icon">
-          <img src="@/assets/logo.png" alt="App Icon" />
+          <img src="@/assets/chaohua-logo.svg" alt="朝华音乐" />
         </div>
         <div class="app-info">
-          <h2 class="app-name">Alger Music Player {{ config.version }}</h2>
+          <h2 class="app-name">朝华音乐 {{ config.version }}</h2>
           <p class="app-desc mb-2">{{ t('comp.installApp.description') }}</p>
           <n-checkbox v-model:checked="noPrompt">{{ t('comp.installApp.noPrompt') }}</n-checkbox>
         </div>

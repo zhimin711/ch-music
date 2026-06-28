@@ -24,7 +24,7 @@
               <div
                 class="w-20 h-20 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 ring-2 ring-green-500/20"
               >
-                <img src="@/assets/logo.png" alt="App Icon" class="w-full h-full object-cover" />
+                <img src="@/assets/chaohua-logo.svg" alt="朝华音乐" class="w-full h-full object-cover" />
               </div>
 
               <!-- 版本信息 -->

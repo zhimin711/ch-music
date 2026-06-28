@@ -1,0 +1,8 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" rx="56" fill="#111827"/>
+  <path d="M172 52v100.8c0 23.3-18.8 42.2-42 42.2-18.2 0-33-11.7-33-26s14.8-26 33-26c7.4 0 14.2 1.9 19.8 5.2V78.6L172 52Z" fill="#22C55E"/>
+  <path d="M178 49l31 28.7v29.5l-31-26.9V49Z" fill="#86EFAC"/>
+  <text x="55" y="143" fill="white" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-size="76" font-weight="800" letter-spacing="0">朝</text>
+  <path d="M66 175h70" stroke="#E5E7EB" stroke-width="12" stroke-linecap="round"/>
+  <path d="M66 199h48" stroke="#6EE7B7" stroke-width="12" stroke-linecap="round"/>
+</svg>
