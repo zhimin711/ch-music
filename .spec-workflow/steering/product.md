@@ -1,36 +1,73 @@
-# Product Overview
+# 产品概览
 
-## Product Purpose
-CH Music provides a desktop-first personal music experience. MusicPlayer is the computer client, and MusicServer is the private backend that stores accounts, uploaded private music, personal playlists, and favorites.
+## 产品目的
+CH Music 是一个由三个项目共同组成的跨端个人音乐系统：
 
-## Target Users
-Primary users are individuals who want their own music library to follow them across machines without depending on a public music platform.
+- **MusicPlayer**：桌面优先的客户端，负责在线发现、私有音乐播放、下载、歌词、远程控制和日常听歌体验。
+- **AndroidMusicPlayer**：Android 客户端，负责本地音乐播放、移动端听歌、歌单、歌词、桌面小组件、Android Auto，以及接入 MusicServer。
+- **MusicServer**：可自托管的私有音乐后端，负责账号、上传音乐、个人歌单、收藏、头像和鉴权流媒体播放。
 
-## Key Features
-1. **User Login**: Account registration, login, logout, and current user lookup for MusicPlayer.
-2. **Private Music Cloud**: Upload personal audio files and stream them back to the authenticated owner.
-3. **Personal Playlists**: Create, update, delete, and manage tracks in user-owned playlists.
-4. **Favorites**: Maintain a default favorites collection for quick access.
+三者合在一起的目标，是让用户在桌面和 Android 上都能获得熟悉、顺手的音乐体验，同时通过一个小而清晰的后端服务掌控自己的私有曲库数据。
 
-## Business Objectives
-- Make MusicPlayer usable with a self-hosted personal music backend.
-- Keep private music data isolated by account.
-- Provide a small, understandable API surface before adding sync and multi-device features.
+## 目标用户
+主要用户是希望拥有精致音乐播放器体验，同时又不想把个人音乐文件、歌单、收藏和听歌环境完全绑定在商业平台上的个人用户。
 
-## Success Metrics
-- MusicPlayer can register/login and attach a Bearer token to backend requests.
-- A user can upload, list, stream, favorite, and place private songs into playlists.
-- Backend can start locally with no external database required.
+次要用户是愿意本地运行或自托管后端的开发者、发烧友和高级用户。他们希望在已有桌面端和移动端音乐播放器基础上，扩展出自己的私有音乐云。
 
-## Product Principles
-1. **Private by Default**: User music is visible only to the owner.
-2. **Desktop Client Friendly**: APIs favor simple JSON and multipart calls that Electron can consume directly.
-3. **Self-hostable First**: Local development uses embedded storage, while production can move to PostgreSQL.
+核心需求和痛点：
 
-## Monitoring & Visibility
-- **Dashboard Type**: None for the initial backend; MusicPlayer is the main user interface.
-- **Real-time Updates**: Future versions can add WebSocket or polling-based library sync.
-- **Key Metrics Displayed**: Future server health, library size, and upload progress.
+- 个人音频文件可以在桌面和 Android 之间访问。
+- 歌单和收藏不被锁定在单一商业音乐平台里。
+- 保留本地播放质量、歌词、元数据和成熟播放器体验。
+- 开发环境可以简单启动，不依赖复杂服务器或外部数据库。
+- 账号数据、上传文件、收藏和歌单必须按用户隔离。
 
-## Future Vision
-MusicServer can grow into a private music cloud with lyrics, transcoding, device sync, remote access, search, and background metadata extraction.
+## 核心功能
+1. **桌面听歌体验**：MusicPlayer 提供搜索、推荐、歌单、MV、专辑、排行榜、歌词、桌面歌词、EQ、下载、快捷键、迷你模式、远程控制和多语言界面。
+2. **Android 听歌体验**：AndroidMusicPlayer 提供本地曲库播放、Material You 风格、歌单、歌词、播放队列、小组件、锁屏控制、Android Auto、普通构建中的 Chromecast，以及移动端个人资料流程。
+3. **私有音乐后端**：MusicServer 支持注册、登录、登出、个人资料和头像管理、音乐上传、鉴权流媒体播放、歌单、收藏，以及按归属用户隔离的数据访问。
+4. **跨客户端私有曲库访问**：桌面端和 Android 端都通过 `/api/auth`、`/api/music`、`/api/playlists`、`/api/favorites` 接入 MusicServer。
+5. **混合曲库模型**：客户端继续支持本地音乐和在线音乐，同时由 MusicServer 管理私有上传歌曲，以及加入歌单的外部或本地歌曲引用。
+6. **自托管开发路径**：MusicServer 默认在 `http://localhost:8080` 启动，使用 H2 和文件系统存储，同时保留 PostgreSQL 依赖，为后续部署留出空间。
+
+## 业务目标
+- 将仓库从几个相对独立的音乐项目，收束成一个连贯的 CH Music 生态。
+- 让 MusicServer 成为桌面端和 Android 端共享的稳定私有曲库契约。
+- 保留每个客户端项目已有优势，避免为了统一而大规模重写。
+- 先把后端范围控制清楚：账号、资料、音乐、歌单、收藏和流媒体播放。
+- 为未来同步能力打基础，同时不破坏当前本地播放工作流。
+
+## 成功指标
+- 用户可以在 MusicPlayer 和 AndroidMusicPlayer 中登录同一个 MusicServer 实例。
+- 用户可以上传私有音乐、在线播放、添加或移除收藏，并在支持的客户端管理歌单。
+- 收藏和歌单始终按认证用户隔离，不会在账号之间泄漏。
+- 桌面端和 Android 端在没有 MusicServer 时仍能进行本地或在线播放，配置 MusicServer 后获得私有曲库能力。
+- MusicServer 可以使用嵌入式存储在本地启动，不要求外部数据库。
+- 共享 REST API 保持小而稳定，并有足够文档支撑两个客户端接入。
+
+## 产品原则
+1. **用户拥有曲库**：私有音乐文件、歌单、收藏和个人资料属于用户，数据结构应尽量可理解、可迁移。
+2. **客户端体验优先**：后端能力应自然融入桌面端和 Android 端流程，而不是变成割裂的管理后台。
+3. **保持本地播放能力**：MusicServer 集成不能削弱现有本地播放、在线发现、歌词、下载、快捷键、小组件和移动端系统集成。
+4. **默认可自托管**：本地设置要简单，开发默认值要可用，同时保留生产存储迁移路径。
+5. **稳定 API 边界**：客户端只通过明确的 HTTP API 和稳定响应结构访问 MusicServer。
+6. **隐私和归属隔离**：每个受保护的后端操作都必须鉴权，并限制在当前用户的数据范围内。
+7. **渐进式整合**：优先做小而可验证的跨客户端改进，避免一次性横跨三个项目的大改。
+
+## 监控与可见性
+- **仪表盘类型**：当前没有独立产品仪表盘；MusicPlayer 和 AndroidMusicPlayer 是主要用户界面。
+- **实时更新**：当前集成以请求和刷新为主。未来曲库同步可以采用轮询、Server-Sent Events 或 WebSocket。
+- **关键可见信息**：客户端应重点展示登录状态、上传进度、曲库规模、歌单内容、收藏状态和播放可用性。
+- **共享能力**：当前不包含公开分享流程。未来如果加入远程访问或分享，也必须保持默认私有。
+
+## 未来愿景
+CH Music 可以演进成一个个人音乐云：让桌面和 Android 播放体验保持同步，同时继续尊重本地文件和自托管控制权。
+
+### 潜在增强
+- **远程访问**：从局域网外安全访问家中的 MusicServer。
+- **曲库同步**：跨设备同步收藏、歌单、最近播放、播放队列和用户偏好。
+- **元数据增强**：服务端提取音频元数据、管理专辑封面、存储歌词、基于校验和去重、修正标签信息。
+- **流媒体增强**：支持 Range 请求、转码、离线缓存和移动端带宽控制。
+- **统一搜索与发现**：跨上传音乐、桌面在线来源和 Android 本地媒体进行统一搜索。
+- **协作能力**：家庭账号、共享歌单、邀请访问，以及评论或标注能力。
+- **运行可见性**：为 MusicServer 增加轻量健康状态页，展示存储占用、活跃客户端、错误和最近同步活动。
