@@ -179,12 +179,28 @@
     <n-modal v-model:show="profileModalVisible" preset="card" title="编辑个人资料" class="profile-modal">
       <div class="profile-form">
         <n-input v-model:value="profileForm.displayName" placeholder="显示名称" maxlength="120" />
-        <n-input v-model:value="profileForm.avatarUrl" placeholder="头像 URL（可选）" />
+        <div class="avatar-upload-row">
+          <input
+            ref="avatarFileInput"
+            class="hidden"
+            type="file"
+            accept="image/*"
+            @change="handleAvatarFileChange"
+          />
+          <n-button @click="avatarFileInput?.click()">
+            <template #icon>
+              <i class="ri-upload-cloud-line" />
+            </template>
+            上传头像
+          </n-button>
+          <span class="avatar-file-name">{{ selectedAvatarFile?.name || '未选择图片' }}</span>
+        </div>
+        <n-input v-model:value="profileForm.avatarUrl" placeholder="头像 URL（可选，上传后自动填写）" />
         <div class="profile-preview">
-          <n-avatar round :size="48" :src="getImgUrl(profileForm.avatarUrl, '50y50')" />
+          <n-avatar round :size="48" :src="getImgUrl(avatarPreviewUrl || profileForm.avatarUrl, '50y50')" />
           <div class="profile-preview-text">
             <div>{{ profileForm.displayName || user?.nickname }}</div>
-            <div>保存后会同步到 MusicServer</div>
+            <div>{{ selectedAvatarFile ? '保存后会上传到 MusicServer' : '保存后会同步到 MusicServer' }}</div>
           </div>
         </div>
         <div class="profile-actions">
@@ -233,6 +249,9 @@ const profileForm = ref({
   displayName: '',
   avatarUrl: ''
 });
+const avatarFileInput = ref<HTMLInputElement | null>(null);
+const selectedAvatarFile = ref<File | null>(null);
+const avatarPreviewUrl = ref('');
 
 // Tab 相关
 const tabs = [
@@ -294,6 +313,7 @@ const goToImportPlaylist = () => {
 
 onBeforeUnmount(() => {
   mounted.value = false;
+  revokeAvatarPreview();
 });
 
 // 检查登录状态
@@ -438,11 +458,46 @@ const handleLoginSuccess = () => {
 };
 
 const openProfileEditor = () => {
+  clearSelectedAvatarFile();
   profileForm.value = {
     displayName: user.value?.nickname || '',
     avatarUrl: user.value?.avatarUrl || ''
   };
   profileModalVisible.value = true;
+};
+
+const revokeAvatarPreview = () => {
+  if (avatarPreviewUrl.value) {
+    URL.revokeObjectURL(avatarPreviewUrl.value);
+    avatarPreviewUrl.value = '';
+  }
+};
+
+const clearSelectedAvatarFile = () => {
+  selectedAvatarFile.value = null;
+  revokeAvatarPreview();
+  if (avatarFileInput.value) avatarFileInput.value.value = '';
+};
+
+const handleAvatarFileChange = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0] || null;
+  if (!file) {
+    clearSelectedAvatarFile();
+    return;
+  }
+  if (!file.type.startsWith('image/')) {
+    message.warning('请选择图片文件');
+    clearSelectedAvatarFile();
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    message.warning('头像图片不能超过 5MB');
+    clearSelectedAvatarFile();
+    return;
+  }
+  revokeAvatarPreview();
+  selectedAvatarFile.value = file;
+  avatarPreviewUrl.value = URL.createObjectURL(file);
 };
 
 const saveProfile = async () => {
@@ -454,10 +509,16 @@ const saveProfile = async () => {
 
   profileSaving.value = true;
   try {
+    let avatarUrl = profileForm.value.avatarUrl.trim();
+    if (selectedAvatarFile.value) {
+      const uploadedUser = await userStore.uploadMusicServerProfileAvatar(selectedAvatarFile.value);
+      avatarUrl = uploadedUser.avatarUrl || '';
+    }
     await userStore.updateMusicServerProfile({
       displayName,
-      avatarUrl: profileForm.value.avatarUrl.trim()
+      avatarUrl
     });
+    clearSelectedAvatarFile();
     profileModalVisible.value = false;
     message.success('个人资料已更新');
   } catch (error: any) {
@@ -467,6 +528,12 @@ const saveProfile = async () => {
     profileSaving.value = false;
   }
 };
+
+watch(profileModalVisible, (visible) => {
+  if (!visible) {
+    clearSelectedAvatarFile();
+  }
+});
 
 const isLoggedIn = computed(() => userStore.user);
 const currentLoginType = computed(() => userStore.loginType);
@@ -628,6 +695,14 @@ const currentLoginType = computed(() => userStore.loginType);
 
 .profile-preview {
   @apply flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-neutral-800;
+}
+
+.avatar-upload-row {
+  @apply flex items-center gap-3;
+}
+
+.avatar-file-name {
+  @apply min-w-0 flex-1 truncate text-sm text-gray-400;
 }
 
 .profile-preview-text {

@@ -6,7 +6,8 @@ import {
   getMusicServerToken,
   listMusicServerPlaylists,
   logoutMusicServer,
-  updateMusicServerMe
+  updateMusicServerMe,
+  uploadMusicServerAvatar
 } from '@/api/musicServer';
 import type { IUserDetail } from '@/types/user';
 import type { MusicServerPlaylist, MusicServerUser } from '@/types/musicServer';
@@ -170,6 +171,24 @@ export const useUserStore = defineStore('user', () => {
     return nextUser;
   };
 
+  const applyMusicServerUser = async (data: MusicServerUser) => {
+    const nextUser = toUserData(data);
+    user.value = nextUser;
+    userDetail.value = toUserDetail(nextUser);
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    localStorage.setItem('musicServerUser', JSON.stringify(data));
+    const { useMusicServerStore } = await import('./musicServer');
+    useMusicServerStore().user = data;
+    return nextUser;
+  };
+
+  const uploadMusicServerProfileAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await uploadMusicServerAvatar(formData);
+    return applyMusicServerUser(data);
+  };
+
   // 初始化专辑列表
   const initializeAlbumList = async () => {
     albumList.value = [];
@@ -243,6 +262,7 @@ export const useUserStore = defineStore('user', () => {
     setSearchType,
     initializeUser,
     updateMusicServerProfile,
+    uploadMusicServerProfileAvatar,
     initializePlaylist,
     initializeAlbumList,
     initializeCollectedAlbums,

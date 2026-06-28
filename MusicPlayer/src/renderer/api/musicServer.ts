@@ -82,6 +82,12 @@ export function updateMusicServerMe(payload: { displayName: string; avatarUrl?: 
   return musicServerRequest.put<MusicServerUser>('/api/auth/me', payload);
 }
 
+export function uploadMusicServerAvatar(formData: FormData) {
+  return musicServerRequest.post<MusicServerUser>('/api/auth/me/avatar', formData, {
+    timeout: 0
+  });
+}
+
 export function listMusicServerMusic() {
   return musicServerRequest.get<MusicServerMusic[]>('/api/music');
 }

@@ -21,6 +21,7 @@ import {
   setMusicServerBaseUrl,
   setMusicServerToken,
   updateMusicServerMe,
+  uploadMusicServerAvatar,
   uploadMusicServerMusic
 } from '@/api/musicServer';
 import type {
@@ -132,6 +133,15 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     return data;
   };
 
+  const uploadAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await uploadMusicServerAvatar(formData);
+    user.value = data;
+    persistUser(data);
+    return data;
+  };
+
   const loadMusic = async () => {
     const { data } = await listMusicServerMusic();
     musicList.value = data;
@@ -229,6 +239,7 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     logout,
     restoreSession,
     updateProfile,
+    uploadAvatar,
     loadMusic,
     loadPlaylists,
     loadFavorites,

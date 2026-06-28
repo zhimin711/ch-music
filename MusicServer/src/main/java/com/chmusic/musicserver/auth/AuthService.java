@@ -57,6 +57,14 @@ public class AuthService {
         return UserResponse.from(user);
     }
 
+    @Transactional
+    public UserResponse updateAvatar(AppUser currentUser, String avatarUrl) {
+        AppUser user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        user.updateProfile(user.getDisplayName(), blankToNull(avatarUrl));
+        return UserResponse.from(user);
+    }
+
     private static String normalizeUsername(String username) {
         return username.trim().toLowerCase(Locale.ROOT);
     }
