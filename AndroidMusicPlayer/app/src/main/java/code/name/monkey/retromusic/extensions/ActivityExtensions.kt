@@ -46,7 +46,7 @@ inline fun <reified T : Any> Activity.extraNotNull(key: String, default: T? = nu
     requireNotNull(if (value is T) value else default) { key }
 }
 
-fun Activity.dip(@DimenRes id: Int): Int {
+fun Activity.dimen(@DimenRes id: Int): Int {
     return resources.getDimensionPixelSize(id)
 }
 

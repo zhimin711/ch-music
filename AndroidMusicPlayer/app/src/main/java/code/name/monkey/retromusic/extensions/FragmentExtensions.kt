@@ -95,6 +95,10 @@ fun Fragment.applyToolbar(toolbar: MaterialToolbar) {
     (requireActivity() as AppCompatActivity).applyToolbar(toolbar)
 }
 
-fun Fragment.dip(@DimenRes id: Int): Int {
+fun Fragment.dimen(@DimenRes id: Int): Int {
     return resources.getDimensionPixelSize(id)
 }
+
+fun Fragment.dip(value: Int): Int = requireContext().dip(value)
+
+fun Fragment.dip(value: Float): Int = requireContext().dip(value)

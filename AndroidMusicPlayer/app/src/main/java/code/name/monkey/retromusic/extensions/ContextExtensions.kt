@@ -24,3 +24,7 @@ val Context.isTablet: Boolean get() = resources.configuration.smallestScreenWidt
 fun Context.getTintedDrawable(@DrawableRes id: Int, @ColorInt color: Int): Drawable {
     return ContextCompat.getDrawable(this, id)?.tint(color)!!
 }
+
+fun Context.dip(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+fun Context.dip(value: Float): Int = (value * resources.displayMetrics.density).toInt()

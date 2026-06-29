@@ -45,7 +45,7 @@ import code.name.monkey.retromusic.adapter.Storage
 import code.name.monkey.retromusic.adapter.StorageAdapter
 import code.name.monkey.retromusic.adapter.StorageClickListener
 import code.name.monkey.retromusic.databinding.FragmentFolderBinding
-import code.name.monkey.retromusic.extensions.dip
+import code.name.monkey.retromusic.extensions.dimen
 
 import code.name.monkey.retromusic.extensions.showToast
 import code.name.monkey.retromusic.extensions.textColorPrimary
@@ -421,7 +421,7 @@ class FoldersFragment : AbsMainActivityFragment(R.layout.fragment_folder),
     private fun checkForMargins() {
         if (mainActivity.isBottomNavVisible) {
             binding.recyclerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = dip(R.dimen.bottom_nav_height)
+                bottomMargin = dimen(R.dimen.bottom_nav_height)
             }
         }
     }

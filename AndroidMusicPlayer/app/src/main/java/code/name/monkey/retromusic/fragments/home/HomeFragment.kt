@@ -36,7 +36,7 @@ import code.name.monkey.retromusic.databinding.FragmentHomeBinding
 import code.name.monkey.retromusic.dialogs.CreatePlaylistDialog
 import code.name.monkey.retromusic.dialogs.ImportPlaylistDialog
 import code.name.monkey.retromusic.extensions.accentColor
-import code.name.monkey.retromusic.extensions.dip
+import code.name.monkey.retromusic.extensions.dimen
 import code.name.monkey.retromusic.extensions.elevatedAccentColor
 import code.name.monkey.retromusic.extensions.setUpMediaRouteButton
 import code.name.monkey.retromusic.fragments.ReloadType
@@ -192,7 +192,7 @@ class HomeFragment :
     private fun checkForMargins() {
         if (mainActivity.isBottomNavVisible) {
             binding.recyclerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = dip(R.dimen.bottom_nav_height)
+                bottomMargin = dimen(R.dimen.bottom_nav_height)
             }
         }
     }

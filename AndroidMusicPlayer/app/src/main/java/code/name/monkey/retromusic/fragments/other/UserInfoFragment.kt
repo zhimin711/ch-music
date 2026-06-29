@@ -122,20 +122,20 @@ class UserInfoFragment : Fragment() {
         postponeEnterTransition()
         view.doOnPreDraw { startPostponedEnterTransition() }
         libraryViewModel.getFabMargin().observe(viewLifecycleOwner) {
-            binding.refresh.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            binding.refresh?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 bottomMargin = it + dip(16)
             }
         }
     }
 
     private fun setupStaticUi() {
-        binding.accountSubtitle.text = MusicServerDefaults.baseUrl
+        binding.accountSubtitle?.text = MusicServerDefaults.baseUrl
         binding.nameContainer.accentColor()
-        binding.usernameContainer.accentColor()
-        binding.passwordContainer.accentColor()
-        binding.displayNameContainer.accentColor()
-        binding.authModeGroup.check(R.id.loginMode)
-        binding.displayNameContainer.isGone = true
+        binding.usernameContainer?.accentColor()
+        binding.passwordContainer?.accentColor()
+        binding.displayNameContainer?.accentColor()
+        binding.authModeGroup?.check(R.id.loginMode)
+        binding.displayNameContainer?.isGone = true
         loadProfile()
     }
 
@@ -150,29 +150,30 @@ class UserInfoFragment : Fragment() {
                 showLocalUserImageOptions()
             }
         }
-        binding.authModeGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+        binding.authModeGroup?.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
             registerMode = checkedId == R.id.registerMode
-            binding.displayNameContainer.isVisible = registerMode
-            binding.authSubmit.setText(if (registerMode) R.string.register else R.string.login)
+            binding.displayNameContainer?.isVisible = registerMode
+            binding.authSubmit?.setText(if (registerMode) R.string.register else R.string.login)
         }
-        binding.authSubmit.setOnClickListener { submitAuth() }
-        binding.saveProfile.setOnClickListener { saveProfile() }
-        binding.uploadAvatar.setOnClickListener {
+        binding.authSubmit?.setOnClickListener { submitAuth() }
+        binding.saveProfile?.setOnClickListener { saveProfile() }
+        binding.next?.setOnClickListener { saveProfile() }
+        binding.uploadAvatar?.setOnClickListener {
             pickAvatarLauncher.launch(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
             )
         }
-        binding.logout.setOnClickListener {
+        binding.logout?.setOnClickListener {
             runServerAction { musicServerRepository.logout() }
         }
-        binding.refresh.setOnClickListener {
+        binding.refresh?.setOnClickListener {
             runServerAction { musicServerRepository.refreshAll() }
         }
-        binding.uploadMusic.setOnClickListener {
+        binding.uploadMusic?.setOnClickListener {
             pickMusicLauncher.launch(arrayOf("audio/*"))
         }
-        binding.createPlaylist.setOnClickListener {
+        binding.createPlaylist?.setOnClickListener {
             showPlaylistEditorDialog()
         }
     }
@@ -195,9 +196,9 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun submitAuth() {
-        val username = binding.username.text.toString().trim()
-        val password = binding.password.text.toString()
-        val displayName = binding.displayName.text.toString().trim().takeIf { it.isNotBlank() }
+        val username = binding.username?.text?.toString()?.trim().orEmpty()
+        val password = binding.password?.text?.toString().orEmpty()
+        val displayName = binding.displayName?.text?.toString()?.trim()?.takeIf { it.isNotBlank() }
         if (username.isBlank() || password.isBlank()) {
             showToast("Username and password are required")
             return
@@ -225,13 +226,13 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun render(state: MusicServerState) {
-        binding.loginGroup.isVisible = !state.isLoggedIn
-        binding.accountGroup.isVisible = state.isLoggedIn
-        binding.refresh.isVisible = state.isLoggedIn
+        binding.loginGroup?.isVisible = !state.isLoggedIn
+        binding.accountGroup?.isVisible = state.isLoggedIn
+        binding.refresh?.isVisible = state.isLoggedIn
 
         val user = state.user
-        binding.accountTitle.text = user?.displayLabel ?: getString(R.string.music_server)
-        binding.accountSubtitle.text = if (user == null) {
+        binding.accountTitle?.text = user?.displayLabel ?: getString(R.string.music_server)
+        binding.accountSubtitle?.text = if (user == null) {
             MusicServerDefaults.baseUrl
         } else {
             "${user.username} · ${MusicServerDefaults.baseUrl}"
@@ -254,13 +255,13 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun renderMusicList(state: MusicServerState) {
-        binding.musicList.removeAllViews()
+        binding.musicList?.removeAllViews()
         if (state.music.isEmpty()) {
-            binding.musicList.addView(emptyText("No private music"))
+            binding.musicList?.addView(emptyText("No private music"))
             return
         }
         state.music.forEach { music ->
-            binding.musicList.addView(
+            binding.musicList?.addView(
                 musicRow(
                     music = music,
                     isFavorite = state.favorites.any { it.music.stableMusicId == music.stableMusicId },
@@ -271,13 +272,13 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun renderFavoriteList(state: MusicServerState) {
-        binding.favoriteList.removeAllViews()
+        binding.favoriteList?.removeAllViews()
         if (state.favorites.isEmpty()) {
-            binding.favoriteList.addView(emptyText("No favorites"))
+            binding.favoriteList?.addView(emptyText("No favorites"))
             return
         }
         state.favorites.forEach { favorite ->
-            binding.favoriteList.addView(
+            binding.favoriteList?.addView(
                 musicRow(
                     music = favorite.music,
                     isFavorite = true,
@@ -288,9 +289,9 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun renderPlaylistList(state: MusicServerState) {
-        binding.playlistList.removeAllViews()
+        binding.playlistList?.removeAllViews()
         if (state.playlists.isEmpty()) {
-            binding.playlistList.addView(emptyText("No playlists"))
+            binding.playlistList?.addView(emptyText("No playlists"))
             return
         }
         state.playlists.forEach { playlist ->
@@ -323,7 +324,7 @@ class UserInfoFragment : Fragment() {
             row.addView(subtitle)
             row.addView(buttonRow(play, details, edit, delete))
             row.addView(buttonRow(addLocal))
-            binding.playlistList.addView(row)
+            binding.playlistList?.addView(row)
         }
     }
 
@@ -568,7 +569,7 @@ class UserInfoFragment : Fragment() {
 
     private fun runServerAction(showErrors: Boolean = true, action: suspend () -> Unit) {
         viewLifecycleOwner.lifecycleScope.launch {
-            binding.refresh.isEnabled = false
+            binding.refresh?.isEnabled = false
             try {
                 withContext(Dispatchers.IO) { action() }
             } catch (error: Throwable) {
@@ -576,7 +577,7 @@ class UserInfoFragment : Fragment() {
                     showToast(error.message ?: getString(R.string.error_load_failed))
                 }
             } finally {
-                binding.refresh.isEnabled = true
+                binding.refresh?.isEnabled = true
             }
         }
     }

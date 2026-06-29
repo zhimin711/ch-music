@@ -151,7 +151,7 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
     private fun checkForMargins() {
         if (mainActivity.isBottomNavVisible) {
             binding.recyclerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = dip(R.dimen.bottom_nav_height)
+                bottomMargin = dimen(R.dimen.bottom_nav_height)
             }
         }
     }

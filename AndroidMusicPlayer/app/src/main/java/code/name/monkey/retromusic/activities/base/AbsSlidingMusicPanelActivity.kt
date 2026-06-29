@@ -55,7 +55,7 @@ import code.name.monkey.retromusic.activities.PermissionActivity
 import code.name.monkey.retromusic.databinding.SlidingMusicPanelLayoutBinding
 import code.name.monkey.retromusic.extensions.currentFragment
 import code.name.monkey.retromusic.extensions.darkAccentColor
-import code.name.monkey.retromusic.extensions.dip
+import code.name.monkey.retromusic.extensions.dimen
 import code.name.monkey.retromusic.extensions.getBottomInsets
 import code.name.monkey.retromusic.extensions.hide
 import code.name.monkey.retromusic.extensions.isColorLight
@@ -527,14 +527,14 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
         animate: Boolean = false,
         isBottomNavVisible: Boolean = navigationView.isVisible && navigationView is BottomNavigationView,
     ) {
-        val heightOfBar = windowInsets.getBottomInsets() + dip(R.dimen.mini_player_height)
-        val heightOfBarWithTabs = heightOfBar + dip(R.dimen.bottom_nav_height)
+        val heightOfBar = windowInsets.getBottomInsets() + dimen(R.dimen.mini_player_height)
+        val heightOfBarWithTabs = heightOfBar + dimen(R.dimen.bottom_nav_height)
         if (hide) {
             bottomSheetBehavior.peekHeight = (-windowInsets.getBottomInsets()).coerceAtLeast(0)
             bottomSheetBehavior.state = STATE_COLLAPSED
             libraryViewModel.setFabMargin(
                 this,
-                if (isBottomNavVisible) dip(R.dimen.bottom_nav_height) else 0
+                if (isBottomNavVisible) dimen(R.dimen.bottom_nav_height) else 0
             )
         } else {
             if (MusicPlayerRemote.playingQueue.isNotEmpty()) {
@@ -549,7 +549,7 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
                     }
                     libraryViewModel.setFabMargin(
                         this,
-                        dip(R.dimen.bottom_nav_mini_player_height)
+                        dimen(R.dimen.bottom_nav_mini_player_height)
                     )
                 } else {
                     logD("Details")
@@ -561,7 +561,7 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
                         bottomSheetBehavior.peekHeight = heightOfBar
                         binding.slidingPanel.bringToFront()
                     }
-                    libraryViewModel.setFabMargin(this, dip(R.dimen.mini_player_height))
+                    libraryViewModel.setFabMargin(this, dimen(R.dimen.mini_player_height))
                 }
             }
         }
