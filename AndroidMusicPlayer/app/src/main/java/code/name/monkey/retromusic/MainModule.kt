@@ -15,6 +15,8 @@ import code.name.monkey.retromusic.network.provideDefaultCache
 import code.name.monkey.retromusic.network.provideLastFmRest
 import code.name.monkey.retromusic.network.provideLastFmRetrofit
 import code.name.monkey.retromusic.network.provideOkHttp
+import code.name.monkey.retromusic.musicserver.MusicServerCacheManager
+import code.name.monkey.retromusic.musicserver.MusicServerDataSourceFactory
 import code.name.monkey.retromusic.musicserver.MusicServerRepository
 import code.name.monkey.retromusic.musicserver.MusicServerSession
 import code.name.monkey.retromusic.musicserver.provideMusicServerApi
@@ -154,8 +156,17 @@ private val dataModule = module {
     }
 
     single {
+        MusicServerCacheManager(androidContext(), provideMusicServerOkHttp(get()))
+    }
+
+    single {
+        MusicServerDataSourceFactory(androidContext(), get(), get())
+    }
+
+    single {
         MusicServerRepository(
             provideMusicServerApi(provideMusicServerOkHttp(get())),
+            get(),
             get()
         )
     }

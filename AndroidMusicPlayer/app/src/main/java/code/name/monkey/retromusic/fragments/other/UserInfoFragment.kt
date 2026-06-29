@@ -36,6 +36,8 @@ import code.name.monkey.retromusic.glide.RetroGlideExtension.profileBannerOption
 import code.name.monkey.retromusic.glide.RetroGlideExtension.userProfileOptions
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
+import code.name.monkey.retromusic.musicserver.MusicServerCacheEntry
+import code.name.monkey.retromusic.musicserver.MusicServerCacheState
 import code.name.monkey.retromusic.musicserver.MusicServerDefaults
 import code.name.monkey.retromusic.musicserver.MusicServerMusic
 import code.name.monkey.retromusic.musicserver.MusicServerPlaylist
@@ -265,7 +267,8 @@ class UserInfoFragment : Fragment() {
                 musicRow(
                     music = music,
                     isFavorite = state.favorites.any { it.music.stableMusicId == music.stableMusicId },
-                    showDelete = true
+                    showDelete = true,
+                    cacheEntry = state.cacheEntryFor(music)
                 )
             )
         }
@@ -282,7 +285,8 @@ class UserInfoFragment : Fragment() {
                 musicRow(
                     music = favorite.music,
                     isFavorite = true,
-                    showDelete = false
+                    showDelete = false,
+                    cacheEntry = state.cacheEntryFor(favorite.music)
                 )
             )
         }
@@ -331,7 +335,8 @@ class UserInfoFragment : Fragment() {
     private fun musicRow(
         music: MusicServerMusic,
         isFavorite: Boolean,
-        showDelete: Boolean
+        showDelete: Boolean,
+        cacheEntry: MusicServerCacheEntry?
     ): View {
         val row = rowContainer()
         val song = musicServerRepository.toSong(music)
@@ -339,6 +344,7 @@ class UserInfoFragment : Fragment() {
         row.addView(subtitleText(listOfNotNull(music.artist, music.album).joinToString(" · ").ifBlank {
             getString(R.string.music_server)
         }))
+        row.addView(subtitleText(cacheStatusText(music, cacheEntry)))
         val play = smallButton(R.string.action_play) { playSongs(listOf(song)) }
         val next = smallButton(R.string.action_play_next) { MusicPlayerRemote.playNext(song) }
         val queue = smallButton(R.string.action_add_to_playing_queue) { MusicPlayerRemote.enqueue(song) }
@@ -353,6 +359,7 @@ class UserInfoFragment : Fragment() {
         secondaryButtons.add(smallTextButton(getString(R.string.action_add_to_playlist)) {
             showAddToPlaylistDialog(music)
         })
+        cacheActionButton(music, cacheEntry)?.let { secondaryButtons.add(it) }
         if (showDelete) {
             secondaryButtons.add(smallButton(R.string.action_delete) {
                 confirm("Delete ${music.title}?") {
@@ -363,6 +370,59 @@ class UserInfoFragment : Fragment() {
         }
         row.addView(buttonRow(*secondaryButtons.toTypedArray()))
         return row
+    }
+
+    private fun MusicServerState.cacheEntryFor(music: MusicServerMusic): MusicServerCacheEntry? {
+        val musicId = music.stableMusicId ?: return null
+        return cacheEntries.values.firstOrNull {
+            it.musicId == musicId && it.profileId == ORIGINAL_PROFILE_ID
+        }
+    }
+
+    private fun cacheStatusText(music: MusicServerMusic, entry: MusicServerCacheEntry?): String {
+        if (music.playback?.supportsOfflineCache == false) {
+            return getString(R.string.cache_status_unavailable)
+        }
+        return when (entry?.state) {
+            null -> getString(R.string.cache_status_not_cached)
+            MusicServerCacheState.QUEUED -> getString(R.string.cache_status_queued)
+            MusicServerCacheState.DOWNLOADING -> getString(R.string.cache_status_downloading)
+            MusicServerCacheState.READY -> getString(R.string.cache_status_ready)
+            MusicServerCacheState.FAILED -> getString(R.string.cache_status_failed)
+            MusicServerCacheState.STALE -> getString(R.string.cache_status_stale)
+            MusicServerCacheState.PAUSED -> getString(R.string.cache_status_paused)
+            MusicServerCacheState.WAITING_FOR_WIFI -> getString(R.string.cache_status_waiting_for_wifi)
+            MusicServerCacheState.STORAGE_LOW -> getString(R.string.cache_status_storage_low)
+        }
+    }
+
+    private fun cacheActionButton(
+        music: MusicServerMusic,
+        entry: MusicServerCacheEntry?
+    ): MaterialButton? {
+        if (music.playback?.supportsOfflineCache == false) return null
+        return when (entry?.state) {
+            MusicServerCacheState.READY -> smallButton(R.string.action_remove_cache) {
+                runServerAction { musicServerRepository.removeCachedMusic(music) }
+            }
+            MusicServerCacheState.DOWNLOADING,
+            MusicServerCacheState.QUEUED -> smallButton(R.string.action_cache_offline) {}.apply {
+                isEnabled = false
+            }
+            MusicServerCacheState.FAILED,
+            MusicServerCacheState.STALE,
+            MusicServerCacheState.PAUSED,
+            MusicServerCacheState.WAITING_FOR_WIFI,
+            MusicServerCacheState.STORAGE_LOW -> smallButton(R.string.action_retry_cache) {
+                runServerAction {
+                    entry?.let { musicServerRepository.retryCachedMusic(it.cacheKey) }
+                    musicServerRepository.downloadCachedMusic(music)
+                }
+            }
+            null -> smallButton(R.string.action_cache_offline) {
+                runServerAction { musicServerRepository.downloadCachedMusic(music) }
+            }
+        }
     }
 
     private fun showAddToPlaylistDialog(music: MusicServerMusic) {
@@ -667,6 +727,10 @@ class UserInfoFragment : Fragment() {
     private fun hideKeyboard() {
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.root.windowToken, 0)
+    }
+
+    private companion object {
+        const val ORIGINAL_PROFILE_ID = "original"
     }
 
     override fun onDestroyView() {

@@ -12,9 +12,16 @@ import java.io.File
 
 class MusicServerRepository(
     private val api: MusicServerApi,
-    private val session: MusicServerSession
+    private val session: MusicServerSession,
+    private val cacheManager: MusicServerCacheManager
 ) {
-    private val _state = MutableStateFlow(MusicServerState(user = session.user))
+    private val _state = MutableStateFlow(
+        MusicServerState(
+            user = session.user,
+            cacheEntries = cacheManager.entriesFor(session.user),
+            cachePolicy = cacheManager.policy.value
+        )
+    )
     val state: StateFlow<MusicServerState> = _state
 
     val currentUser: MusicServerUser?
@@ -130,6 +137,41 @@ class MusicServerRepository(
 
     fun toSong(music: MusicServerMusic): Song = MusicServerSongMapper.toSong(music, session)
 
+    suspend fun cacheMusic(music: MusicServerMusic, profileId: String = ORIGINAL_PROFILE_ID) {
+        val user = currentUser ?: return
+        cacheManager.enqueue(user, music, profileId)
+        updateCacheState(user)
+    }
+
+    suspend fun downloadCachedMusic(music: MusicServerMusic, profileId: String = ORIGINAL_PROFILE_ID) {
+        val user = currentUser ?: return
+        val entry = cacheManager.enqueue(user, music, profileId) ?: return
+        cacheManager.download(entry.cacheKey)
+        updateCacheState(user)
+    }
+
+    suspend fun removeCachedMusic(music: MusicServerMusic, profileId: String = ORIGINAL_PROFILE_ID): Boolean {
+        val user = currentUser ?: return false
+        val musicId = music.stableMusicId ?: return false
+        val cacheKey = cacheKey(user.id, musicId, profileId)
+        val removed = cacheManager.remove(cacheKey)
+        updateCacheState(user)
+        return removed
+    }
+
+    suspend fun retryCachedMusic(cacheKey: String) {
+        val user = currentUser ?: return
+        cacheManager.retry(cacheKey)
+        updateCacheState(user)
+    }
+
+    suspend fun validateCachedMusic(cacheKey: String): MusicServerCacheEntry? {
+        val user = currentUser ?: return null
+        val entry = cacheManager.validate(cacheKey)
+        updateCacheState(user)
+        return entry
+    }
+
     private suspend fun refreshAll(user: MusicServerUser?) {
         if (user == null) {
             clearSession()
@@ -138,16 +180,31 @@ class MusicServerRepository(
         val music = api.music()
         val favorites = api.favorites()
         val playlists = api.playlists()
-        _state.value = MusicServerState(user, music, favorites, playlists)
+        val syncResult = cacheManager.syncIndex(user, music)
+        _state.value = MusicServerState(
+            user = user,
+            music = music,
+            favorites = favorites,
+            playlists = playlists,
+            cacheEntries = syncResult.entries,
+            cachePolicy = cacheManager.policy.value
+        )
     }
 
     private suspend fun refreshPlaylists() {
         _state.value = _state.value.copy(playlists = api.playlists())
     }
 
+    private fun updateCacheState(user: MusicServerUser?) {
+        _state.value = _state.value.copy(
+            cacheEntries = cacheManager.entriesFor(user),
+            cachePolicy = cacheManager.policy.value
+        )
+    }
+
     private fun clearSession() {
         session.clear()
-        _state.value = MusicServerState()
+        _state.value = MusicServerState(cachePolicy = cacheManager.policy.value)
     }
 
     private fun File.toMultipart(partName: String, contentType: String?): MultipartBody.Part {
@@ -158,5 +215,16 @@ class MusicServerRepository(
     private fun String?.asPlainRequestBody(): RequestBody? {
         val value = this?.trim()?.takeIf { it.isNotBlank() } ?: return null
         return value.toRequestBody("text/plain".toMediaTypeOrNull())
+    }
+
+    private fun cacheKey(userId: Long, musicId: Long, profileId: String): String {
+        return java.security.MessageDigest.getInstance("SHA-256")
+            .digest("${MusicServerDefaults.baseUrl}|$userId|$musicId|$profileId".toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+            .take(32)
+    }
+
+    private companion object {
+        const val ORIGINAL_PROFILE_ID = "original"
     }
 }

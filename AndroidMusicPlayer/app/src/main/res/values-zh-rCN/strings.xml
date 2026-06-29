@@ -568,4 +568,17 @@
     <string name="pref_save_last_directory_summary">切换到文件夹视图时恢复上次使用的目录</string>
     <string name="pref_save_last_directory_title">保存上次目录</string>
     <string name="artist_separator_helper_text">To add multiple artists, separate them with: %1$s</string>
+    <string name="action_cache_offline">离线缓存</string>
+    <string name="action_remove_cache">移除缓存</string>
+    <string name="action_retry_cache">重试缓存</string>
+    <string name="cache_status_not_cached">离线缓存：未缓存</string>
+    <string name="cache_status_queued">离线缓存：已排队</string>
+    <string name="cache_status_downloading">离线缓存：正在缓存</string>
+    <string name="cache_status_ready">离线缓存：可离线播放</string>
+    <string name="cache_status_failed">离线缓存：缓存失败</string>
+    <string name="cache_status_stale">离线缓存：需要刷新</string>
+    <string name="cache_status_paused">离线缓存：已暂停</string>
+    <string name="cache_status_waiting_for_wifi">离线缓存：等待 Wi-Fi</string>
+    <string name="cache_status_storage_low">离线缓存：存储空间不足</string>
+    <string name="cache_status_unavailable">离线缓存：不可用</string>
 </resources>
