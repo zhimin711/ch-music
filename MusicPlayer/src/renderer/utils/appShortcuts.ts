@@ -132,9 +132,7 @@ export async function handleShortcutAction(action: ShortcutAction) {
         }
 
         const currentSong = playerStore.playMusic;
-        const favoriteKey =
-          currentSong.source === 'musicServer' ? `musicServer:${currentSong.id}` : currentSong.id;
-        const isFavorite = playerStore.favoriteList.includes(favoriteKey);
+        const isFavorite = playerStore.isFavorite(currentSong);
 
         if (isFavorite) {
           playerStore.removeFromFavorite(currentSong);
