@@ -18,14 +18,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.contains
 import androidx.navigation.ui.setupWithNavController
-import code.name.monkey.retromusic.FAVOURITES
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.activities.base.AbsCastActivity
 import code.name.monkey.retromusic.extensions.*
@@ -86,15 +84,22 @@ class MainActivity : AbsCastActivity() {
         }
         navController.graph = navGraph
         navigationView.setupWithNavController(navController)
+        val drawer = findViewById<NavigationView>(R.id.drawerNavigationView)
+        // Inflate the NetEase-style header (avatar + vip banner)
+        drawer.inflateHeaderView(R.layout.nav_header)
         findViewById<NavigationView>(R.id.drawerNavigationView).setNavigationItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.drawer_profile -> navController.navigate(R.id.user_info_fragment)
-                R.id.drawer_playlists -> navController.navigate(R.id.action_playlist)
-                R.id.drawer_favorites -> navController.navigate(
-                    R.id.detailListFragment,
-                    bundleOf("type" to FAVOURITES)
-                )
-                R.id.drawer_cloud_drive -> navController.navigate(R.id.user_info_fragment)
+                R.id.drawer_vip -> { /* opens the vip offer screen — placeholder */ }
+                R.id.drawer_messages -> { /* navigate to messages when implemented */ }
+                R.id.drawer_cloud_coin -> { /* navigate to cloud coin when implemented */ }
+                R.id.drawer_dress -> { /* navigate to dress center when implemented */ }
+                R.id.drawer_creator -> { /* navigate to creator center when implemented */ }
+                R.id.drawer_recent -> { /* navigate to recent play when implemented */ }
+                R.id.drawer_sleep -> { /* open sleep timer dialog when implemented */ }
+                R.id.drawer_mall -> { /* navigate to mall when implemented */ }
+                R.id.drawer_ticket -> { /* navigate to ticket when implemented */ }
+                R.id.drawer_yuncun_song -> { /* navigate to yuncun song when implemented */ }
+                R.id.drawer_support -> { /* navigate to support when implemented */ }
                 R.id.drawer_settings -> navController.navigate(R.id.settings_fragment)
                 else -> return@setNavigationItemSelectedListener false
             }
@@ -213,28 +218,16 @@ class MainActivity : AbsCastActivity() {
                     handled = true
                 }
             }
-            if (handled) {
-                setIntent(Intent())
-            }
+            return@launch
         }
     }
 
     private fun parseLongFromIntent(
         intent: Intent,
         longKey: String,
-        stringKey: String,
+        stringKey: String
     ): Long {
-        var id = intent.getLongExtra(longKey, -1)
-        if (id < 0) {
-            val idString = intent.getStringExtra(stringKey)
-            if (idString != null) {
-                try {
-                    id = idString.toLong()
-                } catch (e: NumberFormatException) {
-                    logE(e)
-                }
-            }
-        }
-        return id
+        return intent.getLongExtra(longKey, -1L).takeIf { it >= 0L }
+            ?: intent.getStringExtra(stringKey)?.toLongOrNull() ?: -1L
     }
 }

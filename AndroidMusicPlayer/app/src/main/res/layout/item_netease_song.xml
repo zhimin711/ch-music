@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/rectSelector"
+    android:clickable="true"
+    android:focusable="true"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="10dp">
+
+    <code.name.monkey.retromusic.views.RetroShapeableImageView
+        android:id="@+id/songImage"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:retroCornerSize="6dp"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/songTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="15sp"
+        app:layout_constraintEnd_toStartOf="@id/songPlay"
+        app:layout_constraintStart_toEndOf="@id/songImage"
+        app:layout_constraintTop_toTopOf="@id/songImage"
+        tools:text="关山酒（天命轻狂 应似孤鸿游）" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/songMeta"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="4dp"
+        android:alpha="0.65"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="11sp"
+        app:layout_constraintEnd_toStartOf="@id/songPlay"
+        app:layout_constraintStart_toEndOf="@id/songImage"
+        app:layout_constraintTop_toBottomOf="@id/songTitle"
+        tools:text="超48%人收藏 · 萧默然" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/songPlay"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?roundSelector"
+        android:padding="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_play_arrow_outline"
+        app:tint="?attr/colorPrimary" />
+</androidx.constraintlayout.widget.ConstraintLayout>

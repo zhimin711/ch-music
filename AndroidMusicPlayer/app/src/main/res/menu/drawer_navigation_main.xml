@@ -1,30 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:title="@string/personal">
-        <menu>
-            <group android:checkableBehavior="single">
-                <item
-                    android:id="@+id/drawer_profile"
-                    android:icon="@drawable/ic_account"
-                    android:title="@string/profile_info" />
-                <item
-                    android:id="@+id/drawer_playlists"
-                    android:icon="@drawable/asld_playlist"
-                    android:title="@string/playlists" />
-                <item
-                    android:id="@+id/drawer_favorites"
-                    android:icon="@drawable/ic_favorite_border"
-                    android:title="@string/favorites" />
-                <item
-                    android:id="@+id/drawer_cloud_drive"
-                    android:icon="@drawable/ic_info_outline"
-                    android:title="@string/cloud_drive" />
-            </group>
-        </menu>
-    </item>
+    <group android:checkableBehavior="single">
 
-    <item
-        android:id="@+id/drawer_settings"
-        android:icon="@drawable/ic_settings"
-        android:title="@string/action_settings" />
+        <item
+            android:id="@+id/drawer_vip"
+            android:icon="@drawable/ic_vip"
+            android:title="@string/drawer_vip_song"
+            android:actionLayout="@layout/menu_drawer_vip_action" />
+
+        <item
+            android:id="@+id/drawer_messages"
+            android:icon="@drawable/ic_message"
+            android:title="@string/drawer_messages" />
+
+        <item
+            android:id="@+id/drawer_cloud_coin"
+            android:icon="@drawable/ic_cloud_coin"
+            android:title="@string/drawer_cloud_coin" />
+
+        <item
+            android:id="@+id/drawer_dress"
+            android:icon="@drawable/ic_dress"
+            android:title="@string/drawer_dress" />
+
+        <item
+            android:id="@+id/drawer_creator"
+            android:icon="@drawable/ic_creator"
+            android:title="@string/drawer_creator" />
+
+        <item
+            android:id="@+id/drawer_recent"
+            android:icon="@drawable/ic_recent_play"
+            android:title="@string/drawer_recent" />
+
+        <item
+            android:id="@+id/drawer_sleep"
+            android:icon="@drawable/ic_sleep_timer"
+            android:title="@string/drawer_sleep" />
+
+        <item
+            android:id="@+id/drawer_mall"
+            android:icon="@drawable/ic_mall"
+            android:title="@string/drawer_mall" />
+
+        <item
+            android:id="@+id/drawer_ticket"
+            android:icon="@drawable/ic_ticket"
+            android:title="@string/drawer_ticket" />
+
+        <item
+            android:id="@+id/drawer_yuncun_song"
+            android:icon="@drawable/ic_yuncun_song"
+            android:title="@string/drawer_yuncun_song" />
+
+        <item
+            android:id="@+id/drawer_support"
+            android:icon="@drawable/ic_support"
+            android:title="@string/drawer_support" />
+
+        <item
+            android:id="@+id/drawer_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/action_settings" />
+    </group>
 </menu>

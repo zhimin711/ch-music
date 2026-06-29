@@ -27,6 +27,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
 import code.name.monkey.retromusic.util.PreferenceUtil
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.transition.MaterialSharedAxis
 
 fun Fragment.getIntRes(@IntegerRes int: Int): Int {
     return resources.getInteger(int)
@@ -101,4 +102,14 @@ fun Fragment.dimen(@DimenRes id: Int): Int {
 
 fun Fragment.dip(value: Int): Int = requireContext().dip(value)
 
-fun Fragment.dip(value: Float): Int = requireContext().dip(value)
+/**
+ * Configure shared-axis (X) enter/exit transitions for the calling fragment.
+ * Used by [code.name.monkey.retromusic.adapter.HomeAdapter] to animate
+ * navigation between the home screen and detail lists.
+ */
+fun Fragment.setSharedAxisXTransitions() {
+    enterTransition = MaterialSharedAxis(MaterialSharedAxis.X, true)
+    returnTransition = MaterialSharedAxis(MaterialSharedAxis.X, false)
+    exitTransition = MaterialSharedAxis(MaterialSharedAxis.X, true)
+    reenterTransition = MaterialSharedAxis(MaterialSharedAxis.X, false)
+}

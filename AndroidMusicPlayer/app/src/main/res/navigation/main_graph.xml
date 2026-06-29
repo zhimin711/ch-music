@@ -116,6 +116,26 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
+        android:id="@+id/action_notes"
+        android:name="code.name.monkey.retromusic.fragments.misc.PlaceholderFragment"
+        tools:layout="@layout/fragment_placeholder">
+        <argument
+            android:name="arg_title"
+            android:defaultValue="Notes"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/action_mine"
+        android:name="code.name.monkey.retromusic.fragments.misc.PlaceholderFragment"
+        tools:layout="@layout/fragment_placeholder">
+        <argument
+            android:name="arg_title"
+            android:defaultValue="Mine"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
         android:id="@+id/user_info_fragment"
         android:name="code.name.monkey.retromusic.fragments.other.UserInfoFragment" />
 
