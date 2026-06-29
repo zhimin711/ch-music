@@ -176,6 +176,24 @@ export function addMusicServerFavorite(musicId: number) {
   return musicServerRequest.post<MusicServerFavorite[]>(`/api/favorites/${musicId}`);
 }
 
+export function addMusicServerExternalFavorite(payload: {
+  source: string;
+  externalId: string;
+  title: string;
+  artist?: string | null;
+  album?: string | null;
+  picUrl?: string | null;
+  duration?: number | null;
+}) {
+  return musicServerRequest.post<MusicServerFavorite[]>('/api/favorites', payload);
+}
+
 export function removeMusicServerFavorite(musicId: number) {
   return musicServerRequest.delete<MusicServerFavorite[]>(`/api/favorites/${musicId}`);
+}
+
+export function removeMusicServerExternalFavorite(source: string, externalId: string) {
+  return musicServerRequest.delete<MusicServerFavorite[]>('/api/favorites/external', {
+    params: { source, externalId }
+  });
 }

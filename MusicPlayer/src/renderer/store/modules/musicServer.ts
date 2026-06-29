@@ -91,7 +91,12 @@ export const useMusicServerStore = defineStore('musicServer', () => {
       toMusicServerSongResult(music, { playMusicUrl: getCachedPlaybackUrl(music) })
     )
   );
-  const favoriteMusicIds = computed(() => favorites.value.map((item) => item.music.id));
+  const favoriteMusicIds = computed(() =>
+    favorites.value
+      .filter((item) => (item.music.source || 'musicServer') === 'musicServer')
+      .map((item) => Number(item.music.musicId ?? item.music.id))
+      .filter(Number.isFinite)
+  );
   const favoriteSongs = computed(() =>
     favorites.value.map((item) =>
       toMusicServerSongResult(item.music, { playMusicUrl: getCachedPlaybackUrl(item.music) })

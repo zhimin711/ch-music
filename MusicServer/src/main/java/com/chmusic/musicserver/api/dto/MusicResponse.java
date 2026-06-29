@@ -1,5 +1,6 @@
 package com.chmusic.musicserver.api.dto;
 
+import com.chmusic.musicserver.favorite.FavoriteTrack;
 import com.chmusic.musicserver.music.MusicFile;
 import com.chmusic.musicserver.playlist.PlaylistTrack;
 import java.time.Instant;
@@ -63,6 +64,33 @@ public record MusicResponse(String id, Long musicId, Long trackId, String source
                 "",
                 track.getCreatedAt(),
                 track.getCreatedAt(),
+                null,
+                PlaybackCapabilities.unavailable());
+    }
+
+    public static MusicResponse from(FavoriteTrack favorite) {
+        MusicFile music = favorite.getMusic();
+        if (music != null) {
+            return from(music);
+        }
+
+        return new MusicResponse(
+                favorite.getExternalId(),
+                null,
+                favorite.getId(),
+                favorite.getExternalSource(),
+                favorite.getExternalId(),
+                favorite.getTitle(),
+                favorite.getArtist(),
+                favorite.getAlbum(),
+                favorite.getPicUrl(),
+                favorite.getDuration(),
+                favorite.getTitle(),
+                "external/" + favorite.getExternalSource(),
+                0,
+                "",
+                favorite.getCreatedAt(),
+                favorite.getCreatedAt(),
                 null,
                 PlaybackCapabilities.unavailable());
     }
