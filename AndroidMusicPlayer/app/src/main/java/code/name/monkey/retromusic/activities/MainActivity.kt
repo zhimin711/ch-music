@@ -18,9 +18,14 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import androidx.core.os.bundleOf
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
+import com.google.android.material.navigation.NavigationView
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.contains
 import androidx.navigation.ui.setupWithNavController
+import code.name.monkey.retromusic.FAVOURITES
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.activities.base.AbsCastActivity
 import code.name.monkey.retromusic.extensions.*
@@ -39,6 +44,8 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 
 class MainActivity : AbsCastActivity() {
+    private val drawerLayout: DrawerLayout by lazy { findViewById(R.id.drawerLayout) }
+
     companion object {
         const val TAG = "MainActivity"
         const val EXPAND_PANEL = "expand_panel"
@@ -79,6 +86,21 @@ class MainActivity : AbsCastActivity() {
         }
         navController.graph = navGraph
         navigationView.setupWithNavController(navController)
+        findViewById<NavigationView>(R.id.drawerNavigationView).setNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.drawer_profile -> navController.navigate(R.id.user_info_fragment)
+                R.id.drawer_playlists -> navController.navigate(R.id.action_playlist)
+                R.id.drawer_favorites -> navController.navigate(
+                    R.id.detailListFragment,
+                    bundleOf("type" to FAVOURITES)
+                )
+                R.id.drawer_cloud_drive -> navController.navigate(R.id.user_info_fragment)
+                R.id.drawer_settings -> navController.navigate(R.id.settings_fragment)
+                else -> return@setNavigationItemSelectedListener false
+            }
+            drawerLayout.closeDrawer(GravityCompat.START)
+            true
+        }
         // Scroll Fragment to top
         navigationView.setOnItemReselectedListener {
             currentFragment(R.id.fragment_container).apply {
@@ -109,6 +131,10 @@ class MainActivity : AbsCastActivity() {
                 ) // Hide Bottom Navigation Bar
             }
         }
+    }
+
+    fun openDrawer() {
+        drawerLayout.openDrawer(GravityCompat.START)
     }
 
     private fun saveTab(id: Int) {

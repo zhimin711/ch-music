@@ -49,11 +49,7 @@ class LibraryFragment : AbsMainActivityFragment(R.layout.fragment_library) {
         mainActivity.setSupportActionBar(binding.toolbar)
         mainActivity.supportActionBar?.title = null
         binding.toolbar.setNavigationOnClickListener {
-            findNavController().navigate(
-                R.id.action_search,
-                null,
-                navOptions
-            )
+            mainActivity.openDrawer()
         }
         setupNavigationController()
         setupTitle()

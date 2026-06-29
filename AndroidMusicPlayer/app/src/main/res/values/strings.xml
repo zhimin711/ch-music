@@ -445,6 +445,9 @@
     <string name="pro">Pro</string>
     <string name="pro_summary">Black theme, Now playing themes, Carousel effect and more..</string>
     <string name="profile">Profile</string>
+    <string name="personal">Personal</string>
+    <string name="profile_info">Info</string>
+    <string name="cloud_drive">Cloud drive</string>
     <string name="purchase">Purchase</string>
     <string name="queue">Playing Queue</string>
     <string name="rate_app">Rate the app</string>
