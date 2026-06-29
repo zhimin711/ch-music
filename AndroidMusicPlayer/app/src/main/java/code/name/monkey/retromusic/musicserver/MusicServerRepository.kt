@@ -177,6 +177,7 @@ class MusicServerRepository(
             clearSession()
             return
         }
+        resetStateForNewUser(user)
         val music = api.music()
         val favorites = api.favorites()
         val playlists = api.playlists()
@@ -202,9 +203,22 @@ class MusicServerRepository(
         )
     }
 
+    private fun resetStateForNewUser(user: MusicServerUser) {
+        val current = _state.value.user
+        if (current != null && current.id == user.id) return
+        _state.value = MusicServerState(
+            user = user,
+            cacheEntries = cacheManager.entriesFor(user),
+            cachePolicy = cacheManager.policy.value
+        )
+    }
+
     private fun clearSession() {
         session.clear()
-        _state.value = MusicServerState(cachePolicy = cacheManager.policy.value)
+        _state.value = MusicServerState(
+            cacheEntries = emptyMap(),
+            cachePolicy = cacheManager.policy.value
+        )
     }
 
     private fun File.toMultipart(partName: String, contentType: String?): MultipartBody.Part {

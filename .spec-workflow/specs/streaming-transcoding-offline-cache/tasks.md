@@ -123,7 +123,7 @@
   - _Requirements: 6.1, 6.5, 6.7, 8.1, 8.3, 8.6_
   - _Prompt: Implement the task for spec streaming-transcoding-offline-cache, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Android UI developer | Task: Add minimal offline cache controls/status to the existing MusicServer user/library UI | Restrictions: Do not redesign full Retro Music UI; keep strings resource-based; do not block UI thread; hide unavailable actions when cache feature is disabled | _Leverage: UserInfoFragment, MusicServerRepository, Android string resources | _Requirements: 6.1, 6.5, 6.7, 8.1, 8.3, 8.6 | Success: users can see Android cache state and trigger cache/remove/retry from the existing private music surface. Before implementation mark this task [-] in tasks.md, after completion call log-implementation with artifacts and then mark [x]._
 
-- [-] 17. 实现跨端缓存失效和同步规则
+- [x] 17. 实现跨端缓存失效和同步规则
   - Files: `MusicPlayer/src/renderer/store/modules/musicServer.ts`, `AndroidMusicPlayer/app/src/main/java/code/name/monkey/retromusic/musicserver/MusicServerRepository.kt`
   - 客户端刷新私有曲库时同步服务端元数据，标记 stale、missing、ready。
   - 处理退出登录、切换账号、切换服务器地址时的缓存隔离。
@@ -131,14 +131,14 @@
   - _Requirements: 7.2, 7.3, 7.4, 7.5, 7.6_
   - _Prompt: Implement the task for spec streaming-transcoding-offline-cache, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Cross-client integration developer | Task: Implement cache synchronization and invalidation rules in desktop and Android MusicServer session flows | Restrictions: Do not delete user files unexpectedly on logout; never show cache entries from another account/server; offline valid caches may remain playable when explicitly allowed | _Leverage: MusicPlayer musicServer store, Android MusicServerRepository restore/load flows | _Requirements: 7.2-7.6 | Success: both clients mark stale/missing cache entries correctly on refresh and isolate caches by server/user identity. Before implementation mark this task [-] in tasks.md, after completion call log-implementation with artifacts and then mark [x]._
 
-- [ ] 18. 补充端到端文档和运行说明
+- [x] 18. 补充端到端文档和运行说明
   - Files: `MusicServer/README.md`, `README.md`, `.spec-workflow/specs/streaming-transcoding-offline-cache/design.md`
   - 更新 Range、转码配置、缓存目录、客户端离线缓存行为说明。
   - _Leverage: existing README files and approved spec documents_
   - _Requirements: 8.4, 8.5_
   - _Prompt: Implement the task for spec streaming-transcoding-offline-cache, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Technical writer with backend/client context | Task: Update user-facing and developer docs for Range, transcode configuration, cache directories, and offline cache behavior | Restrictions: Keep docs concise and accurate; do not claim unsupported defaults; mention FFmpeg is optional/configured | _Leverage: MusicServer/README.md, root README.md, spec design | _Requirements: 8.4, 8.5 | Success: maintainers can configure and troubleshoot streaming/transcoding/cache features from docs. Before implementation mark this task [-] in tasks.md, after completion call log-implementation with artifacts and then mark [x]._
 
-- [ ] 19. 执行三端验证和回归测试
+- [x] 19. 执行三端验证和回归测试
   - Files: no production files; test commands and any necessary test fixtures only
   - 运行 MusicServer 测试、MusicPlayer typecheck/lint、Android lint/build 的相关最小集合。
   - 验证关键用户路径：上传、Range 播放、转码准备/播放、桌面缓存播放、Android 缓存播放、删除失效、账号切换隔离。
