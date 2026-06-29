@@ -327,8 +327,10 @@ class AudioService {
 
   public setEQFrequencyGain(frequency: string, gain: number) {
     const filterIndex = this.frequencies.findIndex((f) => f.toString() === frequency);
-    if (filterIndex !== -1 && this.filters[filterIndex]) {
-      this.filters[filterIndex].gain.setValueAtTime(gain, this.context?.currentTime || 0);
+    if (filterIndex !== -1) {
+      if (this.filters[filterIndex]) {
+        this.filters[filterIndex].gain.setValueAtTime(gain, this.context?.currentTime || 0);
+      }
       this.saveEQSettings(frequency, gain);
     }
   }
