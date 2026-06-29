@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="about_album_label">关于 %s</string>
-    <string name="about_settings_summary">团队，社交链接</string>
     <string name="accent_color">强调色</string>
     <string name="accent_color_desc">主题强调色，默认为紫色</string>
-    <string name="action_about">关于</string>
     <string name="action_add_to_blacklist">加入黑名单</string>
     <string name="action_add_to_favorites">加入收藏夹</string>
     <string name="action_add_to_playing_queue">加入播放队列</string>

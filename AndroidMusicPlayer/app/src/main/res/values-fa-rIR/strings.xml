@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="about_album_label">درباره %s...</string>
-    <string name="about_settings_summary">تیم، پیوندهای اجتماعی</string>
     <string name="accent_color">رنگ تاکیدی محیط</string>
     <string name="accent_color_desc">رنگ تاکیدی محیط به صورت پیشفرض، رنگ بنفش است</string>
-    <string name="action_about">درباره</string>
     <string name="action_add_to_blacklist">افزودن به لیست سیاه</string>
     <string name="action_add_to_favorites">افزودن به موارد مورد علاقه</string>
     <string name="action_add_to_playing_queue">افزودن به لیست پخش آهنگ</string>
