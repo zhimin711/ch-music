@@ -188,6 +188,14 @@
         <item name="cornerSize">40dp</item>
     </style>
 
+    <style name="BannerShapeAppearance" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <style name="ProfileCardShapeAppearance" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">24dp</item>
+    </style>
+
     <style name="SearchChipStyle" parent="Widget.Material3.Chip.Filter">
         <item name="android:checked">false</item>
         <item name="android:textSize">16sp</item>

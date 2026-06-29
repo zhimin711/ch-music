@@ -324,6 +324,17 @@
     <string name="upload_avatar">Upload avatar</string>
     <string name="upload_music">Upload music</string>
     <string name="action_refresh">Refresh</string>
+    <string name="action_banner">Banner image</string>
+    <string name="action_avatar">Profile image</string>
+    <string name="add_current_local">Add current local</string>
+    <string name="empty_private_music">No private music uploaded yet</string>
+    <string name="empty_favorites">No favorites yet</string>
+    <string name="empty_playlist_tracks">This playlist has no tracks</string>
+    <string name="hint_username_password_required">Username and password are required</string>
+    <string name="hint_play_local_first">Play a local song first</string>
+    <string name="hint_create_playlist_first">Create a playlist first</string>
+    <string name="hint_playlist_name_required">Playlist name is required</string>
+    <string name="hint_no_playable_tracks">No playable private tracks</string>
     <string name="pref_blur_amount_summary">Amount of blur applied for blur themes, lower is faster</string>
     <string name="pref_blur_amount_title">Blur amount</string>
     <string name="pref_filter_song_summary">Filter songs by length</string>
