@@ -124,31 +124,26 @@
     </n-tooltip>
 
     <!-- 用户 -->
-    <n-popover trigger="hover" placement="bottom-end" :show-arrow="false" raw>
+    <n-popover v-if="userStore.user" trigger="hover" placement="bottom-end" :show-arrow="false" raw>
       <template #trigger>
         <div class="user-btn">
           <n-avatar
-            v-if="userStore.user"
             circle
             :size="26"
             :src="getImgUrl(userStore.user.avatarUrl)"
             class="cursor-pointer"
             @click="selectItem('user')"
           />
-          <span v-else class="login-label" @click="toLogin">{{ t('comp.searchBar.login') }}</span>
         </div>
       </template>
       <div class="user-menu">
-        <div v-if="userStore.user" class="user-menu-top" @click="selectItem('user')">
+        <div class="user-menu-top" @click="selectItem('user')">
           <n-avatar circle :size="30" :src="getImgUrl(userStore.user?.avatarUrl)" />
           <span class="user-name">{{ userStore.user?.nickname }}</span>
         </div>
-        <div v-if="userStore.user" class="menu-sep" />
+        <div class="menu-sep" />
         <div class="menu-list">
-          <div v-if="!userStore.user" class="menu-row" @click="toLogin">
-            <i class="ri-login-box-line" /><span>{{ t('comp.searchBar.toLogin') }}</span>
-          </div>
-          <div v-if="userStore.user" class="menu-row" @click="selectItem('logout')">
+          <div class="menu-row" @click="selectItem('logout')">
             <i class="ri-logout-box-r-line" /><span>{{ t('comp.searchBar.logout') }}</span>
           </div>
           <div class="menu-row" @click="selectItem('set')">
@@ -192,18 +187,22 @@
         </div>
       </div>
     </n-popover>
+    <button v-else class="user-btn login-entry" @click="toLogin">
+      <i class="ri-login-box-line" />
+      <span>{{ t('comp.searchBar.login') }}</span>
+    </button>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { useDebounceFn } from '@vueuse/core';
-import { computed, onMounted, ref, watch, watchEffect } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
 import { getSearchKeyword } from '@/api/home';
 import { getSearchSuggestions } from '@/api/search';
-import { SEARCH_TYPES, USER_SET_OPTIONS } from '@/const/bar-const';
+import { SEARCH_TYPES } from '@/const/bar-const';
 import { useZoom } from '@/hooks/useZoom';
 import { useDownloadStore } from '@/store/modules/download';
 import { useIntelligenceModeStore } from '@/store/modules/intelligenceMode';
@@ -219,7 +218,6 @@ const navTitleStore = useNavTitleStore();
 const searchStore = useSearchStore();
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
-const userSetOptions = ref(USER_SET_OPTIONS);
 const { t, locale } = useI18n();
 
 const intelligenceModeStore = useIntelligenceModeStore();
@@ -419,14 +417,9 @@ const loadPage = async () => {
   await userStore.initializeUser();
 };
 loadPage();
-watchEffect(() => {
-  userSetOptions.value = userStore.user
-    ? USER_SET_OPTIONS
-    : USER_SET_OPTIONS.filter((i) => i.key !== 'logout');
-});
 
 const restartApp = () => window.electron.ipcRenderer.send('restart');
-const toLogin = () => router.push('/user');
+const toLogin = () => router.push('/login');
 
 const isDark = computed({
   get: () => settingsStore.theme === 'dark',
@@ -708,14 +701,20 @@ onMounted(() => {
   box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
 }
 
-.login-label {
+.login-entry {
+  gap: 4px;
+  padding: 0 10px;
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
-  padding: 0 8px;
+  color: #4b5563;
 }
-.dark .login-label {
-  color: #9ca3af;
+
+.login-entry i {
+  font-size: 16px;
+}
+
+.dark .login-entry {
+  color: #d1d5db;
 }
 
 /* ── User menu ───────────────────────────────────────── */

@@ -3,11 +3,13 @@ import { computed, ref } from 'vue';
 
 import homeRouter from '@/router/home';
 import { useSettingsStore } from '@/store/modules/settings';
+import { useUserStore } from '@/store/modules/user';
 import { isElectron } from '@/utils';
 
 export const useMenuStore = defineStore('menu', () => {
   const allMenus = ref(homeRouter);
   const settingsStore = useSettingsStore();
+  const userStore = useUserStore();
 
   const menus = computed(() => {
     return allMenus.value.filter((item) => {
@@ -15,6 +17,9 @@ export const useMenuStore = defineStore('menu', () => {
         return false;
       }
       if (item.meta?.hideInSidebar) {
+        return false;
+      }
+      if (item.meta?.requireAuth && !userStore.user) {
         return false;
       }
       if (settingsStore.isMobile) {
