@@ -411,6 +411,7 @@ export function initializeTray(iconPath: string, mainWindow: BrowserWindow) {
   const trayIcon = nativeImage
     .createFromPath(join(iconPath, iconFile))
     .resize({ width: iconSize, height: iconSize });
+  trayIcon.setTemplateImage(process.platform === 'darwin');
 
   tray = new Tray(trayIcon);
 
