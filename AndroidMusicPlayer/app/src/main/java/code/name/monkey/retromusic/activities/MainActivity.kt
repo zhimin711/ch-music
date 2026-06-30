@@ -23,7 +23,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.contains
-import androidx.navigation.ui.setupWithNavController
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.activities.base.AbsCastActivity
 import code.name.monkey.retromusic.extensions.*
@@ -83,7 +82,6 @@ class MainActivity : AbsCastActivity() {
             )
         }
         navController.graph = navGraph
-        navigationView.setupWithNavController(navController)
         val drawer = findViewById<NavigationView>(R.id.drawerNavigationView)
         // Inflate the NetEase-style header (avatar + vip banner)
         drawer.inflateHeaderView(R.layout.nav_header)
@@ -107,11 +105,9 @@ class MainActivity : AbsCastActivity() {
             true
         }
         // Scroll Fragment to top
-        navigationView.setOnItemReselectedListener {
-            currentFragment(R.id.fragment_container).apply {
-                if (this is IScrollHelper) {
-                    scrollToTop()
-                }
+        currentFragment(R.id.fragment_container).apply {
+            if (this is IScrollHelper) {
+                scrollToTop()
             }
         }
         navController.addOnDestinationChangedListener { _, destination, _ ->

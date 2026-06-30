@@ -22,7 +22,6 @@ import android.view.View
 import androidx.core.text.parseAsHtml
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
 import code.name.monkey.appthemehelper.ThemeStore
 import code.name.monkey.appthemehelper.common.ATHToolbarActivity.getToolbarBackgroundColor
 import code.name.monkey.appthemehelper.util.ToolbarContentTintHelper
@@ -73,10 +72,6 @@ class LibraryFragment : AbsMainActivityFragment(R.layout.fragment_library) {
             navGraph.setStartDestination(categoryInfo.category.id)
         }
         navController.graph = navGraph
-        // Bottom navigation was removed; skip the navigation-bar wiring.
-        mainActivity.navigationView?.let {
-            NavigationUI.setupWithNavController(it, navController)
-        }
         navController.addOnDestinationChangedListener { _, _, _ ->
             binding.appBarLayout.setExpanded(true, true)
         }

@@ -11,29 +11,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragment_container"
+            android:name="androidx.navigation.fragment.NavHostFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <code.name.monkey.retromusic.views.TintedNavigationRailView
-                android:id="@+id/navigationView"
-                style="@style/Widget.Material3.NavigationRailView"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                app:itemHorizontalTranslationEnabled="false"
-                app:menu="@menu/bottom_navigation_main"
-                tools:viewBindingType="com.google.android.material.navigation.NavigationBarView" />
-
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/fragment_container"
-                android:name="androidx.navigation.fragment.NavHostFragment"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="?attr/colorSurface"
-                app:defaultNavHost="true"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:layout="@layout/fragment_home" />
-        </LinearLayout>
+            android:layout_height="match_parent"
+            android:background="?attr/colorSurface"
+            app:defaultNavHost="true"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:layout="@layout/fragment_home" />
 
         <FrameLayout
             android:id="@+id/slidingPanel"

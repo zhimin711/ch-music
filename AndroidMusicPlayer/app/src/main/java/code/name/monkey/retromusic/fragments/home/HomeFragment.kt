@@ -31,12 +31,9 @@ class HomeFragment :
     private val binding get() = _binding!!
 
     private val tabTitles = listOf(
-        R.string.tab_heart,
         R.string.tab_recommend,
-        R.string.tab_music,
-        R.string.tab_podcast,
-        R.string.tab_audiobook,
-        R.string.tab_free
+        R.string.tab_songlist,
+        R.string.tab_toplist
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -48,7 +45,7 @@ class HomeFragment :
         mainActivity.supportActionBar?.hide()
 
         binding.homePager.adapter = HomePagerAdapter(this)
-        binding.homePager.offscreenPageLimit = 2
+        binding.homePager.offscreenPageLimit = 1
 
         TabLayoutMediator(binding.topTabLayout, binding.homePager) { tab, position ->
             tab.text = getString(tabTitles[position])
@@ -61,7 +58,7 @@ class HomeFragment :
 
     override fun scrollToTop() {
         binding.appBarLayout.setExpanded(true, true)
-        binding.homePager.setCurrentItem(1, true) // jump to "推荐" tab content
+        binding.homePager.setCurrentItem(0, true) // jump to first tab content (首页)
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -78,7 +75,7 @@ class HomeFragment :
 
     /** A lightweight pager that reuses a single feed fragment for every tab. */
     private class HomePagerAdapter(host: HomeFragment) : FragmentStateAdapter(host) {
-        override fun getItemCount(): Int = 6
+        override fun getItemCount(): Int = 3
         override fun createFragment(position: Int): Fragment = HomePagerItemFragment.newInstance(position)
     }
 }

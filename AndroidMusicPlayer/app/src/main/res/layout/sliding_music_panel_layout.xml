@@ -46,15 +46,6 @@
                 tools:layout="@layout/fragment_mini_player" />
 
         </FrameLayout>
-
-        <!-- Hidden placeholder: bottom navigation was removed. The id is
-             preserved so legacy activity code that references
-             binding.navigationView still resolves to a non-null view. -->
-        <View
-            android:id="@+id/navigationView"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView

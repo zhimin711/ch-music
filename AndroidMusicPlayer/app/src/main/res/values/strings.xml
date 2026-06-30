@@ -42,7 +42,9 @@
     <string name="action_set_as_start_directory">Set as start directory</string>
     <!-- NetEase-style home tabs -->
     <string name="tab_heart">心动</string>
-    <string name="tab_recommend">推荐</string>
+    <string name="tab_recommend">首页</string>
+    <string name="tab_songlist">歌单</string>
+    <string name="tab_toplist">排行榜</string>
     <string name="tab_music">音乐</string>
     <string name="tab_podcast">播客</string>
     <string name="tab_audiobook">听书</string>

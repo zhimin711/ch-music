@@ -35,62 +35,19 @@
                 app:retroCornerSize="16dp"
                 tools:src="@tools:sample/avatars" />
 
-            <LinearLayout
+            <!-- Icon-only search trigger. Tap to expand the search row inline. -->
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/searchInput"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
-                android:background="@drawable/bg_netease_search_field"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/actionScan"
-                app:layout_constraintStart_toEndOf="@id/userImage"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:alpha="0.55"
-                    app:srcCompat="@drawable/ic_search"
-                    app:tint="?android:attr/textColorSecondary" />
-
-                <com.google.android.material.textview.MaterialTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:alpha="0.55"
-                    android:text="@string/search_hint"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/actionScan"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:layout_marginEnd="12dp"
                 android:background="?roundSelector"
-                android:padding="2dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/actionMic"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_scan"
-                app:tint="?android:attr/textColorPrimary" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/actionMic"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_marginEnd="12dp"
-                android:background="?roundSelector"
+                android:contentDescription="@string/search_hint"
                 android:padding="2dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_mic"
+                app:srcCompat="@drawable/ic_search"
                 app:tint="?android:attr/textColorPrimary" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -135,12 +92,10 @@
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:visibility="gone" />
+        android:layout_height="0dp" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/contentContainer"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone" />
+        android:layout_height="0dp" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -38,12 +38,9 @@ class HomePagerItemFragment : Fragment() {
 
         // Section title varies per tab so the pages feel like distinct feeds.
         binding.sectionTitle.text = when (position) {
-            0 -> getString(R.string.tab_heart) + " · " + getString(R.string.section_sad_picks)
-            1 -> getString(R.string.section_sad_picks)
-            2 -> getString(R.string.tab_music) + " · " + getString(R.string.daily_recommend)
-            3 -> getString(R.string.tab_podcast)
-            4 -> getString(R.string.tab_audiobook)
-            else -> getString(R.string.tab_free) + " · " + getString(R.string.daily_recommend)
+            0 -> getString(R.string.tab_recommend) + " · " + getString(R.string.section_sad_picks)
+            1 -> getString(R.string.tab_songlist) + " · " + getString(R.string.daily_recommend)
+            else -> getString(R.string.tab_toplist) + " · " + getString(R.string.daily_recommend)
         }
 
         binding.quickRoaming.quickTitle.setText(R.string.quick_roaming)
