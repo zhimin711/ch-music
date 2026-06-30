@@ -11,6 +11,7 @@ public class MusicServerProperties {
     private final Storage storage = new Storage();
     private final Auth auth = new Auth();
     private final Cors cors = new Cors();
+    private final Upload upload = new Upload();
     private final Streaming streaming = new Streaming();
     private final Transcoding transcoding = new Transcoding();
     private final Netease netease = new Netease();
@@ -25,6 +26,10 @@ public class MusicServerProperties {
 
     public Cors getCors() {
         return cors;
+    }
+
+    public Upload getUpload() {
+        return upload;
     }
 
     public Streaming getStreaming() {
@@ -72,6 +77,18 @@ public class MusicServerProperties {
 
         public void setAllowedOrigins(String allowedOrigins) {
             this.allowedOrigins = allowedOrigins;
+        }
+    }
+
+    public static class Upload {
+        private DataSize maxTotalSize = DataSize.ofGigabytes(40);
+
+        public DataSize getMaxTotalSize() {
+            return maxTotalSize;
+        }
+
+        public void setMaxTotalSize(DataSize maxTotalSize) {
+            this.maxTotalSize = maxTotalSize;
         }
     }
 

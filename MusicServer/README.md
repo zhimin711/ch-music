@@ -10,6 +10,8 @@ MAVEN_USER_HOME=.m2 ./mvnw -s .mvn/local-settings.xml spring-boot:run
 
 The service starts on `http://localhost:8080`.
 
+For PostgreSQL, Flyway, storage, and sidecar deployment details, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## API Surface
 
 - `POST /api/auth/register`

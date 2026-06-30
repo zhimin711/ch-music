@@ -1,6 +1,7 @@
 package com.chmusic.musicserver.music;
 
 import com.chmusic.musicserver.api.dto.MusicResponse;
+import com.chmusic.musicserver.config.MusicServerProperties;
 import com.chmusic.musicserver.user.AppUser;
 import java.nio.file.Path;
 import java.util.List;
@@ -17,20 +18,23 @@ public class MusicService {
     private final MusicFileRepository musicRepository;
     private final MusicStorageService storageService;
     private final TranscodeCacheService transcodeCacheService;
+    private final MusicServerProperties properties;
 
     public MusicService(MusicFileRepository musicRepository, MusicStorageService storageService,
-            TranscodeCacheService transcodeCacheService) {
+            TranscodeCacheService transcodeCacheService, MusicServerProperties properties) {
         this.musicRepository = musicRepository;
         this.storageService = storageService;
         this.transcodeCacheService = transcodeCacheService;
+        this.properties = properties;
     }
 
     @Transactional
     public MusicResponse upload(AppUser owner, MultipartFile file, String title, String artist, String album) {
+        validateUploadQuota(owner, file.getSize());
         StoredMusicFile stored = storageService.store(file);
-        String resolvedTitle = title == null || title.isBlank() ? stripExtension(stored.originalFilename()) : title.trim();
-        MusicFile music = new MusicFile(owner, stored.originalFilename(), stored.storagePath(), resolvedTitle,
-                blankToNull(artist), blankToNull(album), stored.contentType(), stored.fileSize(), stored.checksum());
+        ResolvedMetadata metadata = resolveMetadata(stored.originalFilename(), title, artist, album);
+        MusicFile music = new MusicFile(owner, stored.originalFilename(), stored.storagePath(), metadata.title(),
+                metadata.artist(), metadata.album(), stored.contentType(), stored.fileSize(), stored.checksum());
         return MusicResponse.from(musicRepository.save(music));
     }
 
@@ -70,8 +74,56 @@ public class MusicService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    private void validateUploadQuota(AppUser owner, long incomingSize) {
+        long maxTotalSize = properties.getUpload().getMaxTotalSize().toBytes();
+        if (maxTotalSize <= 0) {
+            return;
+        }
+        long usedSize = musicRepository.sumFileSizeByOwner(owner);
+        if (usedSize >= maxTotalSize || incomingSize > maxTotalSize - usedSize) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Music upload quota exceeded");
+        }
+    }
+
+    private static ResolvedMetadata resolveMetadata(String filename, String title, String artist, String album) {
+        String resolvedTitle = blankToNull(title);
+        String resolvedArtist = blankToNull(artist);
+        String resolvedAlbum = blankToNull(album);
+        if (resolvedTitle != null) {
+            return new ResolvedMetadata(resolvedTitle, resolvedArtist, resolvedAlbum);
+        }
+
+        FilenameMetadata filenameMetadata = parseFilename(stripExtension(filename));
+        if (resolvedArtist == null) {
+            resolvedArtist = filenameMetadata.artist();
+        }
+        return new ResolvedMetadata(filenameMetadata.title(), resolvedArtist, resolvedAlbum);
+    }
+
+    private static FilenameMetadata parseFilename(String filenameWithoutExtension) {
+        String fallbackTitle = filenameWithoutExtension == null || filenameWithoutExtension.isBlank()
+                ? "Untitled"
+                : filenameWithoutExtension.trim();
+        int separatorIndex = fallbackTitle.indexOf(" - ");
+        if (separatorIndex <= 0 || separatorIndex >= fallbackTitle.length() - 3) {
+            return new FilenameMetadata(fallbackTitle, null);
+        }
+        String artist = fallbackTitle.substring(0, separatorIndex).trim();
+        String title = fallbackTitle.substring(separatorIndex + 3).trim();
+        if (artist.isBlank() || title.isBlank()) {
+            return new FilenameMetadata(fallbackTitle, null);
+        }
+        return new FilenameMetadata(title, artist);
+    }
+
     private static String stripExtension(String filename) {
         int dotIndex = filename.lastIndexOf('.');
         return dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
+    }
+
+    private record ResolvedMetadata(String title, String artist, String album) {
+    }
+
+    private record FilenameMetadata(String title, String artist) {
     }
 }
