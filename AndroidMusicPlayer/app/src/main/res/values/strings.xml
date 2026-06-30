@@ -410,6 +410,9 @@
     <string name="pref_filter_song_summary">Filter songs by length</string>
     <string name="pref_filter_song_title">Filter song duration</string>
     <string name="pref_header_advanced">Advanced</string>
+    <string name="pref_header_netease">网易云 API</string>
+    <string name="pref_netease_api_base_url_title">API 服务器地址</string>
+    <string name="pref_netease_api_base_url_summary">默认指向 Vercel 公共镜像，国内网络可能无法访问。可填本地部署的 netease-cloud-music-api 地址，例如 http://192.168.1.10:3000/</string>
     <string name="pref_header_album">Album style</string>
     <string name="pref_header_audio">Audio</string>
     <string name="pref_header_blacklist">Blacklist</string>

@@ -80,6 +80,20 @@
 
 
     </code.name.monkey.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory>
+    <code.name.monkey.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory
+        android:layout="@layout/preference_category_title"
+        android:title="@string/pref_header_netease">
+
+        <EditTextPreference
+            android:defaultValue="https://netease-cloud-music-api-five-roan-88.vercel.app/"
+            android:key="netease_api_base_url"
+            android:layout="@layout/list_item_view"
+            android:summary="@string/pref_netease_api_base_url_summary"
+            android:title="@string/pref_netease_api_base_url_title"
+            app:icon="@drawable/ic_language" />
+
+    </code.name.monkey.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory>
+
     <code.name.monkey.appthemehelper.common.prefs.supportv7.ATEListPreference
         android:defaultValue="auto"
         android:entries="@array/pref_language_names"

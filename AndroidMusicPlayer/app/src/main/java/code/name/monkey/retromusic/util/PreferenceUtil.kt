@@ -232,6 +232,26 @@ object PreferenceUtil {
             putString(SAF_SDCARD_URI, value)
         }
 
+    /**
+     * 网易云 API 服务器地址。
+     * 默认指向公开 Vercel mirror，但国内网络多半无法访问；
+     * 用户可在设置页填本地部署 / 自有服务器地址。
+     */
+    var neteaseApiBaseUrl: String
+        get() {
+            val raw = sharedPreferences.getStringOrDefault(
+                code.name.monkey.retromusic.NETEASE_API_BASE_URL,
+                code.name.monkey.retromusic.DEFAULT_NETEASE_API_BASE_URL
+            ).trim()
+            val normalized = if (raw.isEmpty()) {
+                code.name.monkey.retromusic.DEFAULT_NETEASE_API_BASE_URL
+            } else raw
+            return if (normalized.endsWith("/")) normalized else "$normalized/"
+        }
+        set(value) = sharedPreferences.edit {
+            putString(code.name.monkey.retromusic.NETEASE_API_BASE_URL, value)
+        }
+
     private val autoDownloadImagesPolicy
         get() = sharedPreferences.getStringOrDefault(
             AUTO_DOWNLOAD_IMAGES_POLICY,

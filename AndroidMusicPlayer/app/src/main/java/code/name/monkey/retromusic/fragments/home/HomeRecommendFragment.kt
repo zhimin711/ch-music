@@ -123,7 +123,12 @@ class HomeRecommendFragment : Fragment() {
                     showPlaylists(result.data)
                 }
                 is Result.Error -> {
-                    // 加载失败处理
+                    android.util.Log.e("HomeRecommend", "加载推荐歌单失败", result.error)
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        "推荐歌单加载失败: ${result.error.message ?: "未知错误"}",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
                 }
                 is Result.Loading -> {
                 }
@@ -137,6 +142,7 @@ class HomeRecommendFragment : Fragment() {
                     artistAdapter?.updateData(result.data.take(10))
                 }
                 is Result.Error -> {
+                    android.util.Log.e("HomeRecommend", "加载热门歌手失败", result.error)
                 }
                 is Result.Loading -> {
                 }
@@ -150,6 +156,7 @@ class HomeRecommendFragment : Fragment() {
                     // TODO: 转换为 Song 对象并更新适配器
                 }
                 is Result.Error -> {
+                    android.util.Log.e("HomeRecommend", "加载新歌推荐失败", result.error)
                 }
                 is Result.Loading -> {
                 }

@@ -82,6 +82,7 @@ class SonglistFragment : Fragment() {
                     setupCategoryTabs(result.data.sub ?: emptyList())
                 }
                 is Result.Error -> {
+                    android.util.Log.e("Songlist", "加载歌单分类失败", result.error)
                 }
                 is Result.Loading -> {
                 }
@@ -97,6 +98,12 @@ class SonglistFragment : Fragment() {
                     }
                 }
                 is Result.Error -> {
+                    android.util.Log.e("Songlist", "加载歌单列表失败", result.error)
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        "歌单加载失败: ${result.error.message ?: "未知错误"}",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
                 }
                 is Result.Loading -> {
                 }

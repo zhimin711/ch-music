@@ -189,6 +189,11 @@ private val dataModule = module {
     single {
         NeteaseRepository(get())
     }
+
+    // 网易云播放管理器
+    single {
+        code.name.monkey.retromusic.netease.NeteasePlaybackManager(get())
+    }
 }
 
 private val viewModules = module {

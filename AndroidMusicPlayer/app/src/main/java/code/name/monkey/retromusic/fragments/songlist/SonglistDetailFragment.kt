@@ -9,6 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.adapter.song.NeteaseStreamSongAdapter
 import code.name.monkey.retromusic.adapter.song.SongAdapter
 import code.name.monkey.retromusic.databinding.FragmentSonglistDetailBinding
 import code.name.monkey.retromusic.extensions.accentColor
@@ -16,6 +17,8 @@ import code.name.monkey.retromusic.extensions.elevatedAccentColor
 import code.name.monkey.retromusic.extensions.surfaceColor
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
+import code.name.monkey.retromusic.netease.NeteasePlaybackManager
+import code.name.monkey.retromusic.netease.NeteaseSongMapper
 import code.name.monkey.retromusic.network.Result
 import code.name.monkey.retromusic.network.models.PlaylistDetail
 import code.name.monkey.retromusic.util.MusicUtil
@@ -26,6 +29,7 @@ import com.google.android.material.transition.MaterialArcMotion
 import com.google.android.material.transition.MaterialContainerTransform
 import com.google.android.material.transition.MaterialSharedAxis
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
@@ -35,6 +39,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
 
     private val homeViewModel: HomeViewModel by viewModel()
+    private val neteasePlayback: NeteasePlaybackManager by inject()
 
     private var _binding: FragmentSonglistDetailBinding? = null
     private val binding get() = _binding!!
@@ -82,10 +87,16 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
     }
 
     private fun setUpRecyclerView() {
-        songAdapter = SongAdapter(
+        songAdapter = NeteaseStreamSongAdapter(
             activity = requireActivity(),
             dataSet = mutableListOf(),
-            itemLayoutRes = R.layout.item_list
+            itemLayoutRes = R.layout.item_list,
+            lifecycleScope = viewLifecycleOwner.lifecycleScope,
+            playbackManager = neteasePlayback,
+            onResolveError = { msg ->
+                binding.errorInfo.visibility = View.VISIBLE
+                binding.errorMessage.text = getString(R.string.failed_to_load_playlist, msg ?: "未知错误")
+            }
         )
 
         binding.recyclerView.apply {
@@ -99,7 +110,7 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
         binding.playButton.apply {
             setOnClickListener {
                 if (songAdapter.dataSet.isNotEmpty()) {
-                    MusicPlayerRemote.openQueue(songAdapter.dataSet, 0, true)
+                    playSongs(songAdapter.dataSet, shuffle = false)
                 }
             }
             accentColor()
@@ -108,10 +119,34 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
         binding.shuffleButton.apply {
             setOnClickListener {
                 if (songAdapter.dataSet.isNotEmpty()) {
-                    MusicPlayerRemote.openAndShuffleQueue(songAdapter.dataSet, true)
+                    playSongs(songAdapter.dataSet, shuffle = true)
                 }
             }
             elevatedAccentColor()
+        }
+    }
+
+    /**
+     * 播放歌单歌曲：批量预取 URL 后启动播放
+     */
+    private fun playSongs(songs: List<Song>, shuffle: Boolean) {
+        binding.progressIndicator.visibility = View.VISIBLE
+        viewLifecycleOwner.lifecycleScope.launch {
+            val resolved = neteasePlayback.resolveSongs(songs)
+            val playable = neteasePlayback.playableOnly(resolved)
+            binding.progressIndicator.visibility = View.GONE
+            if (playable.isEmpty()) {
+                binding.errorInfo.visibility = View.VISIBLE
+                binding.errorMessage.text = getString(R.string.failed_to_load_playlist, "无可用播放链接")
+                return@launch
+            }
+            // 同步更新 adapter，避免显示与播放的歌曲不一致
+            songAdapter.swapDataSet(resolved)
+            if (shuffle) {
+                MusicPlayerRemote.openAndShuffleQueue(ArrayList(playable), true)
+            } else {
+                MusicPlayerRemote.openQueue(ArrayList(playable), 0, true)
+            }
         }
     }
 
@@ -158,31 +193,13 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
 
     /**
      * 将网易云歌曲转换为本地 Song 对象
+     * data 字段（播放 URL）此时为空，点击播放时再批量预取
      */
     private fun convertNeteaseSongsToLocalSongs(
         neteaseSongs: List<code.name.monkey.retromusic.network.models.NeteaseSong>
     ): List<Song> {
         return neteaseSongs.mapIndexed { index, neteaseSong ->
-            val artistName = neteaseSong.ar?.firstOrNull()?.name ?: getString(R.string.unknown_artist)
-            val albumName = neteaseSong.al?.name ?: getString(R.string.unknown_album)
-            val albumId = neteaseSong.al?.id ?: 0L
-            val artistId = neteaseSong.ar?.firstOrNull()?.id ?: 0L
-
-            Song(
-                id = neteaseSong.id,
-                title = neteaseSong.name ?: getString(R.string.unknown_title),
-                trackNumber = index + 1,
-                year = 0,
-                duration = neteaseSong.dt ?: 0L,
-                data = "",  // 网易云歌曲需要通过 API 获取播放 URL
-                dateModified = System.currentTimeMillis(),
-                albumId = albumId,
-                albumName = albumName,
-                artistId = artistId,
-                artistName = artistName,
-                composer = null,
-                albumArtist = artistName
-            )
+            NeteaseSongMapper.toSong(neteaseSong, trackIndex = index)
         }
     }
 

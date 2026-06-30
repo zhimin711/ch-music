@@ -22,6 +22,7 @@ import androidx.preference.Preference
 import code.name.monkey.appthemehelper.common.prefs.supportv7.ATEListPreference
 import code.name.monkey.retromusic.LANGUAGE_NAME
 import code.name.monkey.retromusic.LAST_ADDED_CUTOFF
+import code.name.monkey.retromusic.NETEASE_API_BASE_URL
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.extensions.installLanguageAndRecreate
 import code.name.monkey.retromusic.fragments.LibraryViewModel
@@ -42,6 +43,23 @@ class OtherSettingsFragment : AbsSettingsFragment() {
             restartActivity()
             return@setOnPreferenceChangeListener true
         }
+        val neteaseUrlPref: Preference? = findPreference(NETEASE_API_BASE_URL)
+        neteaseUrlPref?.setOnPreferenceChangeListener { _, newValue ->
+            val trimmed = (newValue as? String)?.trim().orEmpty()
+            // 保存后提示需要重启应用以重建 Retrofit
+            android.widget.Toast.makeText(
+                requireContext(),
+                "已保存，重启应用后生效",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+            true
+        }
+        // 显示当前已配置的 URL 作为 summary
+        neteaseUrlPref?.summary =
+            (preferenceManager.sharedPreferences
+                ?.getString(NETEASE_API_BASE_URL, null)
+                ?.takeIf { it.isNotBlank() }
+                ?: getString(R.string.pref_netease_api_base_url_summary))
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {

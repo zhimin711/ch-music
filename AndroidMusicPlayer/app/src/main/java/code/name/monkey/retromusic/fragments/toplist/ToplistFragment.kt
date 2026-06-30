@@ -74,6 +74,12 @@ class ToplistFragment : Fragment() {
                     toplistAdapter?.updateData(result.data)
                 }
                 is Result.Error -> {
+                    android.util.Log.e("Toplist", "加载排行榜失败", result.error)
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        "排行榜加载失败: ${result.error.message ?: "未知错误"}",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
                 }
                 is Result.Loading -> {
                 }

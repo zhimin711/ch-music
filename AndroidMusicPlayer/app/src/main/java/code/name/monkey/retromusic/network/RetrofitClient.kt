@@ -90,17 +90,38 @@ fun provideLyrics(retrofit: Retrofit): LyricsRestService {
 // ==================== 网易云音乐 API ====================
 
 /**
+ * 网易云 API 专用拦截器：
+ * - 使用浏览器风格 User-Agent，避免 Vercel 反爬虫拦截
+ * - 不强行注入 Content-Type（GET 请求不需要，反而可能被拒）
+ * - 加上 Accept 和 Referer 让请求更像普通客户端
+ */
+private fun neteaseHeaderInterceptor(): Interceptor {
+    return Interceptor { chain ->
+        val original = chain.request()
+        val builder = original.newBuilder()
+            .header(
+                "User-Agent",
+                "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 " +
+                        "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+            )
+            .header("Accept", "application/json, text/plain, */*")
+            .header("Referer", "https://music.163.com/")
+        chain.proceed(builder.build())
+    }
+}
+
+/**
  * 提供网易云音乐 API 的 OkHttp 客户端
  * 增加超时时间以适配国内网络
  */
 fun provideNeteaseOkHttp(context: Context, cache: Cache): OkHttpClient {
     return OkHttpClient.Builder()
         .addNetworkInterceptor(logInterceptor())
-        .addInterceptor(headerInterceptor(context))
-        .connectTimeout(15, TimeUnit.SECONDS)
+        .addInterceptor(neteaseHeaderInterceptor())
+        .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
-        .cache(cache)
+        .retryOnConnectionFailure(true)
         .build()
 }
 
@@ -109,7 +130,7 @@ fun provideNeteaseRetrofit(client: OkHttpClient): Retrofit {
         .setLenient()
         .create()
     return Retrofit.Builder()
-        .baseUrl("https://netease-cloud-music-api-five-roan-88.vercel.app/")
+        .baseUrl(code.name.monkey.retromusic.util.PreferenceUtil.neteaseApiBaseUrl)
         .addConverterFactory(GsonConverterFactory.create(gson))
         .callFactory { request -> client.newCall(request) }
         .build()

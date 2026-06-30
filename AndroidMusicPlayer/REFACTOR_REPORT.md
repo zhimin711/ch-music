@@ -79,9 +79,50 @@ API 返回数据 → 展示歌单详情和歌曲列表
 用户点击歌曲 → 跳转到播放器
 ```
 
+### Phase 4-1: 在线播放集成 (已完成)
+
+实现方案：复用现有 `Song.uri` 扩展中已有的 HTTP URL 检测机制（参见 `MusicServerSongMapper.isRemoteSong()`），只要 `Song.data` 字段为 HTTP/HTTPS URL，ExoPlayer 会自动按流式播放处理。
+
+新增文件：
+
+- `netease/NeteaseUrlCache.kt` - 基于 `LruCache` 的内存缓存（500 首，6 小时过期），避免短时间内重复请求 URL
+- `netease/NeteaseSongMapper.kt` - 网易云歌曲 ↔ 本地 Song 映射器，使用 `-8_000_000_000L` 作为 ID 偏移量区分本地 / 远程歌曲
+- `netease/NeteasePlaybackManager.kt` - 播放管理器，封装单首 / 批量预取、缓存命中检查、可播放歌曲过滤
+- `adapter/song/NeteaseStreamSongAdapter.kt` - `SongAdapter` 子类，覆盖单条点击事件，先解析 URL 再启动播放
+
+修改文件：
+
+- `MainModule.kt` - Koin 注册 `NeteasePlaybackManager`
+- `SonglistDetailFragment.kt` - 改用 `NeteaseStreamSongAdapter`，"全部播放" / "随机播放" 按钮先调用 `resolveSongs()` 批量预取再播放
+
+数据流：
+
+```
+点击歌曲/播放按钮
+    ↓
+NeteasePlaybackManager.resolveSongs(songs)
+    ↓
+对每首歌：缓存命中 ? 跳过 : 加入批量请求列表
+    ↓
+NeteaseRepository.getSongsUrl(missingIds)  // 一次性请求
+    ↓
+NeteaseUrlCache.putAll(result)  // 写入缓存
+    ↓
+Song.data 填入 URL → playableOnly() 过滤可播放
+    ↓
+MusicPlayerRemote.openQueue(...)  // ExoPlayer 识别 URL 启 HTTP 流
+```
+
+性能特点：
+
+- 批量请求：一次 API 调用即可拿到整个歌单的 URL（网易云 API 支持 `id,id,id` 形式）
+- 缓存优先：6 小时内重复播放无需再请求
+- 灰色歌曲容错：URL 为空的歌曲被 `playableOnly()` 过滤，不会阻塞队列
+- 进度反馈：解析期间显示 `progressIndicator`，失败展示 `errorInfo`
+
 ## 后续需要完善的功能
 
-### Phase 4-1: 在线播放集成 (高优先级)
+### Phase 4-1: 在线播放集成 (✅ 已完成)
 
 **问题**: 当前 `Song` 模型的 `data` 字段是本地文件路径，网易云歌曲需要通过 API 动态获取播放 URL。
 
