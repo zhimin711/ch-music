@@ -27,7 +27,7 @@ import code.name.monkey.retromusic.adapter.base.MediaEntryViewHolder
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.albumCoverOptions
 import code.name.monkey.retromusic.glide.RetroGlideExtension.asBitmapPalette
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
+import code.name.monkey.retromusic.glide.ZhaohuaColoredTarget
 import code.name.monkey.retromusic.helper.SortOrder
 import code.name.monkey.retromusic.helper.menu.SongsMenuHelper
 import code.name.monkey.retromusic.interfaces.IAlbumClickListener
@@ -117,7 +117,7 @@ open class AlbumAdapter(
             .albumCoverOptions(song)
             //.checkIgnoreMediaStore()
             .load(RetroGlideExtension.getSongModel(song))
-            .into(object : RetroMusicColoredTarget(holder.image!!) {
+            .into(object : ZhaohuaColoredTarget(holder.image!!) {
                 override fun onColorReady(colors: MediaNotificationProcessor) {
                     setColors(colors, holder)
                 }

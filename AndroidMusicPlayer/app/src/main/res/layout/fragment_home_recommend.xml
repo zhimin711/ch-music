@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/feedScroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:overScrollMode="@integer/overScrollMode"
+    android:background="?attr/colorSurface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="@dimen/bottom_nav_mini_player_height">
+
+        <!-- Hero Section: 每日推荐 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/featuredCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="6dp"
+            app:cardBackgroundColor="?attr/colorSurfaceVariant"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="14dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/featuredTag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_netease_tag_free"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text="@string/free_listen"
+                    android:textColor="@color/md_white_1000"
+                    android:textSize="10sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/featuredTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/daily_recommend"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="@id/featuredTag"
+                    app:layout_constraintEnd_toStartOf="@id/featuredPlay"
+                    app:layout_constraintStart_toEndOf="@id/featuredTag"
+                    app:layout_constraintTop_toTopOf="@id/featuredTag" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/featuredSubtitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:alpha="0.65"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/daily_recommend_sub"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="12sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/featuredTag" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/featuredArt"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_netease_album_placeholder"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/featuredSubtitle"
+                    tools:srcCompat="@tools:sample/backgrounds/scenic" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/featuredDesc"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="10dp"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:maxLines="2"
+                    android:text="@string/daily_recommend_desc"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="13sp"
+                    app:layout_constraintBottom_toBottomOf="@id/featuredArt"
+                    app:layout_constraintEnd_toStartOf="@id/featuredPlay"
+                    app:layout_constraintStart_toEndOf="@id/featuredArt"
+                    app:layout_constraintTop_toTopOf="@id/featuredArt" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/featuredPlay"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?roundSelector"
+                    android:padding="6dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/ic_play_circle_filled"
+                    app:tint="?attr/colorPrimary" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 3-column quick actions: 漫游 / 雷达歌单 / 专属定制 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <include
+                android:id="@+id/quickRoaming"
+                layout="@layout/item_netease_quick_action" />
+
+            <include
+                android:id="@+id/quickRadar"
+                layout="@layout/item_netease_quick_action" />
+
+            <include
+                android:id="@+id/quickCustom"
+                layout="@layout/item_netease_quick_action" />
+        </LinearLayout>
+
+        <!-- Section: 推荐歌单 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="18dp">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/recommended_playlists"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recommendedPlaylists"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:paddingHorizontal="8dp"
+                tools:itemCount="9"
+                tools:listitem="@layout/item_home_playlist_card" />
+        </LinearLayout>
+
+        <!-- Section: 热门歌手 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/hot_artists"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/hotArtists"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:paddingHorizontal="8dp"
+                tools:itemCount="10"
+                tools:listitem="@layout/item_home_artist" />
+        </LinearLayout>
+
+        <!-- Section: 新歌推荐 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/new_songs"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/newSongs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                tools:itemCount="6"
+                tools:listitem="@layout/item_netease_song" />
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

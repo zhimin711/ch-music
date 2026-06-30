@@ -26,7 +26,7 @@ import code.name.monkey.retromusic.databinding.ItemGenreBinding
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.asBitmapPalette
 import code.name.monkey.retromusic.glide.RetroGlideExtension.songCoverOptions
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
+import code.name.monkey.retromusic.glide.ZhaohuaColoredTarget
 import code.name.monkey.retromusic.interfaces.IGenreClickListener
 import code.name.monkey.retromusic.model.Genre
 import code.name.monkey.retromusic.util.MusicUtil
@@ -74,7 +74,7 @@ class GenreAdapter(
             .asBitmapPalette()
             .songCoverOptions(genreSong)
             .load(RetroGlideExtension.getSongModel(genreSong))
-            .into(object : RetroMusicColoredTarget(holder.binding.image) {
+            .into(object : ZhaohuaColoredTarget(holder.binding.image) {
                 override fun onColorReady(colors: MediaNotificationProcessor) {
                     setColors(holder, colors)
                 }

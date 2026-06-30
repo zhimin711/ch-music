@@ -86,3 +86,35 @@ fun provideLyrics(retrofit: Retrofit): LyricsRestService {
         .build()
     return newBuilder.create(LyricsRestService::class.java)
 }
+
+// ==================== 网易云音乐 API ====================
+
+/**
+ * 提供网易云音乐 API 的 OkHttp 客户端
+ * 增加超时时间以适配国内网络
+ */
+fun provideNeteaseOkHttp(context: Context, cache: Cache): OkHttpClient {
+    return OkHttpClient.Builder()
+        .addNetworkInterceptor(logInterceptor())
+        .addInterceptor(headerInterceptor(context))
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .cache(cache)
+        .build()
+}
+
+fun provideNeteaseRetrofit(client: OkHttpClient): Retrofit {
+    val gson = com.google.gson.GsonBuilder()
+        .setLenient()
+        .create()
+    return Retrofit.Builder()
+        .baseUrl("https://netease-cloud-music-api-five-roan-88.vercel.app/")
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .callFactory { request -> client.newCall(request) }
+        .build()
+}
+
+fun provideNeteaseRest(retrofit: Retrofit): NeteaseCloudApi {
+    return retrofit.create(NeteaseCloudApi::class.java)
+}

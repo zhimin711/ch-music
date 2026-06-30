@@ -20,7 +20,7 @@ import androidx.fragment.app.FragmentActivity
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.albumCoverOptions
 import code.name.monkey.retromusic.glide.RetroGlideExtension.asBitmapPalette
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
+import code.name.monkey.retromusic.glide.ZhaohuaColoredTarget
 import code.name.monkey.retromusic.helper.HorizontalAdapterHelper
 import code.name.monkey.retromusic.interfaces.IAlbumClickListener
 import code.name.monkey.retromusic.model.Album
@@ -53,7 +53,7 @@ class HorizontalAlbumAdapter(
             .asBitmapPalette()
             .albumCoverOptions(album.safeGetFirstSong())
             .load(RetroGlideExtension.getSongModel(album.safeGetFirstSong()))
-            .into(object : RetroMusicColoredTarget(holder.image!!) {
+            .into(object : ZhaohuaColoredTarget(holder.image!!) {
                 override fun onColorReady(colors: MediaNotificationProcessor) {
                     setColors(colors, holder)
                 }

@@ -23,7 +23,7 @@ import code.name.monkey.retromusic.glide.palette.BitmapPaletteWrapper
 import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
 import com.bumptech.glide.request.transition.Transition
 
-abstract class RetroMusicColoredTarget(view: ImageView) : BitmapPaletteTarget(view) {
+abstract class ZhaohuaColoredTarget(view: ImageView) : BitmapPaletteTarget(view) {
 
     protected val defaultFooterColor: Int
         get() = getView().context.colorControlNormal()
