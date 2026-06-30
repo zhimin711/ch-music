@@ -15,7 +15,7 @@
                   云音乐库
                 </h1>
                 <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400 truncate">
-                  {{ cloudStore.isLoggedIn ? cloudStore.user?.displayName : cloudStore.baseUrl }}
+                  {{ cloudStore.isLoggedIn ? cloudStore.user?.displayName : '未连接云音乐库' }}
                 </p>
               </div>
             </div>
@@ -40,43 +40,21 @@
 
         <section v-if="!cloudStore.isLoggedIn" class="page-padding-x mt-8">
           <div
-            class="max-w-xl rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5"
+            class="max-w-xl rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-6"
           >
-            <div class="grid gap-4">
+            <div class="flex items-start gap-4">
               <div
-                class="flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400"
+                class="w-11 h-11 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center text-neutral-400 shrink-0"
               >
-                <i class="ri-server-line text-neutral-400" />
-                <span class="truncate">{{ cloudStore.baseUrl }}</span>
+                <i class="ri-cloud-off-line text-xl" />
               </div>
-              <n-input v-model:value="username" placeholder="用户名（3-80 位）">
-                <template #prefix>
-                  <i class="ri-user-line text-neutral-400" />
-                </template>
-              </n-input>
-              <n-input
-                v-model:value="password"
-                type="password"
-                show-password-on="click"
-                placeholder="密码（8-120 位）"
-                @keyup.enter="handleLogin"
-              >
-                <template #prefix>
-                  <i class="ri-lock-line text-neutral-400" />
-                </template>
-              </n-input>
-              <n-input v-model:value="displayName" placeholder="显示名称（注册时可填，最多 120 位）">
-                <template #prefix>
-                  <i class="ri-id-card-line text-neutral-400" />
-                </template>
-              </n-input>
-              <div class="flex flex-col sm:flex-row gap-3">
-                <n-button type="primary" :loading="authLoading" class="flex-1" @click="handleLogin">
-                  登录
-                </n-button>
-                <n-button :loading="authLoading" class="flex-1" @click="handleRegister">
-                  注册并登录
-                </n-button>
+              <div class="min-w-0">
+                <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+                  当前未连接云音乐库
+                </h2>
+                <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                  云端音乐将在账号状态可用后自动同步。
+                </p>
               </div>
             </div>
           </div>
@@ -392,10 +370,6 @@ const DEFAULT_CACHE_PROFILE_ID = 'original';
 
 const activeTab = ref<'music' | 'uploading' | 'favorites' | 'playlists'>('music');
 const activePlaylistId = ref<number | null>(null);
-const authLoading = ref(false);
-const username = ref('');
-const password = ref('');
-const displayName = ref('');
 const searchKeyword = ref('');
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFiles = ref<File[]>([]);
@@ -541,70 +515,11 @@ watch(
   { immediate: true }
 );
 
-function validateAuthForm() {
-  const trimmedUsername = username.value.trim();
-  const trimmedDisplayName = displayName.value.trim();
-  if (!trimmedUsername || !password.value) {
-    message.warning('请填写用户名和密码');
-    return false;
-  }
-  if (trimmedUsername.length < 3 || trimmedUsername.length > 80) {
-    message.warning('用户名长度需在 3 到 80 位之间');
-    return false;
-  }
-  if (password.value.length < 8 || password.value.length > 120) {
-    message.warning('密码长度需在 8 到 120 位之间');
-    return false;
-  }
-  if (trimmedDisplayName.length > 120) {
-    message.warning('显示名称不能超过 120 位');
-    return false;
-  }
-  return true;
-}
-
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError<{ message?: string }>(error)) {
     return error.response?.data?.message || error.message || fallback;
   }
   return error instanceof Error ? error.message : fallback;
-}
-
-async function handleLogin() {
-  if (!validateAuthForm()) return;
-  authLoading.value = true;
-  try {
-    await cloudStore.login({
-      username: username.value.trim(),
-      password: password.value
-    });
-    await playerStore.initializeFavoriteList();
-    message.success('登录成功');
-  } catch (error) {
-    console.error('MusicServer 登录失败:', error);
-    message.error(getErrorMessage(error, '登录失败'));
-  } finally {
-    authLoading.value = false;
-  }
-}
-
-async function handleRegister() {
-  if (!validateAuthForm()) return;
-  authLoading.value = true;
-  try {
-    await cloudStore.register({
-      username: username.value.trim(),
-      password: password.value,
-      displayName: displayName.value.trim() || undefined
-    });
-    await playerStore.initializeFavoriteList();
-    message.success('注册成功');
-  } catch (error) {
-    console.error('MusicServer 注册失败:', error);
-    message.error(getErrorMessage(error, '注册失败'));
-  } finally {
-    authLoading.value = false;
-  }
 }
 
 async function handleLogout() {
@@ -917,7 +832,7 @@ onMounted(async () => {
     await cloudStore.restoreSession();
     await playerStore.initializeFavoriteList();
   } catch {
-    message.warning('云音乐库登录已失效');
+    message.warning('云音乐库连接已失效');
   }
 });
 </script>
