@@ -47,16 +47,14 @@
 
         </FrameLayout>
 
-        <code.name.monkey.retromusic.views.TintedBottomNavigationView
+        <!-- Hidden placeholder: bottom navigation was removed. The id is
+             preserved so legacy activity code that references
+             binding.navigationView still resolves to a non-null view. -->
+        <View
             android:id="@+id/navigationView"
-            style="@style/Widget.Material3.BottomNavigationView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:minHeight="@dimen/bottom_nav_height"
-            app:itemHorizontalTranslationEnabled="false"
-            app:menu="@menu/bottom_navigation_main"
-            tools:viewBindingType="com.google.android.material.navigation.NavigationBarView" />
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView

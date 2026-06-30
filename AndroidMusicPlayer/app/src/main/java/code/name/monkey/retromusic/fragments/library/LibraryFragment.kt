@@ -73,7 +73,10 @@ class LibraryFragment : AbsMainActivityFragment(R.layout.fragment_library) {
             navGraph.setStartDestination(categoryInfo.category.id)
         }
         navController.graph = navGraph
-        NavigationUI.setupWithNavController(mainActivity.navigationView, navController)
+        // Bottom navigation was removed; skip the navigation-bar wiring.
+        mainActivity.navigationView?.let {
+            NavigationUI.setupWithNavController(it, navController)
+        }
         navController.addOnDestinationChangedListener { _, _, _ ->
             binding.appBarLayout.setExpanded(true, true)
         }
