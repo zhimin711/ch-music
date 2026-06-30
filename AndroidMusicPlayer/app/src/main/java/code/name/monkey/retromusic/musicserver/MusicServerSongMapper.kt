@@ -34,9 +34,17 @@ object MusicServerSongMapper {
         return song.data.startsWith("http://") || song.data.startsWith("https://")
     }
 
+    fun isMusicServerSong(song: Song): Boolean {
+        return isRemoteSong(song) && song.id < REMOTE_ID_OFFSET
+    }
+
     fun musicIdFromSong(song: Song): Long? {
-        if (!isRemoteSong(song)) return null
+        if (!isMusicServerSong(song)) return null
         return REMOTE_ID_OFFSET - song.id
+    }
+
+    fun playbackUri(song: Song): Uri {
+        return Uri.parse(song.data).withoutAccessToken()
     }
 
     private fun buildStreamUrl(music: MusicServerMusic, session: MusicServerSession): String {
@@ -55,5 +63,18 @@ object MusicServerSongMapper {
 
     private fun stableHash(value: String): Long {
         return abs(value.hashCode()).toLong().coerceAtLeast(1L)
+    }
+
+    private fun Uri.withoutAccessToken(): Uri {
+        if (getQueryParameter("access_token") == null) return this
+        val builder = buildUpon().clearQuery()
+        queryParameterNames
+            .filterNot { it == "access_token" }
+            .forEach { name ->
+                getQueryParameters(name).forEach { value ->
+                    builder.appendQueryParameter(name, value)
+                }
+            }
+        return builder.build()
     }
 }

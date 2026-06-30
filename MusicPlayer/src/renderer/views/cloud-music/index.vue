@@ -167,6 +167,7 @@
                   <div>专辑</div>
                   <div>格式</div>
                   <div>上传时间</div>
+                  <div>离线</div>
                   <div>大小</div>
                   <div></div>
                 </div>
@@ -191,10 +192,24 @@
                   <div class="drive-muted">{{ music.album || '未知专辑' }}</div>
                   <div class="drive-muted">{{ getMusicFormat(music) }}</div>
                   <div class="drive-muted">{{ formatDate(music.createdAt) }}</div>
+                  <div class="drive-cache-cell">
+                    <span class="cache-badge" :class="getCacheBadgeClass(music)">
+                      <i :class="getCacheStatusIcon(music)" />
+                      {{ getCacheStatusText(music) }}
+                    </span>
+                  </div>
                   <div class="drive-muted">{{ formatBytes(music.fileSize) }}</div>
                   <div class="drive-row-actions">
                     <button type="button" title="播放" @click.stop="handlePlayMusic(music)">
                       <i class="ri-play-fill" />
+                    </button>
+                    <button
+                      type="button"
+                      :title="getCacheActionLabel(music)"
+                      :disabled="isCacheActionDisabled(music)"
+                      @click.stop="handleCacheAction(music)"
+                    >
+                      <i :class="getCacheActionIcon(music)" />
                     </button>
                     <button type="button" title="删除" @click.stop="handleDeleteMusic(Number(music.id))">
                       <i class="ri-delete-bin-line" />
@@ -373,6 +388,7 @@ const { message } = createDiscreteApi(['message']);
 const cloudStore = useMusicServerStore();
 const playerStore = usePlayerStore();
 const CLOUD_CAPACITY_BYTES = 40 * 1024 * 1024 * 1024;
+const DEFAULT_CACHE_PROFILE_ID = 'original';
 
 const activeTab = ref<'music' | 'uploading' | 'favorites' | 'playlists'>('music');
 const activePlaylistId = ref<number | null>(null);
@@ -388,6 +404,7 @@ const uploadArtist = ref('');
 const uploadAlbum = ref('');
 const newPlaylistName = ref('');
 const playlistTrackMusicId = ref<number | null>(null);
+const cacheActionLoading = ref<Record<string, boolean>>({});
 const cloudContextSong = ref<SongResult | null>(null);
 const cloudContextMusic = ref<MusicServerMusic | null>(null);
 const driveTabs = [
@@ -481,9 +498,7 @@ const filteredMusic = computed(() => {
   );
 });
 
-const favoriteMusics = computed(() => cloudStore.favorites.map((item) => item.music));
-
-const favoriteSongResults = computed(() => favoriteMusics.value.map(toMusicServerSongResult));
+const favoriteSongResults = computed(() => cloudStore.favoriteSongs);
 
 const musicOptions = computed(() =>
   cloudStore.musicList.map((music) => ({
@@ -509,6 +524,8 @@ const uploadStatusText = computed(() => {
   if (!selectedFiles.value.length) return cloudStore.uploading ? '正在上传音乐' : '';
   return `${cloudStore.uploading ? '正在上传' : '待上传'} ${selectedFiles.value.length} 个文件`;
 });
+
+type CacheState = (typeof cloudStore.cacheStates)[string];
 
 watch(
   () => cloudStore.playlists,
@@ -682,13 +699,88 @@ function formatBytes(value?: number | null) {
   return `${size.toFixed(unitIndex === 0 ? 0 : 1)}${units[unitIndex]}`;
 }
 
-function toSongs(musicList: MusicServerMusic[]) {
-  return musicList.map(toMusicServerSongResult);
+function getMusicId(music: MusicServerMusic) {
+  const musicId = Number(music.musicId ?? music.id);
+  return Number.isFinite(musicId) ? musicId : null;
+}
+
+function getMusicCacheState(music: MusicServerMusic): CacheState | null {
+  const musicId = getMusicId(music);
+  if (!cloudStore.user || musicId == null) return null;
+  return (
+    Object.values(cloudStore.cacheStates).find(
+      (entry) =>
+        entry.serverBaseUrl === cloudStore.baseUrl &&
+        entry.userId === cloudStore.user?.id &&
+        entry.musicId === musicId &&
+        entry.profileId === DEFAULT_CACHE_PROFILE_ID
+    ) || null
+  );
+}
+
+function getCacheStatusText(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  if (state === 'ready') return '已缓存';
+  if (state === 'downloading') return '缓存中';
+  if (state === 'queued') return '等待中';
+  if (state === 'paused') return '已暂停';
+  if (state === 'failed') return '失败';
+  if (state === 'stale') return '需更新';
+  return '未缓存';
+}
+
+function getCacheStatusIcon(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  if (state === 'ready') return 'ri-checkbox-circle-fill';
+  if (state === 'downloading' || state === 'queued') return 'ri-loader-4-line animate-spin';
+  if (state === 'paused') return 'ri-pause-circle-line';
+  if (state === 'failed' || state === 'stale') return 'ri-error-warning-line';
+  return 'ri-download-cloud-line';
+}
+
+function getCacheBadgeClass(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  return {
+    ready: state === 'ready',
+    active: state === 'downloading' || state === 'queued',
+    warning: state === 'failed' || state === 'stale',
+    paused: state === 'paused'
+  };
+}
+
+function getCacheActionLabel(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  if (state === 'ready') return '移除缓存';
+  if (state === 'failed' || state === 'stale' || state === 'paused') return '重试缓存';
+  if (state === 'downloading' || state === 'queued') return '缓存中';
+  return '缓存';
+}
+
+function getCacheActionIcon(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  if (cacheActionLoading.value[String(music.id)]) return 'ri-loader-4-line animate-spin';
+  if (state === 'ready') return 'ri-delete-back-2-line';
+  if (state === 'failed' || state === 'stale' || state === 'paused') return 'ri-restart-line';
+  if (state === 'downloading' || state === 'queued') return 'ri-loader-4-line animate-spin';
+  return 'ri-download-cloud-2-line';
+}
+
+function isCacheActionDisabled(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  return (
+    Boolean(cacheActionLoading.value[String(music.id)]) ||
+    state === 'downloading' ||
+    state === 'queued'
+  );
+}
+
+async function toSongs(musicList: MusicServerMusic[]) {
+  return await Promise.all(musicList.map((music) => cloudStore.toCachedSongResult(music)));
 }
 
 async function handlePlayAll(musicList: MusicServerMusic[]) {
   if (!musicList.length) return;
-  const songs = toSongs(musicList);
+  const songs = await toSongs(musicList);
   playerStore.setPlayList(songs);
   await playerStore.setPlay(songs[0]);
 }
@@ -699,22 +791,51 @@ async function handlePlaySongResult(song: SongResult, context: SongResult[]) {
 }
 
 async function handlePlayMusic(music: MusicServerMusic) {
-  const songs = toSongs(filteredMusic.value);
-  const song = toMusicServerSongResult(music);
+  const songs = await toSongs(filteredMusic.value);
+  const song = await cloudStore.toCachedSongResult(music);
   playerStore.setPlayList(songs);
   await playerStore.setPlay(song);
 }
 
-function handleCloudMusicContextMenu(event: MouseEvent, music: MusicServerMusic) {
+async function handleCloudMusicContextMenu(event: MouseEvent, music: MusicServerMusic) {
   cloudContextMusic.value = music;
-  cloudContextSong.value = toMusicServerSongResult(music);
+  cloudContextSong.value = await cloudStore.toCachedSongResult(music);
   openCloudContextMenu(event);
 }
 
 async function handleCloudContextPlay() {
-  if (!cloudContextSong.value) return;
-  playerStore.setPlayList(toSongs(filteredMusic.value));
-  await playerStore.setPlay(cloudContextSong.value);
+  if (!cloudContextMusic.value) return;
+  const song = await cloudStore.toCachedSongResult(cloudContextMusic.value);
+  cloudContextSong.value = song;
+  playerStore.setPlayList(await toSongs(filteredMusic.value));
+  await playerStore.setPlay(song);
+}
+
+async function handleCacheAction(music: MusicServerMusic) {
+  const key = String(music.id);
+  if (isCacheActionDisabled(music)) return;
+
+  cacheActionLoading.value = { ...cacheActionLoading.value, [key]: true };
+  try {
+    const state = getMusicCacheState(music);
+    if (state?.state === 'ready') {
+      await cloudStore.removeCachedMusic(music);
+      message.success('已移除缓存');
+    } else if (state && ['failed', 'stale', 'paused'].includes(state.state)) {
+      await cloudStore.retryCachedMusic(music);
+      message.success('已重新加入缓存队列');
+    } else {
+      await cloudStore.cacheMusic(music);
+      message.success('已加入缓存队列');
+    }
+  } catch (error) {
+    console.error('处理离线缓存失败:', error);
+    message.error(getErrorMessage(error, '缓存操作失败'));
+  } finally {
+    const nextLoading = { ...cacheActionLoading.value };
+    delete nextLoading[key];
+    cacheActionLoading.value = nextLoading;
+  }
 }
 
 function handleCloudContextDownload() {
@@ -866,7 +987,7 @@ onMounted(async () => {
 .drive-table-head,
 .drive-row {
   display: grid;
-  grid-template-columns: 52px minmax(260px, 1.5fr) minmax(130px, 0.7fr) 92px 132px 92px 84px;
+  grid-template-columns: 52px minmax(240px, 1.5fr) minmax(120px, 0.7fr) 84px 120px 108px 88px 120px;
   align-items: center;
   column-gap: 12px;
 }
@@ -907,11 +1028,43 @@ onMounted(async () => {
   @apply truncate text-sm text-neutral-400;
 }
 
+.drive-cache-cell {
+  @apply min-w-0;
+}
+
+.cache-badge {
+  @apply inline-flex h-7 max-w-full items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 text-xs font-medium text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400;
+
+  i {
+    @apply text-sm;
+  }
+
+  &.ready {
+    @apply bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300;
+  }
+
+  &.active {
+    @apply bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300;
+  }
+
+  &.warning {
+    @apply bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-300;
+  }
+
+  &.paused {
+    @apply bg-neutral-100 text-neutral-500 dark:bg-neutral-900 dark:text-neutral-300;
+  }
+}
+
 .drive-row-actions {
   @apply flex justify-end gap-1 opacity-0 transition-opacity;
 
   button {
     @apply flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition hover:bg-white hover:text-primary hover:shadow-sm dark:hover:bg-neutral-800;
+
+    &:disabled {
+      @apply cursor-not-allowed opacity-50 hover:bg-transparent hover:text-neutral-400 hover:shadow-none dark:hover:bg-transparent;
+    }
   }
 }
 
@@ -938,7 +1091,7 @@ onMounted(async () => {
 
   .drive-table-head,
   .drive-row {
-    min-width: 900px;
+    min-width: 1040px;
   }
 }
 </style>

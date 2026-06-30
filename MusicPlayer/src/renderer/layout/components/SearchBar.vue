@@ -189,12 +189,6 @@
           <div class="menu-row" @click="selectItem('refresh')">
             <i class="ri-refresh-line" /><span>{{ t('comp.searchBar.refresh') }}</span>
           </div>
-          <div class="menu-sep" />
-          <div class="menu-row" @click="toGithubRelease">
-            <i class="ri-github-fill" /><span>{{ t('comp.searchBar.currentVersion') }}</span>
-            <span class="ver-chip ml-auto">{{ updateInfo.currentVersion }}</span>
-            <n-tag v-if="updateInfo.hasUpdate" type="success" size="small" class="ml-1">New</n-tag>
-          </div>
         </div>
       </div>
     </n-popover>
@@ -218,9 +212,6 @@ import { useSearchStore } from '@/store/modules/search';
 import { useSettingsStore } from '@/store/modules/settings';
 import { useUserStore } from '@/store/modules/user';
 import { getImgUrl, isElectron } from '@/utils';
-import { checkUpdate, UpdateResult } from '@/utils/update';
-
-import config from '../../../../package.json';
 
 const router = useRouter();
 const route = useRoute();
@@ -436,9 +427,6 @@ watchEffect(() => {
 
 const restartApp = () => window.electron.ipcRenderer.send('restart');
 const toLogin = () => router.push('/user');
-const toGithubRelease = () => {
-  window.location.href = 'https://donate.alger.fun/download';
-};
 
 const isDark = computed({
   get: () => settingsStore.theme === 'dark',
@@ -462,25 +450,9 @@ const selectItem = (key: string) => {
   }
 };
 
-const updateInfo = ref<UpdateResult>({
-  hasUpdate: false,
-  latestVersion: '',
-  currentVersion: config.version,
-  releaseInfo: null
-});
-const checkForUpdates = async () => {
-  try {
-    const r = await checkUpdate(config.version);
-    if (r) updateInfo.value = r;
-  } catch (e) {
-    void e; // 更新检查失败时静默处理
-  }
-};
-
 onMounted(() => {
   loadHotSearch();
   loadPage();
-  checkForUpdates();
   isElectron && initZoomFactor();
 });
 </script>
@@ -866,18 +838,6 @@ onMounted(() => {
 .zoom-val--100 {
   background: #dcfce7;
   color: #16a34a;
-}
-.ver-chip {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 1px 6px;
-  border-radius: 5px;
-  background: #f3f4f6;
-  color: #6b7280;
-}
-.dark .ver-chip {
-  background: #1f2937;
-  color: #9ca3af;
 }
 
 /* ── Suggestions ─────────────────────────────────────── */

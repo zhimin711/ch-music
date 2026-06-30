@@ -5,6 +5,8 @@ import type {
   MusicServerFavorite,
   MusicServerMusic,
   MusicServerPlaylist,
+  MusicServerTranscodeCapabilities,
+  MusicServerTranscodeStatus,
   MusicServerUser
 } from '@/types/musicServer';
 
@@ -43,10 +45,13 @@ musicServerRequest.interceptors.request.use((config) => {
   return config;
 });
 
-export function buildMusicServerStreamUrl(musicId: number) {
+export function buildMusicServerStreamUrl(musicId: number, profileId?: string) {
   const baseUrl = getMusicServerBaseUrl();
   const token = getMusicServerToken();
   const url = new URL(`/api/music/${musicId}/stream`, baseUrl);
+  if (profileId && profileId !== 'original') {
+    url.searchParams.set('profile', profileId);
+  }
   if (token) {
     url.searchParams.set('access_token', token);
   }
@@ -95,6 +100,22 @@ export function uploadMusicServerMusic(formData: FormData) {
 
 export function deleteMusicServerMusic(musicId: number) {
   return musicServerRequest.delete<void>(`/api/music/${musicId}`);
+}
+
+export function getMusicServerTranscodeCapabilities() {
+  return musicServerRequest.get<MusicServerTranscodeCapabilities>('/api/music/transcode-capabilities');
+}
+
+export function prepareMusicServerTranscode(musicId: number, profileId: string) {
+  return musicServerRequest.post<MusicServerTranscodeStatus>(
+    `/api/music/${musicId}/transcodes/${profileId}`
+  );
+}
+
+export function getMusicServerTranscodeStatus(musicId: number, profileId: string) {
+  return musicServerRequest.get<MusicServerTranscodeStatus>(
+    `/api/music/${musicId}/transcodes/${profileId}`
+  );
 }
 
 export function listMusicServerPlaylists() {
@@ -155,6 +176,24 @@ export function addMusicServerFavorite(musicId: number) {
   return musicServerRequest.post<MusicServerFavorite[]>(`/api/favorites/${musicId}`);
 }
 
+export function addMusicServerExternalFavorite(payload: {
+  source: string;
+  externalId: string;
+  title: string;
+  artist?: string | null;
+  album?: string | null;
+  picUrl?: string | null;
+  duration?: number | null;
+}) {
+  return musicServerRequest.post<MusicServerFavorite[]>('/api/favorites', payload);
+}
+
 export function removeMusicServerFavorite(musicId: number) {
   return musicServerRequest.delete<MusicServerFavorite[]>(`/api/favorites/${musicId}`);
+}
+
+export function removeMusicServerExternalFavorite(source: string, externalId: string) {
+  return musicServerRequest.delete<MusicServerFavorite[]>('/api/favorites/external', {
+    params: { source, externalId }
+  });
 }

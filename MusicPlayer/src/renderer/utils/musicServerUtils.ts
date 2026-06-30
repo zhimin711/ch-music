@@ -21,7 +21,11 @@ const createArtist = (name: string): Artist => ({
   topicPerson: 0
 });
 
-export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
+export function toMusicServerSongResult(
+  music: MusicServerMusic,
+  optionsOrIndex: { playMusicUrl?: string; profileId?: string } | number = {}
+): SongResult {
+  const options = typeof optionsOrIndex === 'number' ? {} : optionsOrIndex;
   const artistName = music.artist || UNKNOWN_ARTIST;
   const albumName = music.album || UNKNOWN_ALBUM;
   const artist = createArtist(artistName);
@@ -71,7 +75,9 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
       artists: [artist],
       album: { name: albumName, picUrl }
     },
-    playMusicUrl: isPrivateMusic ? buildMusicServerStreamUrl(Number(musicId)) : undefined,
+    playMusicUrl: isPrivateMusic
+      ? options.playMusicUrl || buildMusicServerStreamUrl(Number(musicId), options.profileId)
+      : undefined,
     source: isPrivateMusic ? 'musicServer' : 'netease',
     count: 0,
     duration: music.duration || undefined,

@@ -16,13 +16,16 @@ import androidx.media3.exoplayer.ExoPlayer
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.extensions.showToast
 import code.name.monkey.retromusic.extensions.uri
+import code.name.monkey.retromusic.musicserver.MusicServerDataSourceFactory
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.service.playback.Playback.PlaybackCallbacks
 import code.name.monkey.retromusic.util.PreferenceUtil.playbackPitch
 import code.name.monkey.retromusic.util.PreferenceUtil.playbackSpeed
 import code.name.monkey.retromusic.util.logE
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.Listener {
+class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.Listener, KoinComponent {
     // Fix provided by : Zak (github: @arrhenius975, mail: zakariatalukdar123@gmail.com)
     // Definition and fix: Fix USB-C/Bluetooth audio routing by setting attributes at init
     private val audioAttributes = AudioAttributes.Builder()
@@ -33,6 +36,7 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
     private var player: ExoPlayer = ExoPlayer.Builder(context)
         .setAudioAttributes(audioAttributes, false)
         .build()
+    private val musicServerDataSourceFactory by inject<MusicServerDataSourceFactory>()
     override var callbacks: PlaybackCallbacks? = null
 
     /**
@@ -56,9 +60,14 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
     ) {
         isInitialized = false
         val mediaItem = MediaItem.fromUri(song.uri)
+        val musicServerMediaSource = musicServerDataSourceFactory.createMediaSource(song)
         try {
             Handler(Looper.getMainLooper()).post {
-                player.setMediaItem(mediaItem)
+                if (musicServerMediaSource != null) {
+                    player.setMediaSource(musicServerMediaSource)
+                } else {
+                    player.setMediaItem(mediaItem)
+                }
                 player.setAudioAttributes(audioAttributes, false)
                 player.playbackParameters = PlaybackParameters(playbackSpeed, playbackPitch)
 

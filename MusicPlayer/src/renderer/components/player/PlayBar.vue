@@ -152,7 +152,7 @@
         {{ t('player.playBar.reparse') }}
       </n-tooltip>
 
-      <!-- 高级控制菜单按钮（整合了 EQ、定时关闭、播放速度） -->
+      <!-- 均衡器独立按钮 + 高级控制菜单（定时关闭、播放速度） -->
       <advanced-controls-popover />
 
       <n-tooltip trigger="hover" :z-index="9999999">

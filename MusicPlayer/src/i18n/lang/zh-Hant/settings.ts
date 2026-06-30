@@ -6,6 +6,7 @@ export default {
   sections: {
     basic: '基礎設定',
     playback: '播放設定',
+    equalizer: '等化器',
     application: '應用程式設定',
     network: '網路設定',
     system: '系統管理',

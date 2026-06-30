@@ -13,6 +13,7 @@ import { initializeFonts } from './modules/fonts';
 import { initializeLocalMusicScanner } from './modules/localMusicScanner';
 import { initializeLoginWindow } from './modules/loginWindow';
 import { initLxMusicHttp } from './modules/lxMusicHttp';
+import { initializeMusicServerOfflineCache } from './modules/musicServerOfflineCache';
 import { initializeMpris, updateMprisCurrentSong, updateMprisPlayState } from './modules/mpris';
 import { initializeOtherApi } from './modules/otherApi';
 import { initializeRemoteControl } from './modules/remoteControl';
@@ -48,6 +49,8 @@ function initialize(configStore: any) {
   initializeDownloadManager();
   // 初始化歌词缓存管理
   initializeCacheManager();
+  // 初始化 MusicServer 私有离线缓存
+  initializeMusicServerOfflineCache();
   // 初始化其他 API （搜索建议等）
   initializeOtherApi();
   // 初始化窗口管理
