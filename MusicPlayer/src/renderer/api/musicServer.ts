@@ -197,3 +197,162 @@ export function removeMusicServerExternalFavorite(source: string, externalId: st
     params: { source, externalId }
   });
 }
+
+export function getMusicServerNeteaseSearch(params: {
+  keywords: string;
+  type: number;
+  limit?: number;
+  offset?: number;
+}) {
+  return musicServerRequest.get<any>('/api/netease/public/search', { params });
+}
+
+export function getMusicServerNeteaseSongDetail(ids: Array<number>) {
+  return musicServerRequest.get<any>('/api/netease/public/song/detail', {
+    params: { ids: ids.join(',') }
+  });
+}
+
+export function getMusicServerNeteaseSongUrl(id: number, level?: string, encodeType?: string) {
+  return musicServerRequest.get<any>('/api/netease/public/song/url', {
+    params: { id, level, encodeType }
+  });
+}
+
+export function getMusicServerNeteaseLyric(id: number) {
+  return musicServerRequest.get<any>('/api/netease/public/lyric', {
+    params: { id }
+  });
+}
+
+export function getMusicServerNeteasePlaylistDetail(id: number | string) {
+  return musicServerRequest.get<any>('/api/netease/public/playlist/detail', {
+    params: { id }
+  });
+}
+
+export function getMusicServerNeteaseAlbum(id: number | string) {
+  return musicServerRequest.get<any>('/api/netease/public/album', {
+    params: { id }
+  });
+}
+
+export function getMusicServerNeteaseToplist() {
+  return musicServerRequest.get<any>('/api/netease/public/toplist');
+}
+
+export function getMusicServerNeteaseToplistDetail() {
+  return musicServerRequest.get<any>('/api/netease/public/toplist/detail');
+}
+
+export function getMusicServerNeteaseSearchSuggest(params: { keywords: string; type?: string }) {
+  return musicServerRequest.get<any>('/api/netease/public/search/suggest', { params });
+}
+
+export function getMusicServerNeteaseSearchDefault() {
+  return musicServerRequest.get<any>('/api/netease/public/search/default');
+}
+
+export function getMusicServerNeteaseSearchHotDetail() {
+  return musicServerRequest.get<any>('/api/netease/public/search/hot/detail');
+}
+
+export function getMusicServerNeteasePlaylistCatlist() {
+  return musicServerRequest.get<any>('/api/netease/public/playlist/catlist');
+}
+
+export function getMusicServerNeteaseTopPlaylist(params: {
+  cat?: string;
+  offset?: number;
+  limit?: number;
+  order?: string;
+}) {
+  return musicServerRequest.get<any>('/api/netease/public/top/playlist', { params });
+}
+
+export function getMusicServerNeteaseTopPlaylistHighquality(params: {
+  cat?: string;
+  tag?: string;
+  before?: number;
+  limit?: number;
+}) {
+  return musicServerRequest.get<any>('/api/netease/public/top/playlist/highquality', { params });
+}
+
+export function getMusicServerNeteasePersonalized(limit?: number) {
+  return musicServerRequest.get<any>('/api/netease/public/personalized', { params: { limit } });
+}
+
+export function getMusicServerNeteasePersonalizedNewsong(params: { limit?: number }) {
+  return musicServerRequest.get<any>('/api/netease/public/personalized/newsong', { params });
+}
+
+export function getMusicServerNeteasePersonalizedPrivatecontent(limit?: number) {
+  return musicServerRequest.get<any>('/api/netease/public/personalized/privatecontent', {
+    params: { limit }
+  });
+}
+
+export function getMusicServerNeteasePersonalizedMv() {
+  return musicServerRequest.get<any>('/api/netease/public/personalized/mv');
+}
+
+export function getMusicServerNeteasePersonalizedDjprogram() {
+  return musicServerRequest.get<any>('/api/netease/public/personalized/djprogram');
+}
+
+export function getMusicServerNeteaseBanner(type: number = 0) {
+  return musicServerRequest.get<any>('/api/netease/public/banner', { params: { type } });
+}
+
+export function getMusicServerNeteaseAlbumNew(params: {
+  limit?: number;
+  offset?: number;
+  area?: string;
+}) {
+  return musicServerRequest.get<any>('/api/netease/public/album/new', { params });
+}
+
+export function getMusicServerNeteaseAlbumNewest() {
+  return musicServerRequest.get<any>('/api/netease/public/album/newest');
+}
+
+export function getMusicServerNeteaseTopAlbum(params?: {
+  limit?: number;
+  offset?: number;
+  area?: string;
+  type?: string;
+  year?: number;
+  month?: number;
+}) {
+  return musicServerRequest.get<any>('/api/netease/public/top/album', { params });
+}
+
+export function getMusicServerNeteaseArtist(id: number | string) {
+  return musicServerRequest.get<any>('/api/netease/public/artist', { params: { id } });
+}
+
+export function getMusicServerNeteaseArtistSongs(params: {
+  id: number | string;
+  offset?: number;
+  limit?: number;
+  order?: string;
+}) {
+  return musicServerRequest.get<any>('/api/netease/public/artist/songs', { params });
+}
+
+export function getMusicServerNeteaseArtistAlbum(params: {
+  id: number | string;
+  limit?: number;
+  offset?: number;
+}) {
+  return musicServerRequest.get<any>('/api/netease/public/artist/album', { params });
+}
+
+export function getMusicServerNeteaseTopArtists(params: { offset?: number; limit?: number }) {
+  return musicServerRequest.get<any>('/api/netease/public/top/artists', { params });
+}
+
+export function getMusicServerNeteaseArtistNewSong(limit: number = 20) {
+  return musicServerRequest.get<any>('/api/netease/public/artist/new/song', { params: { limit } });
+}

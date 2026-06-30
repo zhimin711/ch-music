@@ -1,5 +1,6 @@
 package com.chmusic.musicserver.config;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -12,6 +13,7 @@ public class MusicServerProperties {
     private final Cors cors = new Cors();
     private final Streaming streaming = new Streaming();
     private final Transcoding transcoding = new Transcoding();
+    private final Netease netease = new Netease();
 
     public Storage getStorage() {
         return storage;
@@ -31,6 +33,10 @@ public class MusicServerProperties {
 
     public Transcoding getTranscoding() {
         return transcoding;
+    }
+
+    public Netease getNetease() {
+        return netease;
     }
 
     public static class Storage {
@@ -152,6 +158,106 @@ public class MusicServerProperties {
 
         public void setProfiles(List<Profile> profiles) {
             this.profiles = profiles == null ? new ArrayList<>() : profiles;
+        }
+    }
+
+    public static class Netease {
+        private boolean enabled = true;
+        private String baseUrl = "http://127.0.0.1:3000";
+        private Duration connectTimeout = Duration.ofSeconds(2);
+        private Duration readTimeout = Duration.ofSeconds(8);
+        private final RateLimit rateLimit = new RateLimit();
+        private final Cache cache = new Cache();
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getBaseUrl() {
+            return baseUrl;
+        }
+
+        public void setBaseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+        }
+
+        public Duration getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        public void setConnectTimeout(Duration connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        public Duration getReadTimeout() {
+            return readTimeout;
+        }
+
+        public void setReadTimeout(Duration readTimeout) {
+            this.readTimeout = readTimeout;
+        }
+
+        public RateLimit getRateLimit() {
+            return rateLimit;
+        }
+
+        public Cache getCache() {
+            return cache;
+        }
+    }
+
+    public static class RateLimit {
+        private int anonymousPerMinute = 60;
+
+        public int getAnonymousPerMinute() {
+            return anonymousPerMinute;
+        }
+
+        public void setAnonymousPerMinute(int anonymousPerMinute) {
+            this.anonymousPerMinute = anonymousPerMinute;
+        }
+    }
+
+    public static class Cache {
+        private boolean enabled = true;
+        private Duration shortTtl = Duration.ofMinutes(2);
+        private Duration mediumTtl = Duration.ofMinutes(10);
+        private Duration playbackTtl = Duration.ofSeconds(30);
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public Duration getShortTtl() {
+            return shortTtl;
+        }
+
+        public void setShortTtl(Duration shortTtl) {
+            this.shortTtl = shortTtl;
+        }
+
+        public Duration getMediumTtl() {
+            return mediumTtl;
+        }
+
+        public void setMediumTtl(Duration mediumTtl) {
+            this.mediumTtl = mediumTtl;
+        }
+
+        public Duration getPlaybackTtl() {
+            return playbackTtl;
+        }
+
+        public void setPlaybackTtl(Duration playbackTtl) {
+            this.playbackTtl = playbackTtl;
         }
     }
 
