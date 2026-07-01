@@ -192,6 +192,11 @@
         <item name="cornerSize">20dp</item>
     </style>
 
+    <style name="DrawerItemShapeAppearance" parent="ShapeAppearance.Material3.Corner.Medium">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+
     <style name="ProfileCardShapeAppearance" parent="ShapeAppearance.Material3.Corner.Large">
         <item name="cornerSize">24dp</item>
     </style>

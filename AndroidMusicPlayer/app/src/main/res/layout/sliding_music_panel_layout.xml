@@ -50,9 +50,17 @@
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/drawerNavigationView"
-        android:layout_width="wrap_content"
+        android:layout_width="304dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:background="?attr/colorSurface"
         android:fitsSystemWindows="true"
+        app:itemHorizontalPadding="18dp"
+        app:itemIconPadding="18dp"
+        app:itemIconTint="@color/drawer_item_tint"
+        app:itemShapeAppearanceOverlay="@style/DrawerItemShapeAppearance"
+        app:itemShapeFillColor="@color/drawer_item_fill"
+        app:itemTextAppearance="@style/TextViewSubtitle1"
+        app:itemTextColor="@color/drawer_item_tint"
         app:menu="@menu/drawer_navigation_main" />
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -4,7 +4,7 @@
     <!-- 登录用户专属分组：未登录时整组隐藏 -->
     <group
         android:id="@+id/drawer_group_account"
-        android:checkableBehavior="none">
+        android:checkableBehavior="single">
         <item
             android:id="@+id/drawer_profile"
             android:icon="@drawable/ic_account"
@@ -29,7 +29,7 @@
     <!-- 通用功能：登录/未登录都可见 -->
     <group
         android:id="@+id/drawer_group_common"
-        android:checkableBehavior="none">
+        android:checkableBehavior="single">
         <item
             android:id="@+id/drawer_recent"
             android:icon="@drawable/ic_recent_play"
@@ -44,7 +44,7 @@
     <!-- 系统类 -->
     <group
         android:id="@+id/drawer_group_system"
-        android:checkableBehavior="none">
+        android:checkableBehavior="single">
         <item
             android:id="@+id/drawer_settings"
             android:icon="@drawable/ic_settings"

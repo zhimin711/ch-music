@@ -98,6 +98,9 @@ class DrawerViewController(
                 R.id.drawer_settings -> navController.navigate(R.id.settings_fragment)
                 else -> return@setNavigationItemSelectedListener false
             }
+            if (item.itemId != R.id.drawer_logout && item.itemId != R.id.drawer_sleep) {
+                item.isChecked = true
+            }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
@@ -142,7 +145,8 @@ class DrawerViewController(
             val user = state.user
             headerUsername?.text = user?.displayLabel
                 ?: ctx.getString(R.string.drawer_not_logged_in)
-            headerSubtitle?.text = user?.username.orEmpty()
+            headerSubtitle?.text = user?.username?.takeIf { it.isNotBlank() }
+                ?: ctx.getString(R.string.drawer_tap_to_login)
         } else {
             headerUsername?.text = ctx.getString(R.string.drawer_not_logged_in)
             headerSubtitle?.text = ctx.getString(R.string.drawer_tap_to_login)
@@ -152,7 +156,7 @@ class DrawerViewController(
         headerAvatar?.let { avatar ->
             val userFile = RetroGlideExtension.getUserModel()
             Glide.with(ctx)
-                .load(userFile)
+                .load(state.user?.avatarUrl ?: userFile)
                 .userProfileOptions(userFile, ctx)
                 .into(avatar)
             avatar.isVisible = true

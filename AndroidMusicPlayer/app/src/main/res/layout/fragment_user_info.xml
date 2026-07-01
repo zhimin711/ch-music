@@ -40,6 +40,7 @@
 
             <!-- Header card: banner with overlapping avatar -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/profileHeaderCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="?attr/colorSurfaceVariant"
@@ -139,6 +140,24 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:padding="16dp">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/loginTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/music_server_login_title"
+                            android:textAppearance="@style/TextViewHeadline6"
+                            android:textColor="?android:attr/textColorPrimary" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/loginSubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:layout_marginBottom="16dp"
+                            android:text="@string/music_server_login_subtitle"
+                            android:textAppearance="@style/TextViewBody2"
+                            android:textColor="?android:attr/textColorSecondary" />
 
                         <com.google.android.material.button.MaterialButtonToggleGroup
                             android:id="@+id/authModeGroup"
@@ -329,6 +348,14 @@
                         android:textAppearance="@style/TextViewSubtitle1"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textStyle="bold" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/musicLibrarySummary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextViewBody2"
+                        android:textColor="?android:attr/textColorSecondary"
+                        tools:text="12 首" />
                 </LinearLayout>
 
                 <com.google.android.material.card.MaterialCardView
@@ -394,6 +421,14 @@
                         android:textAppearance="@style/TextViewSubtitle1"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textStyle="bold" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/favoritesSummary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextViewBody2"
+                        android:textColor="?android:attr/textColorSecondary"
+                        tools:text="8 首" />
                 </LinearLayout>
 
                 <com.google.android.material.card.MaterialCardView
@@ -444,6 +479,15 @@
                         android:textAppearance="@style/TextViewSubtitle1"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textStyle="bold" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/playlistsSummary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:textAppearance="@style/TextViewBody2"
+                        android:textColor="?android:attr/textColorSecondary"
+                        tools:text="3 个" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/createPlaylist"

@@ -85,6 +85,15 @@
     <string name="drawer_logout">退出登录</string>
     <string name="drawer_login_required_toast">请先登录以使用此功能</string>
     <string name="drawer_server_prefix">服务器：%1$s</string>
+    <string name="music_server_login_title">登录 MusicServer</string>
+    <string name="music_server_login_subtitle">同步你的云音乐库、收藏和歌单</string>
+    <string name="music_server_profile_subtitle">管理头像、昵称和账号会话</string>
+    <string name="music_server_library_summary">%1$d 首云端歌曲</string>
+    <string name="music_server_favorites_summary">%1$d 首收藏歌曲</string>
+    <string name="music_server_playlists_summary">%1$d 个歌单</string>
+    <string name="music_server_empty_library">还没有云端歌曲，上传一首开始同步</string>
+    <string name="music_server_empty_favorites">还没有收藏，把喜欢的歌加入这里</string>
+    <string name="music_server_empty_playlists">还没有歌单，创建一个整理你的音乐</string>
     <string name="bottom_home">首页</string>
     <string name="bottom_search">搜索</string>
     <string name="bottom_notes">笔记</string>

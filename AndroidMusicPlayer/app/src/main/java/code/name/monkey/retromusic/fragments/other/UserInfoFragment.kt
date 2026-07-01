@@ -266,6 +266,7 @@ class UserInfoFragment : Fragment() {
 
         // === 未登录：无论从哪个抽屉入口进来，都只显示登录/注册表单 ===
         if (!loggedIn) {
+            binding.profileHeaderCard?.isVisible = true
             binding.loginGroup?.isVisible = true
             binding.accountGroup?.isVisible = false
             binding.refresh?.isVisible = false
@@ -273,9 +274,10 @@ class UserInfoFragment : Fragment() {
             setSectionVisible(R.id.favoritesSection, false)
             setSectionVisible(R.id.playlistsSection, false)
 
+            binding.toolbar.title = getString(R.string.music_server)
             binding.accountTitle?.text = getString(R.string.music_server)
-            binding.accountSubtitle?.text = ""
-            binding.accountSubtitle?.isVisible = false
+            binding.accountSubtitle?.text = getString(R.string.music_server_login_subtitle)
+            binding.accountSubtitle?.isVisible = true
             loadProfile()
             return
         }
@@ -285,18 +287,17 @@ class UserInfoFragment : Fragment() {
         binding.loginGroup?.isVisible = false
         binding.accountGroup?.isVisible = tab == "profile"
         binding.refresh?.isVisible = tab != "profile"
+        binding.profileHeaderCard?.isVisible = tab == "profile"
         setSectionVisible(R.id.musicLibrarySection, tab == "music_library")
         setSectionVisible(R.id.favoritesSection, tab == "favorites")
         setSectionVisible(R.id.playlistsSection, tab == "playlists")
 
         val user = state.user
-        // 顶部头像 banner 仅在"账户"入口有意义；其他入口把它藏起来，让内容更聚焦
-        binding.bannerImage.isVisible = tab == "profile"
-        binding.userImage.isVisible = tab == "profile"
-        binding.accountTitle?.isVisible = tab == "profile"
-        binding.accountSubtitle?.isVisible = tab == "profile"
         binding.accountTitle?.text = user?.displayLabel ?: getString(R.string.music_server)
-        binding.accountSubtitle?.text = user?.username.orEmpty()
+        binding.accountSubtitle?.text = getString(R.string.music_server_profile_subtitle)
+        binding.musicLibrarySummary?.text = getString(R.string.music_server_library_summary, state.music.size)
+        binding.favoritesSummary?.text = getString(R.string.music_server_favorites_summary, state.favorites.size)
+        binding.playlistsSummary?.text = getString(R.string.music_server_playlists_summary, state.playlists.size)
 
         binding.toolbar.title = when (tab) {
             "playlists" -> getString(R.string.playlists)
@@ -324,7 +325,7 @@ class UserInfoFragment : Fragment() {
     private fun renderMusicList(state: MusicServerState) {
         binding.musicList?.removeAllViews()
         if (state.music.isEmpty()) {
-            binding.musicList?.addView(emptyText("No private music"))
+            binding.musicList?.addView(emptyText(getString(R.string.music_server_empty_library)))
             return
         }
         state.music.forEach { music ->
@@ -342,7 +343,7 @@ class UserInfoFragment : Fragment() {
     private fun renderFavoriteList(state: MusicServerState) {
         binding.favoriteList?.removeAllViews()
         if (state.favorites.isEmpty()) {
-            binding.favoriteList?.addView(emptyText("No favorites"))
+            binding.favoriteList?.addView(emptyText(getString(R.string.music_server_empty_favorites)))
             return
         }
         state.favorites.forEach { favorite ->
@@ -360,7 +361,7 @@ class UserInfoFragment : Fragment() {
     private fun renderPlaylistList(state: MusicServerState) {
         binding.playlistList?.removeAllViews()
         if (state.playlists.isEmpty()) {
-            binding.playlistList?.addView(emptyText("No playlists"))
+            binding.playlistList?.addView(emptyText(getString(R.string.music_server_empty_playlists)))
             return
         }
         state.playlists.forEach { playlist ->
@@ -716,7 +717,13 @@ class UserInfoFragment : Fragment() {
 
     private fun rowContainer() = LinearLayout(requireContext()).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(0, dip(12), 0, dip(12))
+        setPadding(dip(16), dip(14), dip(16), dip(14))
+        foreground = requireContext().obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))
+            .let {
+                val drawable = it.getDrawable(0)
+                it.recycle()
+                drawable
+            }
     }
 
     private fun buttonRow(vararg buttons: MaterialButton) = LinearLayout(requireContext()).apply {
@@ -741,7 +748,8 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun emptyText(text: String) = subtitleText(text).apply {
-        setPadding(0, dip(8), 0, dip(8))
+        gravity = android.view.Gravity.CENTER
+        setPadding(dip(24), dip(32), dip(24), dip(32))
     }
 
     private fun smallButton(textRes: Int, onClick: () -> Unit) = MaterialButton(requireContext()).apply {
