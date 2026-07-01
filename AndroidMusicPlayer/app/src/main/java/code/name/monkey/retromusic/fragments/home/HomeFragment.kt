@@ -24,7 +24,10 @@ import code.name.monkey.retromusic.databinding.FragmentHomeBinding
 import code.name.monkey.retromusic.fragments.base.AbsMainActivityFragment
 import code.name.monkey.retromusic.fragments.songlist.SonglistFragment
 import code.name.monkey.retromusic.fragments.toplist.ToplistFragment
+import code.name.monkey.retromusic.glide.RetroGlideExtension
+import code.name.monkey.retromusic.glide.RetroGlideExtension.userProfileOptions
 import code.name.monkey.retromusic.interfaces.IScrollHelper
+import com.bumptech.glide.Glide
 import com.google.android.material.tabs.TabLayoutMediator
 
 class HomeFragment :
@@ -57,6 +60,7 @@ class HomeFragment :
         binding.userImage.setOnClickListener {
             mainActivity.openDrawer()
         }
+        loadUserAvatar()
 
         // 顶部搜索图标：跳转到搜索页
         binding.searchInput.setOnClickListener {
@@ -79,6 +83,22 @@ class HomeFragment :
     override fun scrollToTop() {
         binding.appBarLayout.setExpanded(true, true)
         binding.homePager.setCurrentItem(0, true) // jump to first tab content (首页)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 用户可能在 UserInfoFragment 换过头像，回到首页需要刷新
+        if (_binding != null) {
+            loadUserAvatar()
+        }
+    }
+
+    private fun loadUserAvatar() {
+        val userFile = RetroGlideExtension.getUserModel()
+        Glide.with(this)
+            .load(userFile)
+            .userProfileOptions(userFile, requireContext())
+            .into(binding.userImage)
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
