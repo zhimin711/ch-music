@@ -50,7 +50,7 @@ public class NeteasePublicController {
         return neteasePublicService.fetch(NeteasePublicEndpoint.SONG_DETAIL, params, request, authentication);
     }
 
-    @GetMapping("/song/url")
+    @GetMapping({"/song/url", "/song/url/v1"})
     public JsonNode songUrl(@RequestParam MultiValueMap<String, String> params, HttpServletRequest request,
             Authentication authentication) {
         return neteasePublicService.fetch(NeteasePublicEndpoint.SONG_URL, params, request, authentication);

@@ -189,5 +189,33 @@ data class NeteaseSong(
     val name: String,
     val ar: List<NeteaseArtist>?,    // artists
     val al: NeteaseAlbum?,            // album
-    val dt: Long?                     // duration in ms
+    val dt: Long?,                    // duration in ms
+    // ---- 音质相关（可选，用于推导 song/url/v1 的 level & encodeType）----
+    val privilege: NeteasePrivilege? = null,
+    val hrMusic: NeteaseMusicQuality? = null,   // hires
+    val sqMusic: NeteaseMusicQuality? = null,   // lossless
+    val hMusic: NeteaseMusicQuality? = null,    // exhigh
+    val mMusic: NeteaseMusicQuality? = null,    // higher
+    val lMusic: NeteaseMusicQuality? = null     // standard
+)
+
+/**
+ * 网易云单首歌的权限/可用音质信息（song/detail 或歌单 tracks 里返回）。
+ * 我们只关心播放侧字段。
+ */
+data class NeteasePrivilege(
+    val plLevel: String?,         // 当前账号该歌实际可播等级 (standard/higher/exhigh/lossless/hires/sky/...)
+    val playMaxBrLevel: String?,  // 理论最高等级
+    val playMaxbr: Long?,         // 最大比特率 (bps)
+    val maxbr: Long?              // 兜底：最大比特率
+)
+
+/**
+ * 一档音质的资源信息（hMusic/mMusic/sqMusic/hrMusic 等）。
+ * 主要用 extension 判定 encodeType (flac/mp3)。
+ */
+data class NeteaseMusicQuality(
+    val bitrate: Long?,
+    val extension: String?,       // "flac" / "mp3" 等
+    val size: Long?
 )

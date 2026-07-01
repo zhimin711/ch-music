@@ -128,6 +128,26 @@ class UserInfoFragment : Fragment() {
                 bottomMargin = it + dip(16)
             }
         }
+
+        // 支持从抽屉进入时定位到特定分区
+        maybeScrollToDefaultTab()
+    }
+
+    private fun maybeScrollToDefaultTab() {
+        val defaultTab = arguments?.getString("defaultTab") ?: return
+        val container = binding.container ?: return
+        val targetView: View = when (defaultTab) {
+            "profile" -> binding.accountGroup
+            "playlists" -> binding.root.findViewById(R.id.playlistsSection)
+            "favorites" -> binding.root.findViewById(R.id.favoritesSection)
+            "music_library" -> binding.root.findViewById(R.id.musicLibrarySection)
+            else -> null
+        } ?: return
+        // 等 layout 完成后再滚动
+        targetView.post {
+            if (_binding == null) return@post
+            container.smoothScrollTo(0, targetView.top)
+        }
     }
 
     private fun setupStaticUi() {

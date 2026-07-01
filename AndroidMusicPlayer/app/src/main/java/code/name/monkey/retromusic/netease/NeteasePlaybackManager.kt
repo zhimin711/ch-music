@@ -48,50 +48,15 @@ class NeteasePlaybackManager(
      * 批量预取一批歌曲的 URL，已有 URL 或非网易云歌曲直接返回原对象。
      * 缓存命中的歌曲不会触发远程请求。
      *
+     * 实现：**逐首**调用 [resolveSong]。后端 song/url 端点在多 id 情况下响应体
+     * 会出现 Jackson 无法解析的 trailing token（`}{` 等），所以宁可多 N 次请求，
+     * 也不做多 id 拼接。
+     *
      * 返回：与输入对应的歌曲列表（失败的歌曲保留原状）
      */
     suspend fun resolveSongs(songs: List<Song>): List<Song> {
         if (songs.isEmpty()) return songs
-
-        // 收集需要远程请求的歌曲 ID（排除已有 URL 与缓存命中）
-        val pendingIds = mutableListOf<Long>()
-        val cachedUrls = mutableMapOf<Long, String>()
-
-        for (song in songs) {
-            if (song.data.startsWith("http://") || song.data.startsWith("https://")) continue
-            val neteaseId = NeteaseSongMapper.neteaseIdFromSong(song) ?: continue
-            val cached = NeteaseUrlCache.get(neteaseId)
-            if (cached != null) {
-                cachedUrls[neteaseId] = cached
-            } else {
-                pendingIds += neteaseId
-            }
-        }
-
-        // 远程批量获取
-        val fetchedUrls: Map<Long, String> = if (pendingIds.isEmpty()) {
-            emptyMap()
-        } else {
-            when (val result = repository.getSongsUrl(pendingIds)) {
-                is Result.Success -> {
-                    NeteaseUrlCache.putAll(result.data)
-                    result.data
-                }
-                is Result.Error, is Result.Loading -> emptyMap()
-            }
-        }
-
-        // 组装最终列表
-        return songs.map { song ->
-            if (song.data.startsWith("http://") || song.data.startsWith("https://")) return@map song
-            val neteaseId = NeteaseSongMapper.neteaseIdFromSong(song) ?: return@map song
-            val url = cachedUrls[neteaseId] ?: fetchedUrls[neteaseId]
-            if (url != null) {
-                NeteaseSongMapper.withPlayUrl(song, url)
-            } else {
-                song
-            }
-        }
+        return songs.map { song -> resolveSong(song) ?: song }
     }
 
     /**

@@ -137,7 +137,12 @@
 
     <fragment
         android:id="@+id/user_info_fragment"
-        android:name="code.name.monkey.retromusic.fragments.other.UserInfoFragment" />
+        android:name="code.name.monkey.retromusic.fragments.other.UserInfoFragment">
+        <argument
+            android:name="defaultTab"
+            android:defaultValue="profile"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/playing_queue_fragment"

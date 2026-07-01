@@ -47,7 +47,7 @@ val networkModule = module {
     }
     // 网易云音乐 API
     factory {
-        provideNeteaseOkHttp(get(), get())
+        provideNeteaseOkHttp(get(), get(), get())
     }
     single {
         provideNeteaseRetrofit(get())

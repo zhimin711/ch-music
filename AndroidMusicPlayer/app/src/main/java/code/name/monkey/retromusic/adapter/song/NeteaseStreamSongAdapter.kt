@@ -39,24 +39,20 @@ class NeteaseStreamSongAdapter(
             }
             val position = layoutPosition
             if (position == -1) return
+            val clicked = dataSet.getOrNull(position) ?: return
 
             lifecycleScope.launch {
-                val resolved = playbackManager.resolveSongs(dataSet)
-                val playable = playbackManager.playableOnly(resolved)
-                if (playable.isEmpty()) {
+                // 只解析被点击的那一首，避免多 id 请求上游不稳
+                val resolved = playbackManager.resolveSong(clicked)
+                if (resolved == null || !(resolved.data.startsWith("http://") || resolved.data.startsWith("https://"))) {
                     onResolveError?.invoke("无可用播放链接")
                     return@launch
                 }
-                // 在 playable 列表中找到被点击的歌曲
-                val clickedSong = dataSet.getOrNull(position) ?: return@launch
-                val newIndex = playable.indexOfFirst { it.id == clickedSong.id }.coerceAtLeast(0)
+                // 把解析过的这条写回 dataSet，保持 UI 与队列一致
+                dataSet[position] = resolved
+                notifyItemChanged(position)
 
-                // 把解析过的列表写回 adapter，保持 UI 与队列一致
-                dataSet.clear()
-                dataSet.addAll(resolved)
-                notifyDataSetChanged()
-
-                MusicPlayerRemote.openQueue(ArrayList(playable), newIndex, true)
+                MusicPlayerRemote.openQueue(arrayListOf(resolved), 0, true)
             }
         }
     }

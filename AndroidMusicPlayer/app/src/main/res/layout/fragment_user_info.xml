@@ -297,6 +297,7 @@
 
             <!-- Private music section -->
             <LinearLayout
+                android:id="@+id/musicLibrarySection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
@@ -359,6 +360,7 @@
 
             <!-- Favorites section -->
             <LinearLayout
+                android:id="@+id/favoritesSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
@@ -406,6 +408,7 @@
 
             <!-- Playlists section -->
             <LinearLayout
+                android:id="@+id/playlistsSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"

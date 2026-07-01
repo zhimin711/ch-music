@@ -12,7 +12,10 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Component
 public class NeteasePublicClient {
@@ -31,22 +34,27 @@ public class NeteasePublicClient {
                 .requestFactory(requestFactory)
                 .build();
     }
-
+    
     public JsonNode fetch(NeteasePublicEndpoint endpoint, MultiValueMap<String, String> params, String traceId) {
         URI uri = UriComponentsBuilder.fromPath(endpoint.sidecarPath())
                 .queryParams(params)
                 .encode()
                 .build()
                 .toUri();
+        JsonMapper objectMapper = JsonMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, false)
+                .build();
         try {
-            JsonNode body = restClient.get()
+            String raw = restClient.get()
                     .uri(uri)
                     .retrieve()
-                    .body(JsonNode.class);
-            if (body == null) {
+                    .body(String.class);
+            if (raw == null || raw.isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Netease sidecar returned an empty body");
             }
-            return body;
+            return objectMapper.readTree(raw);
+        } catch (DatabindException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Netease sidecar returned invalid JSON", ex);
         } catch (ResourceAccessException ex) {
             log.warn("netease sidecar unavailable traceId={} endpoint={}", traceId, endpoint.name());
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Netease sidecar is unavailable", ex);

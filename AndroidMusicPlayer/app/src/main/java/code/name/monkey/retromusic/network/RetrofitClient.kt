@@ -94,8 +94,13 @@ fun provideLyrics(retrofit: Retrofit): LyricsRestService {
  * - 使用浏览器风格 User-Agent，避免 Vercel 反爬虫拦截
  * - 不强行注入 Content-Type（GET 请求不需要，反而可能被拒）
  * - 加上 Accept 和 Referer 让请求更像普通客户端
+ * - 若 MusicServerSession 已登录（有 accessToken），附带 Bearer；
+ *   后端 /api/netease/public/ 现在对某些端点（例如 song/url）要求鉴权，
+ *   未登录时会 401。
  */
-private fun neteaseHeaderInterceptor(): Interceptor {
+private fun neteaseHeaderInterceptor(
+    session: code.name.monkey.retromusic.musicserver.MusicServerSession
+): Interceptor {
     return Interceptor { chain ->
         val original = chain.request()
         val builder = original.newBuilder()
@@ -106,6 +111,10 @@ private fun neteaseHeaderInterceptor(): Interceptor {
             )
             .header("Accept", "application/json, text/plain, */*")
             .header("Referer", "https://music.163.com/")
+        val token = session.accessToken
+        if (token.isNotBlank()) {
+            builder.header("Authorization", "Bearer $token")
+        }
         chain.proceed(builder.build())
     }
 }
@@ -114,10 +123,14 @@ private fun neteaseHeaderInterceptor(): Interceptor {
  * 提供网易云音乐 API 的 OkHttp 客户端
  * 增加超时时间以适配国内网络
  */
-fun provideNeteaseOkHttp(context: Context, cache: Cache): OkHttpClient {
+fun provideNeteaseOkHttp(
+    context: Context,
+    cache: Cache,
+    session: code.name.monkey.retromusic.musicserver.MusicServerSession
+): OkHttpClient {
     return OkHttpClient.Builder()
         .addNetworkInterceptor(logInterceptor())
-        .addInterceptor(neteaseHeaderInterceptor())
+        .addInterceptor(neteaseHeaderInterceptor(session))
         .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)

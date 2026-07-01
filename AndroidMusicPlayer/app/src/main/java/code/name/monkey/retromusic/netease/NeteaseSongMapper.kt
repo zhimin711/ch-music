@@ -58,6 +58,9 @@ object NeteaseSongMapper {
             ?: neteaseSong.al?.picUrl?.takeIf { it.isNotBlank() }
         NeteaseCoverCache.put(neteaseSong.id, effectiveCoverUrl)
 
+        // 推导并缓存该歌可用的播放音质参数（供 song/url/v1 使用）
+        NeteaseQualityCache.put(neteaseSong.id, NeteaseQualityCache.deriveOption(neteaseSong))
+
         return Song(
             id = toLocalId(neteaseSong.id),
             title = neteaseSong.name?.takeIf { it.isNotBlank() } ?: UNKNOWN_TITLE,

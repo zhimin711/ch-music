@@ -1,33 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <group android:checkableBehavior="single">
+
+    <!-- 登录用户专属分组：未登录时整组隐藏 -->
+    <group
+        android:id="@+id/drawer_group_account"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/drawer_profile"
+            android:icon="@drawable/ic_account"
+            android:title="@string/drawer_profile" />
 
         <item
-            android:id="@+id/drawer_vip"
-            android:icon="@drawable/ic_vip"
-            android:title="@string/drawer_vip_song"
-            android:actionLayout="@layout/menu_drawer_vip_action" />
+            android:id="@+id/drawer_playlists"
+            android:icon="@drawable/ic_playlist_play"
+            android:title="@string/drawer_playlists" />
 
         <item
-            android:id="@+id/drawer_messages"
-            android:icon="@drawable/ic_message"
-            android:title="@string/drawer_messages" />
+            android:id="@+id/drawer_favorites"
+            android:icon="@drawable/ic_favorite"
+            android:title="@string/drawer_favorites" />
 
         <item
-            android:id="@+id/drawer_cloud_coin"
-            android:icon="@drawable/ic_cloud_coin"
-            android:title="@string/drawer_cloud_coin" />
+            android:id="@+id/drawer_music_library"
+            android:icon="@drawable/ic_cloud"
+            android:title="@string/drawer_music_library" />
+    </group>
 
-        <item
-            android:id="@+id/drawer_dress"
-            android:icon="@drawable/ic_dress"
-            android:title="@string/drawer_dress" />
-
-        <item
-            android:id="@+id/drawer_creator"
-            android:icon="@drawable/ic_creator"
-            android:title="@string/drawer_creator" />
-
+    <!-- 通用功能：登录/未登录都可见 -->
+    <group
+        android:id="@+id/drawer_group_common"
+        android:checkableBehavior="none">
         <item
             android:id="@+id/drawer_recent"
             android:icon="@drawable/ic_recent_play"
@@ -37,30 +39,21 @@
             android:id="@+id/drawer_sleep"
             android:icon="@drawable/ic_sleep_timer"
             android:title="@string/drawer_sleep" />
+    </group>
 
-        <item
-            android:id="@+id/drawer_mall"
-            android:icon="@drawable/ic_mall"
-            android:title="@string/drawer_mall" />
-
-        <item
-            android:id="@+id/drawer_ticket"
-            android:icon="@drawable/ic_ticket"
-            android:title="@string/drawer_ticket" />
-
-        <item
-            android:id="@+id/drawer_yuncun_song"
-            android:icon="@drawable/ic_yuncun_song"
-            android:title="@string/drawer_yuncun_song" />
-
-        <item
-            android:id="@+id/drawer_support"
-            android:icon="@drawable/ic_support"
-            android:title="@string/drawer_support" />
-
+    <!-- 系统类 -->
+    <group
+        android:id="@+id/drawer_group_system"
+        android:checkableBehavior="none">
         <item
             android:id="@+id/drawer_settings"
             android:icon="@drawable/ic_settings"
             android:title="@string/action_settings" />
+
+        <!-- 仅登录后可见 -->
+        <item
+            android:id="@+id/drawer_logout"
+            android:icon="@drawable/ic_logout"
+            android:title="@string/drawer_logout" />
     </group>
 </menu>

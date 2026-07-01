@@ -31,6 +31,7 @@ import code.name.monkey.retromusic.helper.SearchQueryHelper.getSongs
 import code.name.monkey.retromusic.interfaces.IScrollHelper
 import code.name.monkey.retromusic.model.CategoryInfo
 import code.name.monkey.retromusic.model.Song
+import code.name.monkey.retromusic.musicserver.MusicServerRepository
 import code.name.monkey.retromusic.repository.PlaylistSongsLoader
 import code.name.monkey.retromusic.service.MusicService
 import code.name.monkey.retromusic.util.AppRater
@@ -39,9 +40,12 @@ import code.name.monkey.retromusic.util.logE
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
+import org.koin.android.ext.android.inject
 
 class MainActivity : AbsCastActivity() {
     private val drawerLayout: DrawerLayout by lazy { findViewById(R.id.drawerLayout) }
+    private val musicServerRepository: MusicServerRepository by inject()
+    private var drawerViewController: DrawerViewController? = null
 
     companion object {
         const val TAG = "MainActivity"
@@ -83,27 +87,13 @@ class MainActivity : AbsCastActivity() {
         }
         navController.graph = navGraph
         val drawer = findViewById<NavigationView>(R.id.drawerNavigationView)
-        // Inflate the NetEase-style header (avatar + vip banner)
-        drawer.inflateHeaderView(R.layout.nav_header)
-        findViewById<NavigationView>(R.id.drawerNavigationView).setNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.drawer_vip -> { /* opens the vip offer screen — placeholder */ }
-                R.id.drawer_messages -> { /* navigate to messages when implemented */ }
-                R.id.drawer_cloud_coin -> { /* navigate to cloud coin when implemented */ }
-                R.id.drawer_dress -> { /* navigate to dress center when implemented */ }
-                R.id.drawer_creator -> { /* navigate to creator center when implemented */ }
-                R.id.drawer_recent -> { /* navigate to recent play when implemented */ }
-                R.id.drawer_sleep -> { /* open sleep timer dialog when implemented */ }
-                R.id.drawer_mall -> { /* navigate to mall when implemented */ }
-                R.id.drawer_ticket -> { /* navigate to ticket when implemented */ }
-                R.id.drawer_yuncun_song -> { /* navigate to yuncun song when implemented */ }
-                R.id.drawer_support -> { /* navigate to support when implemented */ }
-                R.id.drawer_settings -> navController.navigate(R.id.settings_fragment)
-                else -> return@setNavigationItemSelectedListener false
-            }
-            drawerLayout.closeDrawer(GravityCompat.START)
-            true
-        }
+        // 挂接抽屉：登录态菜单显隐、头部、点击分发都在 DrawerViewController 内
+        drawerViewController = DrawerViewController(
+            activity = this,
+            drawerLayout = drawerLayout,
+            navigationView = drawer,
+            musicServerRepository = musicServerRepository
+        ).also { it.attach(this) }
         // Scroll Fragment to top
         currentFragment(R.id.fragment_container).apply {
             if (this is IScrollHelper) {

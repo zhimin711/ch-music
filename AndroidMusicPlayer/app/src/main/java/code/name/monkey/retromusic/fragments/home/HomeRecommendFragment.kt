@@ -13,9 +13,11 @@ import code.name.monkey.retromusic.adapter.NeteaseSongAdapter
 import code.name.monkey.retromusic.adapter.home.HomeArtistAdapter
 import code.name.monkey.retromusic.adapter.home.HomePlaylistCardAdapter
 import code.name.monkey.retromusic.databinding.FragmentHomeRecommendBinding
+import code.name.monkey.retromusic.netease.NeteasePlaybackManager
 import code.name.monkey.retromusic.network.Result
 import code.name.monkey.retromusic.network.models.PersonalizedPlaylist
 import code.name.monkey.retromusic.viewmodel.HomeViewModel
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
@@ -28,6 +30,7 @@ class HomeRecommendFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val homeViewModel: HomeViewModel by viewModel()
+    private val neteasePlayback: NeteasePlaybackManager by inject()
 
     private var playlistAdapter: HomePlaylistCardAdapter? = null
     private var artistAdapter: HomeArtistAdapter? = null
@@ -83,7 +86,18 @@ class HomeRecommendFragment : Fragment() {
         }
 
         // 新歌推荐 - 列表
-        songAdapter = NeteaseSongAdapter(emptyList())
+        songAdapter = NeteaseSongAdapter(
+            songs = emptyList(),
+            playbackManager = neteasePlayback,
+            lifecycleScope = viewLifecycleOwner.lifecycleScope,
+            onResolveError = { msg ->
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "播放失败：${msg ?: "未知错误"}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        )
         binding.newSongs.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = songAdapter

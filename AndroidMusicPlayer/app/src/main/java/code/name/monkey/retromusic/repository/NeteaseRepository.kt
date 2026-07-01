@@ -155,10 +155,18 @@ class NeteaseRepository(
 
     /**
      * 获取单首歌曲的播放 URL
+     *
+     * 从 [code.name.monkey.retromusic.netease.NeteaseQualityCache] 取该歌的 level/encodeType，
+     * 若无缓存则用默认值。
      */
     suspend fun getSongUrl(songId: Long): Result<String?> {
         return try {
-            val response = neteaseApi.getSongUrl(songId.toString())
+            val opt = code.name.monkey.retromusic.netease.NeteaseQualityCache.get(songId)
+            val response = neteaseApi.getSongUrl(
+                id = songId.toString(),
+                level = opt.level,
+                encodeType = opt.encodeType
+            )
             if (response.code == 200 && response.data != null) {
                 val url = response.data.firstOrNull()?.url
                 Success(url)
@@ -173,6 +181,10 @@ class NeteaseRepository(
 
     /**
      * 批量获取多首歌曲的播放 URL
+     *
+     * 注意：后端 song/url 端点多 id 拼接返回体会让 Jackson trailing-token 报错，
+     * 且不同歌需要不同 level/encodeType，因此这个方法**不再被生产代码调用**，
+     * 走 [NeteasePlaybackManager] 内的逐首解析。保留以防外部依赖。
      */
     suspend fun getSongsUrl(songIds: List<Long>): Result<Map<Long, String>> {
         return try {
