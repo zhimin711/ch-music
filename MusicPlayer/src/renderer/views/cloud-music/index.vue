@@ -28,12 +28,6 @@
               >
                 <i class="ri-refresh-line text-lg" :class="{ 'animate-spin': cloudStore.loading }" />
               </button>
-              <button
-                class="px-4 h-10 rounded-full bg-neutral-100 dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-all"
-                @click="handleLogout"
-              >
-                退出
-              </button>
             </div>
           </div>
         </section>
@@ -520,11 +514,6 @@ function getErrorMessage(error: unknown, fallback: string) {
     return error.response?.data?.message || error.message || fallback;
   }
   return error instanceof Error ? error.message : fallback;
-}
-
-async function handleLogout() {
-  await cloudStore.logout();
-  message.success('已退出云音乐库');
 }
 
 async function handleRefresh() {
