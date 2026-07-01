@@ -23,7 +23,6 @@ import code.name.monkey.retromusic.extensions.findNavController
 import code.name.monkey.retromusic.extensions.showToast
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.userProfileOptions
-import code.name.monkey.retromusic.musicserver.MusicServerDefaults
 import code.name.monkey.retromusic.musicserver.MusicServerRepository
 import code.name.monkey.retromusic.musicserver.MusicServerState
 import com.bumptech.glide.Glide
@@ -143,10 +142,7 @@ class DrawerViewController(
             val user = state.user
             headerUsername?.text = user?.displayLabel
                 ?: ctx.getString(R.string.drawer_not_logged_in)
-            headerSubtitle?.text = ctx.getString(
-                R.string.drawer_server_prefix,
-                MusicServerDefaults.baseUrl
-            )
+            headerSubtitle?.text = user?.username.orEmpty()
         } else {
             headerUsername?.text = ctx.getString(R.string.drawer_not_logged_in)
             headerSubtitle?.text = ctx.getString(R.string.drawer_tap_to_login)

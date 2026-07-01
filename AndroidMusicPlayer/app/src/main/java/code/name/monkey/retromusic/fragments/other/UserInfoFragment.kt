@@ -38,12 +38,12 @@ import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.musicserver.MusicServerCacheEntry
 import code.name.monkey.retromusic.musicserver.MusicServerCacheState
-import code.name.monkey.retromusic.musicserver.MusicServerDefaults
 import code.name.monkey.retromusic.musicserver.MusicServerMusic
 import code.name.monkey.retromusic.musicserver.MusicServerPlaylist
 import code.name.monkey.retromusic.musicserver.MusicServerRepository
 import code.name.monkey.retromusic.musicserver.MusicServerSongMapper
 import code.name.monkey.retromusic.musicserver.MusicServerState
+import code.name.monkey.retromusic.musicserver.readableMessage
 import code.name.monkey.retromusic.util.ImageUtil
 import code.name.monkey.retromusic.util.PreferenceUtil.userName
 import com.bumptech.glide.Glide
@@ -68,6 +68,22 @@ class UserInfoFragment : Fragment() {
     private val musicServerRepository: MusicServerRepository by inject()
     private var registerMode = false
     private var lastState = MusicServerState()
+
+    /**
+     * 抽屉入口模式。见 [DrawerViewController]：
+     * - "profile"       账户信息（含未登录时的登录/注册表单）
+     * - "playlists"     我的歌单
+     * - "favorites"     我的收藏
+     * - "music_library" 私有音乐
+     */
+    private val defaultTab: String
+        get() = arguments?.getString("defaultTab") ?: "profile"
+
+    /**
+     * 记录进入本页时的登录状态，用于识别"登录成功"这个瞬间事件，
+     * 触发 pop 回首页。
+     */
+    private var wasLoggedIn: Boolean = false
 
     private val pickBannerImageLauncher =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -151,7 +167,8 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun setupStaticUi() {
-        binding.accountSubtitle?.text = MusicServerDefaults.baseUrl
+        binding.accountSubtitle?.text = ""
+        binding.accountSubtitle?.isVisible = false
         binding.nameContainer.accentColor()
         binding.usernameContainer?.accentColor()
         binding.passwordContainer?.accentColor()
@@ -252,12 +269,20 @@ class UserInfoFragment : Fragment() {
         binding.accountGroup?.isVisible = state.isLoggedIn
         binding.refresh?.isVisible = state.isLoggedIn
 
+        // 未登录时只显示登录卡片，其他业务区块整体隐藏，避免出现"No private music/No favorites/No playlists"空白提示
+        binding.root.findViewById<View>(R.id.musicLibrarySection)?.isVisible = state.isLoggedIn
+        binding.root.findViewById<View>(R.id.favoritesSection)?.isVisible = state.isLoggedIn
+        binding.root.findViewById<View>(R.id.playlistsSection)?.isVisible = state.isLoggedIn
+
         val user = state.user
         binding.accountTitle?.text = user?.displayLabel ?: getString(R.string.music_server)
-        binding.accountSubtitle?.text = if (user == null) {
-            MusicServerDefaults.baseUrl
+        // 未登录时不暴露服务器地址；登录后只显示用户名，不再拼接 baseUrl
+        if (user == null) {
+            binding.accountSubtitle?.text = ""
+            binding.accountSubtitle?.isVisible = false
         } else {
-            "${user.username} · ${MusicServerDefaults.baseUrl}"
+            binding.accountSubtitle?.text = user.username
+            binding.accountSubtitle?.isVisible = true
         }
 
         if (user != null) {
@@ -654,7 +679,9 @@ class UserInfoFragment : Fragment() {
                 withContext(Dispatchers.IO) { action() }
             } catch (error: Throwable) {
                 if (showErrors) {
-                    showToast(error.message ?: getString(R.string.error_load_failed))
+                    showToast(error.readableMessage().ifBlank {
+                        getString(R.string.error_load_failed)
+                    })
                 }
             } finally {
                 binding.refresh?.isEnabled = true
