@@ -19,8 +19,7 @@
             android:id="@+id/topBar"
             android:layout_width="match_parent"
             android:layout_height="@dimen/tab_height"
-            android:background="?attr/colorSurface"
-            app:layout_scrollFlags="scroll|enterAlways">
+            android:background="?attr/colorSurface"><!-- 顶栏（含 Tab、头像、搜索）常驻，不随内容滚动 -->
 
             <code.name.monkey.retromusic.views.RetroShapeableImageView
                 android:id="@+id/userImage"

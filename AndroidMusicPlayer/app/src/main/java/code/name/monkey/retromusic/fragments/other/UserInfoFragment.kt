@@ -80,10 +80,11 @@ class UserInfoFragment : Fragment() {
         get() = arguments?.getString("defaultTab") ?: "profile"
 
     /**
-     * 记录进入本页时的登录状态，用于识别"登录成功"这个瞬间事件，
-     * 触发 pop 回首页。
+     * 表示用户"刚刚点击了登录/注册按钮"，此次登录成功后应该跳回首页。
+     * 与后台自动恢复 session（restoreSession）区分开——恢复只是把本地状态放回来，
+     * 不应触发导航。
      */
-    private var wasLoggedIn: Boolean = false
+    private var pendingAuthNavigate: Boolean = false
 
     private val pickBannerImageLauncher =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -132,6 +133,7 @@ class UserInfoFragment : Fragment() {
         applyToolbar(binding.toolbar)
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
+        // 记录进入时的登录态（保留占位，防止外部依赖 sublist 顺序）
         setupStaticUi()
         setupActions()
         observeMusicServer()
@@ -144,27 +146,11 @@ class UserInfoFragment : Fragment() {
                 bottomMargin = it + dip(16)
             }
         }
-
-        // 支持从抽屉进入时定位到特定分区
-        maybeScrollToDefaultTab()
     }
 
-    private fun maybeScrollToDefaultTab() {
-        val defaultTab = arguments?.getString("defaultTab") ?: return
-        val container = binding.container ?: return
-        val targetView: View = when (defaultTab) {
-            "profile" -> binding.accountGroup
-            "playlists" -> binding.root.findViewById(R.id.playlistsSection)
-            "favorites" -> binding.root.findViewById(R.id.favoritesSection)
-            "music_library" -> binding.root.findViewById(R.id.musicLibrarySection)
-            else -> null
-        } ?: return
-        // 等 layout 完成后再滚动
-        targetView.post {
-            if (_binding == null) return@post
-            container.smoothScrollTo(0, targetView.top)
-        }
-    }
+    /** 是否是"账户"入口——账户入口才展示登录卡；其他入口未登录时会引导到账户入口 */
+    @Suppress("unused")
+    private fun isProfileMode(): Boolean = defaultTab == "profile"
 
     private fun setupStaticUi() {
         binding.accountSubtitle?.text = ""
@@ -229,6 +215,7 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun restoreSession() {
+        // restoreSession 只是本地恢复，不算"用户主动登录成功"，不应触发跳转
         runServerAction(showErrors = false) {
             musicServerRepository.restoreSession()
         }
@@ -243,7 +230,10 @@ class UserInfoFragment : Fragment() {
             return
         }
         hideKeyboard()
-        runServerAction {
+        pendingAuthNavigate = true
+        runServerAction(
+            onError = { pendingAuthNavigate = false }
+        ) {
             if (registerMode) {
                 musicServerRepository.register(username, password, displayName)
             } else {
@@ -265,24 +255,54 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun render(state: MusicServerState) {
-        binding.loginGroup?.isVisible = !state.isLoggedIn
-        binding.accountGroup?.isVisible = state.isLoggedIn
-        binding.refresh?.isVisible = state.isLoggedIn
+        val loggedIn = state.isLoggedIn
 
-        // 未登录时只显示登录卡片，其他业务区块整体隐藏，避免出现"No private music/No favorites/No playlists"空白提示
-        binding.root.findViewById<View>(R.id.musicLibrarySection)?.isVisible = state.isLoggedIn
-        binding.root.findViewById<View>(R.id.favoritesSection)?.isVisible = state.isLoggedIn
-        binding.root.findViewById<View>(R.id.playlistsSection)?.isVisible = state.isLoggedIn
+        // === "用户点了登录/注册"并成功：跳回首页 ===
+        if (pendingAuthNavigate && loggedIn) {
+            pendingAuthNavigate = false
+            popToHome()
+            return
+        }
 
-        val user = state.user
-        binding.accountTitle?.text = user?.displayLabel ?: getString(R.string.music_server)
-        // 未登录时不暴露服务器地址；登录后只显示用户名，不再拼接 baseUrl
-        if (user == null) {
+        // === 未登录：无论从哪个抽屉入口进来，都只显示登录/注册表单 ===
+        if (!loggedIn) {
+            binding.loginGroup?.isVisible = true
+            binding.accountGroup?.isVisible = false
+            binding.refresh?.isVisible = false
+            setSectionVisible(R.id.musicLibrarySection, false)
+            setSectionVisible(R.id.favoritesSection, false)
+            setSectionVisible(R.id.playlistsSection, false)
+
+            binding.accountTitle?.text = getString(R.string.music_server)
             binding.accountSubtitle?.text = ""
             binding.accountSubtitle?.isVisible = false
-        } else {
-            binding.accountSubtitle?.text = user.username
-            binding.accountSubtitle?.isVisible = true
+            loadProfile()
+            return
+        }
+
+        // === 已登录：按抽屉入口只显示对应一块 ===
+        val tab = defaultTab
+        binding.loginGroup?.isVisible = false
+        binding.accountGroup?.isVisible = tab == "profile"
+        binding.refresh?.isVisible = tab != "profile"
+        setSectionVisible(R.id.musicLibrarySection, tab == "music_library")
+        setSectionVisible(R.id.favoritesSection, tab == "favorites")
+        setSectionVisible(R.id.playlistsSection, tab == "playlists")
+
+        val user = state.user
+        // 顶部头像 banner 仅在"账户"入口有意义；其他入口把它藏起来，让内容更聚焦
+        binding.bannerImage.isVisible = tab == "profile"
+        binding.userImage.isVisible = tab == "profile"
+        binding.accountTitle?.isVisible = tab == "profile"
+        binding.accountSubtitle?.isVisible = tab == "profile"
+        binding.accountTitle?.text = user?.displayLabel ?: getString(R.string.music_server)
+        binding.accountSubtitle?.text = user?.username.orEmpty()
+
+        binding.toolbar.title = when (tab) {
+            "playlists" -> getString(R.string.playlists)
+            "favorites" -> getString(R.string.favorites)
+            "music_library" -> getString(R.string.private_music)
+            else -> getString(R.string.profile)
         }
 
         if (user != null) {
@@ -672,7 +692,11 @@ class UserInfoFragment : Fragment() {
         MusicPlayerRemote.openQueue(songs, 0, true)
     }
 
-    private fun runServerAction(showErrors: Boolean = true, action: suspend () -> Unit) {
+    private fun runServerAction(
+        showErrors: Boolean = true,
+        onError: (Throwable) -> Unit = {},
+        action: suspend () -> Unit
+    ) {
         viewLifecycleOwner.lifecycleScope.launch {
             binding.refresh?.isEnabled = false
             try {
@@ -683,6 +707,7 @@ class UserInfoFragment : Fragment() {
                         getString(R.string.error_load_failed)
                     })
                 }
+                onError(error)
             } finally {
                 binding.refresh?.isEnabled = true
             }
@@ -774,6 +799,23 @@ class UserInfoFragment : Fragment() {
     private fun hideKeyboard() {
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.root.windowToken, 0)
+    }
+
+    private fun setSectionVisible(sectionId: Int, visible: Boolean) {
+        binding.root.findViewById<View>(sectionId)?.isVisible = visible
+    }
+
+    /**
+     * 登录成功回到首页：pop 掉 UserInfo 这一层，让用户回到 [HomeFragment]。
+     * 用 `popBackStack(R.id.action_home, inclusive=false)`，即使中间还夹着其他页也能一路清回首页。
+     */
+    private fun popToHome() {
+        val nav = findNavController()
+        // 若栈里没有 home（极少见），退化成 navigateUp
+        val popped = nav.popBackStack(R.id.action_home, /* inclusive = */ false)
+        if (!popped) {
+            nav.navigateUp()
+        }
     }
 
     private companion object {
