@@ -45,12 +45,18 @@ object NeteaseSongMapper {
     fun toSong(
         neteaseSong: code.name.monkey.retromusic.network.models.NeteaseSong,
         playUrl: String? = null,
-        trackIndex: Int = 0
+        trackIndex: Int = 0,
+        coverUrl: String? = null
     ): Song {
         val artistName = neteaseSong.ar?.firstOrNull()?.name?.takeIf { it.isNotBlank() } ?: UNKNOWN_ARTIST
         val albumName = neteaseSong.al?.name?.takeIf { it.isNotBlank() } ?: UNKNOWN_ALBUM
         val albumId = neteaseSong.al?.id ?: abs(albumName.hashCode().toLong())
         val artistId = neteaseSong.ar?.firstOrNull()?.id ?: abs(artistName.hashCode().toLong())
+
+        // 优先使用调用方传入的 coverUrl（如 NewSong.picUrl），否则回落到网易云 album.picUrl
+        val effectiveCoverUrl = coverUrl?.takeIf { it.isNotBlank() }
+            ?: neteaseSong.al?.picUrl?.takeIf { it.isNotBlank() }
+        NeteaseCoverCache.put(neteaseSong.id, effectiveCoverUrl)
 
         return Song(
             id = toLocalId(neteaseSong.id),

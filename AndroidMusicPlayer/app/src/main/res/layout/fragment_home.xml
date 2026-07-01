@@ -35,7 +35,7 @@
                 app:retroCornerSize="16dp"
                 tools:src="@tools:sample/avatars" />
 
-            <!-- Icon-only search trigger. Tap to expand the search row inline. -->
+            <!-- 搜索图标：常驻顶栏右侧 -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/searchInput"
                 android:layout_width="28dp"
@@ -49,37 +49,43 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_search"
                 app:tint="?android:attr/textColorPrimary" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <HorizontalScrollView
-            android:id="@+id/tabScroll"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/colorSurface"
-            android:overScrollMode="never"
-            android:scrollbars="none"
-            app:layout_scrollFlags="scroll|enterAlways">
-
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/topTabLayout"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/tab_height"
+            <!-- 顶部 Tab：夹在头像和搜索图标之间 -->
+            <HorizontalScrollView
+                android:id="@+id/tabScroll"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:background="@android:color/transparent"
-                app:tabBackground="@android:color/transparent"
-                app:tabGravity="start"
-                app:tabIndicator="@drawable/bg_netease_tab_indicator"
-                app:tabIndicatorColor="?attr/colorPrimary"
-                app:tabIndicatorFullWidth="false"
-                app:tabIndicatorHeight="3dp"
-                app:tabMinWidth="48dp"
-                app:tabMode="scrollable"
-                app:tabPaddingEnd="14dp"
-                app:tabPaddingStart="14dp"
-                app:tabRippleColor="@android:color/transparent"
-                app:tabSelectedTextColor="?attr/colorOnSurface"
-                app:tabTextAppearance="@style/TextViewHeadline6"
-                app:tabTextColor="?android:attr/textColorSecondary" />
-        </HorizontalScrollView>
+                android:overScrollMode="never"
+                android:scrollbars="none"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/searchInput"
+                app:layout_constraintStart_toEndOf="@id/userImage"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/topTabLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    app:tabBackground="@android:color/transparent"
+                    app:tabGravity="start"
+                    app:tabIndicator="@drawable/bg_netease_tab_indicator"
+                    app:tabIndicatorColor="?attr/colorPrimary"
+                    app:tabIndicatorFullWidth="false"
+                    app:tabIndicatorHeight="3dp"
+                    app:tabMinWidth="48dp"
+                    app:tabMode="scrollable"
+                    app:tabPaddingEnd="14dp"
+                    app:tabPaddingStart="14dp"
+                    app:tabRippleColor="@android:color/transparent"
+                    app:tabSelectedTextColor="?attr/colorOnSurface"
+                    app:tabTextAppearance="@style/TextViewHeadline6"
+                    app:tabTextColor="?android:attr/textColorSecondary" />
+            </HorizontalScrollView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.viewpager2.widget.ViewPager2

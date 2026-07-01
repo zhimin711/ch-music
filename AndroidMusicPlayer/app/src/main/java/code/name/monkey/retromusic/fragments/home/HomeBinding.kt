@@ -23,6 +23,7 @@ class HomeBinding(
     val contentContainer: View = homeBinding.contentContainer
     val toolbar: com.google.android.material.appbar.MaterialToolbar = homeBinding.toolbar
     val userImage: code.name.monkey.retromusic.views.RetroShapeableImageView = homeBinding.userImage
+    val searchInput: androidx.appcompat.widget.AppCompatImageView = homeBinding.searchInput!!
     val bannerImage: ImageView? = null
     val lastAdded: MaterialButton? = null
     val topPlayed: MaterialButton? = null

@@ -8,12 +8,6 @@
         android:title="@string/bottom_home" />
 
     <item
-        android:id="@+id/action_search"
-        android:enabled="true"
-        android:icon="@drawable/ic_search"
-        android:title="@string/bottom_search" />
-
-    <item
         android:id="@+id/action_notes"
         android:enabled="true"
         android:icon="@drawable/ic_edit"

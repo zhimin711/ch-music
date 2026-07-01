@@ -17,6 +17,7 @@ package code.name.monkey.retromusic.fragments.home
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.databinding.FragmentHomeBinding
@@ -55,6 +56,23 @@ class HomeFragment :
 
         binding.userImage.setOnClickListener {
             mainActivity.openDrawer()
+        }
+
+        // 顶部搜索图标：跳转到搜索页
+        binding.searchInput.setOnClickListener {
+            findNavController().navigate(
+                R.id.action_search,
+                null,
+                androidx.navigation.navOptions {
+                    launchSingleTop = true
+                    anim {
+                        enter = R.anim.retro_fragment_open_enter
+                        exit = R.anim.retro_fragment_open_exit
+                        popEnter = R.anim.retro_fragment_close_enter
+                        popExit = R.anim.retro_fragment_close_exit
+                    }
+                }
+            )
         }
     }
 

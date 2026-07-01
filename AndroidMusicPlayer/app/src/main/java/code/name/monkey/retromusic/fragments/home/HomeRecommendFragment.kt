@@ -92,22 +92,7 @@ class HomeRecommendFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        // 每日推荐卡片点击
-        binding.featuredPlay.setOnClickListener {
-            // TODO: 跳转到每日推荐详情
-            android.widget.Toast.makeText(requireContext(), R.string.daily_recommend, android.widget.Toast.LENGTH_SHORT).show()
-        }
-
-        // 快捷入口
-        binding.quickRoaming.root.setOnClickListener {
-            // TODO: 私人漫游
-        }
-        binding.quickRadar.root.setOnClickListener {
-            // TODO: 雷达歌单
-        }
-        binding.quickCustom.root.setOnClickListener {
-            // TODO: 专属定制
-        }
+        // 每日推荐 / 快捷入口已移除，占位以便后续扩展
     }
 
     private fun observeViewModel() {
@@ -153,7 +138,7 @@ class HomeRecommendFragment : Fragment() {
         homeViewModel.newSongs.observe(viewLifecycleOwner) { result ->
             when (result) {
                 is Result.Success -> {
-                    // TODO: 转换为 Song 对象并更新适配器
+                    showNewSongs(result.data)
                 }
                 is Result.Error -> {
                     android.util.Log.e("HomeRecommend", "加载新歌推荐失败", result.error)
@@ -162,6 +147,35 @@ class HomeRecommendFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun showNewSongs(newSongs: List<code.name.monkey.retromusic.network.models.NewSong>) {
+        // NewSong.song 是网易云原始歌曲结构，若为空则用 NewSong 顶层字段兜底
+        val songs = newSongs.mapIndexedNotNull { index, item ->
+            val ncSong = item.song
+            if (ncSong != null) {
+                code.name.monkey.retromusic.netease.NeteaseSongMapper.toSong(
+                    ncSong,
+                    trackIndex = index,
+                    coverUrl = item.picUrl
+                )
+            } else {
+                // 兜底：直接从 NewSong 顶层字段构造
+                val fallback = code.name.monkey.retromusic.network.models.NeteaseSong(
+                    id = item.id,
+                    name = item.name,
+                    ar = item.artists,
+                    al = null,
+                    dt = null
+                )
+                code.name.monkey.retromusic.netease.NeteaseSongMapper.toSong(
+                    fallback,
+                    trackIndex = index,
+                    coverUrl = item.picUrl
+                )
+            }
+        }
+        songAdapter?.swapData(songs)
     }
 
     private fun showPlaylists(playlists: List<PersonalizedPlaylist>) {
