@@ -59,15 +59,6 @@
             app:popExitAnim="@anim/retro_fragment_close_exit" />
 
         <action
-            android:id="@+id/action_mainSettingsFragment_to_aboutActivity"
-            app:destination="@id/aboutActivity"
-            app:enterAnim="@anim/retro_fragment_open_enter"
-            app:exitAnim="@anim/retro_fragment_open_exit"
-            app:launchSingleTop="true"
-            app:popEnterAnim="@anim/retro_fragment_close_enter"
-            app:popExitAnim="@anim/retro_fragment_close_exit" />
-
-        <action
             android:id="@+id/action_mainSettingsFragment_to_backupFragment"
             app:destination="@id/backup_fragment"
             app:enterAnim="@anim/retro_fragment_open_enter"
@@ -106,11 +97,6 @@
         android:id="@+id/themeSettingsFragment"
         android:name="code.name.monkey.retromusic.fragments.settings.ThemeSettingsFragment"
         android:label="Look &amp; Feel" />
-
-    <fragment
-        android:id="@+id/aboutActivity"
-        android:name="code.name.monkey.retromusic.fragments.about.AboutFragment"
-        android:label="About" />
 
     <fragment
         android:id="@+id/backup_fragment"

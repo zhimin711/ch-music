@@ -27,6 +27,7 @@ materialIntro = "2.0.0"
 mediarouter = "1.8.0"
 nanohttpd = "2.3.1"
 navigation_version = "2.9.0"
+viewpager2_version = "1.1.0"
 mdc_version = "1.12.0"
 glide_version = "4.15.1"
 orgEclipseEgitGithubCore = "2.1.5"
@@ -120,6 +121,7 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", version = "1.0.0" }
 androidx-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version = "1.6.1" }
+androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2_version" }
 
 
 

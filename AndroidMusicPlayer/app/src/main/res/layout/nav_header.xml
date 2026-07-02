@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerHeaderRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_netease_drawer_header"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:paddingStart="20dp"
+    android:paddingTop="32dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="20dp">
+
+    <code.name.monkey.retromusic.views.RetroShapeableImageView
+        android:id="@+id/drawerAvatar"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:retroCornerSize="28dp"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/drawerUsername"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="@string/drawer_not_logged_in"
+        android:textColor="@color/md_white_1000"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/drawerSubtitle"
+        app:layout_constraintEnd_toStartOf="@id/drawerChevron"
+        app:layout_constraintStart_toEndOf="@id/drawerAvatar"
+        app:layout_constraintTop_toTopOf="@id/drawerAvatar"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/drawerSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="4dp"
+        android:alpha="0.85"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="@string/drawer_tap_to_login"
+        android:textColor="@color/md_white_1000"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/drawerAvatar"
+        app:layout_constraintEnd_toStartOf="@id/drawerChevron"
+        app:layout_constraintStart_toEndOf="@id/drawerAvatar"
+        app:layout_constraintTop_toBottomOf="@id/drawerUsername" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/drawerChevron"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:alpha="0.7"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_keyboard_arrow_right"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/md_white_1000" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -36,12 +36,14 @@ import code.name.monkey.retromusic.glide.RetroGlideExtension.profileBannerOption
 import code.name.monkey.retromusic.glide.RetroGlideExtension.userProfileOptions
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
-import code.name.monkey.retromusic.musicserver.MusicServerDefaults
+import code.name.monkey.retromusic.musicserver.MusicServerCacheEntry
+import code.name.monkey.retromusic.musicserver.MusicServerCacheState
 import code.name.monkey.retromusic.musicserver.MusicServerMusic
 import code.name.monkey.retromusic.musicserver.MusicServerPlaylist
 import code.name.monkey.retromusic.musicserver.MusicServerRepository
 import code.name.monkey.retromusic.musicserver.MusicServerSongMapper
 import code.name.monkey.retromusic.musicserver.MusicServerState
+import code.name.monkey.retromusic.musicserver.readableMessage
 import code.name.monkey.retromusic.util.ImageUtil
 import code.name.monkey.retromusic.util.PreferenceUtil.userName
 import com.bumptech.glide.Glide
@@ -66,6 +68,23 @@ class UserInfoFragment : Fragment() {
     private val musicServerRepository: MusicServerRepository by inject()
     private var registerMode = false
     private var lastState = MusicServerState()
+
+    /**
+     * 抽屉入口模式。见 [DrawerViewController]：
+     * - "profile"       账户信息（含未登录时的登录/注册表单）
+     * - "playlists"     我的歌单
+     * - "favorites"     我的收藏
+     * - "music_library" 私有音乐
+     */
+    private val defaultTab: String
+        get() = arguments?.getString("defaultTab") ?: "profile"
+
+    /**
+     * 表示用户"刚刚点击了登录/注册按钮"，此次登录成功后应该跳回首页。
+     * 与后台自动恢复 session（restoreSession）区分开——恢复只是把本地状态放回来，
+     * 不应触发导航。
+     */
+    private var pendingAuthNavigate: Boolean = false
 
     private val pickBannerImageLauncher =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -114,6 +133,7 @@ class UserInfoFragment : Fragment() {
         applyToolbar(binding.toolbar)
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
+        // 记录进入时的登录态（保留占位，防止外部依赖 sublist 顺序）
         setupStaticUi()
         setupActions()
         observeMusicServer()
@@ -128,8 +148,13 @@ class UserInfoFragment : Fragment() {
         }
     }
 
+    /** 是否是"账户"入口——账户入口才展示登录卡；其他入口未登录时会引导到账户入口 */
+    @Suppress("unused")
+    private fun isProfileMode(): Boolean = defaultTab == "profile"
+
     private fun setupStaticUi() {
-        binding.accountSubtitle?.text = MusicServerDefaults.baseUrl
+        binding.accountSubtitle?.text = ""
+        binding.accountSubtitle?.isVisible = false
         binding.nameContainer.accentColor()
         binding.usernameContainer?.accentColor()
         binding.passwordContainer?.accentColor()
@@ -190,6 +215,7 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun restoreSession() {
+        // restoreSession 只是本地恢复，不算"用户主动登录成功"，不应触发跳转
         runServerAction(showErrors = false) {
             musicServerRepository.restoreSession()
         }
@@ -204,7 +230,10 @@ class UserInfoFragment : Fragment() {
             return
         }
         hideKeyboard()
-        runServerAction {
+        pendingAuthNavigate = true
+        runServerAction(
+            onError = { pendingAuthNavigate = false }
+        ) {
             if (registerMode) {
                 musicServerRepository.register(username, password, displayName)
             } else {
@@ -226,16 +255,54 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun render(state: MusicServerState) {
-        binding.loginGroup?.isVisible = !state.isLoggedIn
-        binding.accountGroup?.isVisible = state.isLoggedIn
-        binding.refresh?.isVisible = state.isLoggedIn
+        val loggedIn = state.isLoggedIn
+
+        // === "用户点了登录/注册"并成功：跳回首页 ===
+        if (pendingAuthNavigate && loggedIn) {
+            pendingAuthNavigate = false
+            popToHome()
+            return
+        }
+
+        // === 未登录：无论从哪个抽屉入口进来，都只显示登录/注册表单 ===
+        if (!loggedIn) {
+            binding.loginGroup?.isVisible = true
+            binding.accountGroup?.isVisible = false
+            binding.refresh?.isVisible = false
+            setSectionVisible(R.id.musicLibrarySection, false)
+            setSectionVisible(R.id.favoritesSection, false)
+            setSectionVisible(R.id.playlistsSection, false)
+
+            binding.accountTitle?.text = getString(R.string.music_server)
+            binding.accountSubtitle?.text = ""
+            binding.accountSubtitle?.isVisible = false
+            loadProfile()
+            return
+        }
+
+        // === 已登录：按抽屉入口只显示对应一块 ===
+        val tab = defaultTab
+        binding.loginGroup?.isVisible = false
+        binding.accountGroup?.isVisible = tab == "profile"
+        binding.refresh?.isVisible = tab != "profile"
+        setSectionVisible(R.id.musicLibrarySection, tab == "music_library")
+        setSectionVisible(R.id.favoritesSection, tab == "favorites")
+        setSectionVisible(R.id.playlistsSection, tab == "playlists")
 
         val user = state.user
+        // 顶部头像 banner 仅在"账户"入口有意义；其他入口把它藏起来，让内容更聚焦
+        binding.bannerImage.isVisible = tab == "profile"
+        binding.userImage.isVisible = tab == "profile"
+        binding.accountTitle?.isVisible = tab == "profile"
+        binding.accountSubtitle?.isVisible = tab == "profile"
         binding.accountTitle?.text = user?.displayLabel ?: getString(R.string.music_server)
-        binding.accountSubtitle?.text = if (user == null) {
-            MusicServerDefaults.baseUrl
-        } else {
-            "${user.username} · ${MusicServerDefaults.baseUrl}"
+        binding.accountSubtitle?.text = user?.username.orEmpty()
+
+        binding.toolbar.title = when (tab) {
+            "playlists" -> getString(R.string.playlists)
+            "favorites" -> getString(R.string.favorites)
+            "music_library" -> getString(R.string.private_music)
+            else -> getString(R.string.profile)
         }
 
         if (user != null) {
@@ -265,7 +332,8 @@ class UserInfoFragment : Fragment() {
                 musicRow(
                     music = music,
                     isFavorite = state.favorites.any { it.music.stableMusicId == music.stableMusicId },
-                    showDelete = true
+                    showDelete = true,
+                    cacheEntry = state.cacheEntryFor(music)
                 )
             )
         }
@@ -282,7 +350,8 @@ class UserInfoFragment : Fragment() {
                 musicRow(
                     music = favorite.music,
                     isFavorite = true,
-                    showDelete = false
+                    showDelete = false,
+                    cacheEntry = state.cacheEntryFor(favorite.music)
                 )
             )
         }
@@ -331,7 +400,8 @@ class UserInfoFragment : Fragment() {
     private fun musicRow(
         music: MusicServerMusic,
         isFavorite: Boolean,
-        showDelete: Boolean
+        showDelete: Boolean,
+        cacheEntry: MusicServerCacheEntry?
     ): View {
         val row = rowContainer()
         val song = musicServerRepository.toSong(music)
@@ -339,6 +409,7 @@ class UserInfoFragment : Fragment() {
         row.addView(subtitleText(listOfNotNull(music.artist, music.album).joinToString(" · ").ifBlank {
             getString(R.string.music_server)
         }))
+        row.addView(subtitleText(cacheStatusText(music, cacheEntry)))
         val play = smallButton(R.string.action_play) { playSongs(listOf(song)) }
         val next = smallButton(R.string.action_play_next) { MusicPlayerRemote.playNext(song) }
         val queue = smallButton(R.string.action_add_to_playing_queue) { MusicPlayerRemote.enqueue(song) }
@@ -353,6 +424,7 @@ class UserInfoFragment : Fragment() {
         secondaryButtons.add(smallTextButton(getString(R.string.action_add_to_playlist)) {
             showAddToPlaylistDialog(music)
         })
+        cacheActionButton(music, cacheEntry)?.let { secondaryButtons.add(it) }
         if (showDelete) {
             secondaryButtons.add(smallButton(R.string.action_delete) {
                 confirm("Delete ${music.title}?") {
@@ -363,6 +435,59 @@ class UserInfoFragment : Fragment() {
         }
         row.addView(buttonRow(*secondaryButtons.toTypedArray()))
         return row
+    }
+
+    private fun MusicServerState.cacheEntryFor(music: MusicServerMusic): MusicServerCacheEntry? {
+        val musicId = music.stableMusicId ?: return null
+        return cacheEntries.values.firstOrNull {
+            it.musicId == musicId && it.profileId == ORIGINAL_PROFILE_ID
+        }
+    }
+
+    private fun cacheStatusText(music: MusicServerMusic, entry: MusicServerCacheEntry?): String {
+        if (music.playback?.supportsOfflineCache == false) {
+            return getString(R.string.cache_status_unavailable)
+        }
+        return when (entry?.state) {
+            null -> getString(R.string.cache_status_not_cached)
+            MusicServerCacheState.QUEUED -> getString(R.string.cache_status_queued)
+            MusicServerCacheState.DOWNLOADING -> getString(R.string.cache_status_downloading)
+            MusicServerCacheState.READY -> getString(R.string.cache_status_ready)
+            MusicServerCacheState.FAILED -> getString(R.string.cache_status_failed)
+            MusicServerCacheState.STALE -> getString(R.string.cache_status_stale)
+            MusicServerCacheState.PAUSED -> getString(R.string.cache_status_paused)
+            MusicServerCacheState.WAITING_FOR_WIFI -> getString(R.string.cache_status_waiting_for_wifi)
+            MusicServerCacheState.STORAGE_LOW -> getString(R.string.cache_status_storage_low)
+        }
+    }
+
+    private fun cacheActionButton(
+        music: MusicServerMusic,
+        entry: MusicServerCacheEntry?
+    ): MaterialButton? {
+        if (music.playback?.supportsOfflineCache == false) return null
+        return when (entry?.state) {
+            MusicServerCacheState.READY -> smallButton(R.string.action_remove_cache) {
+                runServerAction { musicServerRepository.removeCachedMusic(music) }
+            }
+            MusicServerCacheState.DOWNLOADING,
+            MusicServerCacheState.QUEUED -> smallButton(R.string.action_cache_offline) {}.apply {
+                isEnabled = false
+            }
+            MusicServerCacheState.FAILED,
+            MusicServerCacheState.STALE,
+            MusicServerCacheState.PAUSED,
+            MusicServerCacheState.WAITING_FOR_WIFI,
+            MusicServerCacheState.STORAGE_LOW -> smallButton(R.string.action_retry_cache) {
+                runServerAction {
+                    entry?.let { musicServerRepository.retryCachedMusic(it.cacheKey) }
+                    musicServerRepository.downloadCachedMusic(music)
+                }
+            }
+            null -> smallButton(R.string.action_cache_offline) {
+                runServerAction { musicServerRepository.downloadCachedMusic(music) }
+            }
+        }
     }
 
     private fun showAddToPlaylistDialog(music: MusicServerMusic) {
@@ -567,15 +692,22 @@ class UserInfoFragment : Fragment() {
         MusicPlayerRemote.openQueue(songs, 0, true)
     }
 
-    private fun runServerAction(showErrors: Boolean = true, action: suspend () -> Unit) {
+    private fun runServerAction(
+        showErrors: Boolean = true,
+        onError: (Throwable) -> Unit = {},
+        action: suspend () -> Unit
+    ) {
         viewLifecycleOwner.lifecycleScope.launch {
             binding.refresh?.isEnabled = false
             try {
                 withContext(Dispatchers.IO) { action() }
             } catch (error: Throwable) {
                 if (showErrors) {
-                    showToast(error.message ?: getString(R.string.error_load_failed))
+                    showToast(error.readableMessage().ifBlank {
+                        getString(R.string.error_load_failed)
+                    })
                 }
+                onError(error)
             } finally {
                 binding.refresh?.isEnabled = true
             }
@@ -667,6 +799,27 @@ class UserInfoFragment : Fragment() {
     private fun hideKeyboard() {
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.root.windowToken, 0)
+    }
+
+    private fun setSectionVisible(sectionId: Int, visible: Boolean) {
+        binding.root.findViewById<View>(sectionId)?.isVisible = visible
+    }
+
+    /**
+     * 登录成功回到首页：pop 掉 UserInfo 这一层，让用户回到 [HomeFragment]。
+     * 用 `popBackStack(R.id.action_home, inclusive=false)`，即使中间还夹着其他页也能一路清回首页。
+     */
+    private fun popToHome() {
+        val nav = findNavController()
+        // 若栈里没有 home（极少见），退化成 navigateUp
+        val popped = nav.popBackStack(R.id.action_home, /* inclusive = */ false)
+        if (!popped) {
+            nav.navigateUp()
+        }
+    }
+
+    private companion object {
+        const val ORIGINAL_PROFILE_ID = "original"
     }
 
     override fun onDestroyView() {

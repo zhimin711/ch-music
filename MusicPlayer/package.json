@@ -1,10 +1,10 @@
 {
   "name": "chaohua-music",
-  "version": "5.1.0",
+  "version": "1.0.0",
   "description": "朝华音乐",
-  "author": "Alger <algerkc@qq.com>",
+  "author": "Zhimin <zhimin711@gmail.com>",
   "main": "./out/main/index.js",
-  "homepage": "https://github.com/algerkong/AlgerMusicPlayer",
+  "homepage": "https://wiki.chaohua.cc",
   "scripts": {
     "prepare": "husky",
     "format": "prettier --write ./src",

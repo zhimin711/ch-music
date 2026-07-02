@@ -37,7 +37,7 @@ import code.name.monkey.retromusic.extensions.setStatusBarColor
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.asBitmapPalette
 import code.name.monkey.retromusic.glide.RetroGlideExtension.songCoverOptions
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
+import code.name.monkey.retromusic.glide.ZhaohuaColoredTarget
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.util.Share
 import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
@@ -78,7 +78,7 @@ class ShareInstagramStory : AbsThemeActivity() {
                 .asBitmapPalette()
                 .songCoverOptions(songFinal)
                 .load(RetroGlideExtension.getSongModel(songFinal))
-                .into(object : RetroMusicColoredTarget(binding.image) {
+                .into(object : ZhaohuaColoredTarget(binding.image) {
                     override fun onColorReady(colors: MediaNotificationProcessor) {
                         setColors(colors.backgroundColor)
                     }

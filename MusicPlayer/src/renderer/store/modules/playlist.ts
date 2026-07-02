@@ -375,17 +375,16 @@ export const usePlaylistStore = defineStore(
       const playerCore = usePlayerCoreStore();
 
       audioService.pause();
-      setTimeout(() => {
-        playerCore.playMusic = {} as SongResult;
-        playerCore.playMusicUrl = '';
-        playList.value = [];
-        playListIndex.value = 0;
-        originalPlayList.value = [];
-        // 只清除 playerCore 的 localStorage（这些由 playerCore store 管理）
-        localStorage.removeItem('currentPlayMusic');
-        localStorage.removeItem('currentPlayMusicUrl');
-        // playlist 状态由 pinia-plugin-persistedstate 自动管理
-      }, 500);
+      playerCore.setIsPlay(false);
+      playerCore.userPlayIntent = false;
+      playerCore.playMusic = {} as SongResult;
+      playerCore.playMusicUrl = '';
+      playList.value = [];
+      playListIndex.value = 0;
+      originalPlayList.value = [];
+      playListDrawerVisible.value = false;
+      localStorage.removeItem('currentPlayMusic');
+      localStorage.removeItem('currentPlayMusicUrl');
     };
 
     /**
@@ -677,9 +676,7 @@ export const usePlaylistStore = defineStore(
         if (song.isFirstPlay) song.isFirstPlay = false;
 
         // Update playlist index
-        const songIndex = playList.value.findIndex(
-          (item: SongResult) => item.id === song.id && item.source === song.source
-        );
+        let songIndex = playList.value.findIndex((item: SongResult) => isSameSong(item, song));
         if (songIndex !== -1 && songIndex !== playListIndex.value) {
           console.log('歌曲索引不匹配，更新为:', songIndex);
           playListIndex.value = songIndex;
@@ -690,6 +687,19 @@ export const usePlaylistStore = defineStore(
 
         if (success) {
           playerCore.isPlay = true;
+          if (songIndex === -1) {
+            const nextSong = playerCore.playMusic?.id ? playerCore.playMusic : song;
+            const insertIndex =
+              playList.value.length === 0
+                ? 0
+                : Math.min(playListIndex.value + 1, playList.value.length);
+            const nextList = [...playList.value];
+            nextList.splice(insertIndex, 0, nextSong);
+            playList.value = nextList;
+            playListIndex.value = insertIndex;
+            originalPlayList.value = [];
+            songIndex = insertIndex;
+          }
           if (songIndex !== -1) {
             setTimeout(() => preloadNextSongs(playListIndex.value), 3000);
           }

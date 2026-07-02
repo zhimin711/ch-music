@@ -58,6 +58,12 @@ object RetroGlideExtension {
     }
 
     private fun getSongModel(song: Song, ignoreMediaStore: Boolean): Any {
+        // 优先识别网易云在线歌曲：Song.albumId 是负偏移，MediaStore 拿不到封面，
+        // 直接使用 NeteaseCoverCache 里缓存的 HTTP URL。
+        code.name.monkey.retromusic.netease.NeteaseSongMapper.neteaseIdFromSong(song)?.let { neteaseId ->
+            val coverUrl = code.name.monkey.retromusic.netease.NeteaseCoverCache.get(neteaseId)
+            if (!coverUrl.isNullOrBlank()) return coverUrl
+        }
         return if (ignoreMediaStore) {
             AudioFileCover(song.data)
         } else {

@@ -30,7 +30,7 @@ import code.name.monkey.retromusic.extensions.hide
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.artistImageOptions
 import code.name.monkey.retromusic.glide.RetroGlideExtension.asBitmapPalette
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
+import code.name.monkey.retromusic.glide.ZhaohuaColoredTarget
 import code.name.monkey.retromusic.helper.menu.SongsMenuHelper
 import code.name.monkey.retromusic.interfaces.IAlbumArtistClickListener
 import code.name.monkey.retromusic.interfaces.IArtistClickListener
@@ -116,7 +116,7 @@ class ArtistAdapter(
             .artistImageOptions(artist)
             .load(RetroGlideExtension.getArtistModel(artist))
             .transition(RetroGlideExtension.getDefaultTransition())
-            .into(object : RetroMusicColoredTarget(holder.image!!) {
+            .into(object : ZhaohuaColoredTarget(holder.image!!) {
                 override fun onColorReady(colors: MediaNotificationProcessor) {
                     setColors(colors, holder)
                 }

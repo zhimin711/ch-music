@@ -8,10 +8,17 @@ import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.util.MusicUtil
 
 val Song.uri: Uri
-    get() = if (MusicServerSongMapper.isRemoteSong(this)) {
-        Uri.parse(data)
-    } else {
-        MusicUtil.getSongFileUri(songId = id)
+    get() {
+        // 优先按 data 判断：任何 http/https 数据源（MusicServer 或网易云在线歌曲）
+        // 都直接走网络 URI，避免落到 MediaStore（负 ID 时 ExoPlayer 会抛 UnsupportedOperationException）。
+        val src = data
+        return if (src.startsWith("http://") || src.startsWith("https://")) {
+            Uri.parse(src)
+        } else if (MusicServerSongMapper.isRemoteSong(this)) {
+            Uri.parse(src)
+        } else {
+            MusicUtil.getSongFileUri(songId = id)
+        }
     }
 
 val Song.albumArtUri get() = MusicUtil.getMediaStoreAlbumCoverUri(albumId)

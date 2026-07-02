@@ -1,4 +1,13 @@
 <template>
+  <n-tooltip trigger="hover" :z-index="9999999">
+    <template #trigger>
+      <div class="equalizer-controls-btn" @click="openEQ">
+        <i class="iconfont ri-equalizer-line"></i>
+      </div>
+    </template>
+    {{ t('player.playBar.eq') }}
+  </n-tooltip>
+
   <n-dropdown
     :show="showDropdown"
     :options="dropdownOptions"
@@ -109,7 +118,6 @@ const playerStore = usePlayerStore();
 const showDropdown = ref(false);
 const showEQModal = ref(false);
 const showSpeedModal = ref(false);
-const isEQVisible = ref(false);
 
 // 监听弹窗状态，确保互斥
 watch(showEQModal, (newValue) => {
@@ -157,16 +165,11 @@ const hasActiveSleepTimer = computed(() => playerStore.hasSleepTimerActive);
 
 // 检查是否有任何高级设置是激活状态
 const hasActiveSettings = computed(() => {
-  return playbackRate.value !== 1.0 || hasActiveSleepTimer.value || isEQVisible.value;
+  return playbackRate.value !== 1.0 || hasActiveSleepTimer.value;
 });
 
 // 下拉菜单选项
 const dropdownOptions = computed<DropdownOption[]>(() => [
-  {
-    label: t('player.playBar.eq'),
-    key: 'eq',
-    icon: () => h('i', { class: 'ri-equalizer-line' })
-  },
   {
     label: t('player.sleepTimer.title'),
     key: 'timer',
@@ -195,9 +198,6 @@ const handleSelect = (key: string) => {
 
   // 然后仅打开所选弹窗
   switch (key) {
-    case 'eq':
-      showEQModal.value = true;
-      break;
     case 'timer':
       playerStore.showSleepTimer = true;
       break;
@@ -210,6 +210,13 @@ const handleSelect = (key: string) => {
 // 选择播放速度
 const selectSpeed = (speed: number) => {
   playerStore.setPlaybackRate(speed);
+};
+
+const openEQ = () => {
+  showDropdown.value = false;
+  playerStore.showSleepTimer = false;
+  showSpeedModal.value = false;
+  showEQModal.value = true;
 };
 </script>
 
@@ -240,7 +247,8 @@ const selectSpeed = (speed: number) => {
   }
 }
 
-.advanced-controls-btn {
+.advanced-controls-btn,
+.equalizer-controls-btn {
   @apply cursor-pointer mx-3 relative;
 
   .iconfont {

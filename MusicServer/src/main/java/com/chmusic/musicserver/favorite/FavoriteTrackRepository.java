@@ -13,5 +13,10 @@ public interface FavoriteTrackRepository extends JpaRepository<FavoriteTrack, Lo
 
     boolean existsByOwnerAndMusic(AppUser owner, MusicFile music);
 
+    boolean existsByOwnerAndExternalSourceAndExternalId(AppUser owner, String externalSource, String externalId);
+
     Optional<FavoriteTrack> findByOwnerAndMusicId(AppUser owner, Long musicId);
+
+    Optional<FavoriteTrack> findByOwnerAndExternalSourceAndExternalId(AppUser owner, String externalSource,
+            String externalId);
 }

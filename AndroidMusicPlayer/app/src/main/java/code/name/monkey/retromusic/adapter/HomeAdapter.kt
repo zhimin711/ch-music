@@ -31,6 +31,7 @@ import code.name.monkey.retromusic.*
 import code.name.monkey.retromusic.adapter.album.AlbumAdapter
 import code.name.monkey.retromusic.adapter.artist.ArtistAdapter
 import code.name.monkey.retromusic.adapter.song.SongAdapter
+import code.name.monkey.retromusic.extensions.setSharedAxisXTransitions
 import code.name.monkey.retromusic.fragments.home.HomeFragment
 import code.name.monkey.retromusic.interfaces.IAlbumClickListener
 import code.name.monkey.retromusic.interfaces.IArtistClickListener

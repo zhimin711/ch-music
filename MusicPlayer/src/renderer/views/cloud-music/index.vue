@@ -15,7 +15,7 @@
                   云音乐库
                 </h1>
                 <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400 truncate">
-                  {{ cloudStore.isLoggedIn ? cloudStore.user?.displayName : cloudStore.baseUrl }}
+                  {{ cloudStore.isLoggedIn ? cloudStore.user?.displayName : '未连接云音乐库' }}
                 </p>
               </div>
             </div>
@@ -28,55 +28,27 @@
               >
                 <i class="ri-refresh-line text-lg" :class="{ 'animate-spin': cloudStore.loading }" />
               </button>
-              <button
-                class="px-4 h-10 rounded-full bg-neutral-100 dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-all"
-                @click="handleLogout"
-              >
-                退出
-              </button>
             </div>
           </div>
         </section>
 
         <section v-if="!cloudStore.isLoggedIn" class="page-padding-x mt-8">
           <div
-            class="max-w-xl rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-5"
+            class="max-w-xl rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-6"
           >
-            <div class="grid gap-4">
+            <div class="flex items-start gap-4">
               <div
-                class="flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400"
+                class="w-11 h-11 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center text-neutral-400 shrink-0"
               >
-                <i class="ri-server-line text-neutral-400" />
-                <span class="truncate">{{ cloudStore.baseUrl }}</span>
+                <i class="ri-cloud-off-line text-xl" />
               </div>
-              <n-input v-model:value="username" placeholder="用户名（3-80 位）">
-                <template #prefix>
-                  <i class="ri-user-line text-neutral-400" />
-                </template>
-              </n-input>
-              <n-input
-                v-model:value="password"
-                type="password"
-                show-password-on="click"
-                placeholder="密码（8-120 位）"
-                @keyup.enter="handleLogin"
-              >
-                <template #prefix>
-                  <i class="ri-lock-line text-neutral-400" />
-                </template>
-              </n-input>
-              <n-input v-model:value="displayName" placeholder="显示名称（注册时可填，最多 120 位）">
-                <template #prefix>
-                  <i class="ri-id-card-line text-neutral-400" />
-                </template>
-              </n-input>
-              <div class="flex flex-col sm:flex-row gap-3">
-                <n-button type="primary" :loading="authLoading" class="flex-1" @click="handleLogin">
-                  登录
-                </n-button>
-                <n-button :loading="authLoading" class="flex-1" @click="handleRegister">
-                  注册并登录
-                </n-button>
+              <div class="min-w-0">
+                <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+                  当前未连接云音乐库
+                </h2>
+                <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                  云端音乐将在账号状态可用后自动同步。
+                </p>
               </div>
             </div>
           </div>
@@ -167,6 +139,7 @@
                   <div>专辑</div>
                   <div>格式</div>
                   <div>上传时间</div>
+                  <div>离线</div>
                   <div>大小</div>
                   <div></div>
                 </div>
@@ -191,10 +164,24 @@
                   <div class="drive-muted">{{ music.album || '未知专辑' }}</div>
                   <div class="drive-muted">{{ getMusicFormat(music) }}</div>
                   <div class="drive-muted">{{ formatDate(music.createdAt) }}</div>
+                  <div class="drive-cache-cell">
+                    <span class="cache-badge" :class="getCacheBadgeClass(music)">
+                      <i :class="getCacheStatusIcon(music)" />
+                      {{ getCacheStatusText(music) }}
+                    </span>
+                  </div>
                   <div class="drive-muted">{{ formatBytes(music.fileSize) }}</div>
                   <div class="drive-row-actions">
                     <button type="button" title="播放" @click.stop="handlePlayMusic(music)">
                       <i class="ri-play-fill" />
+                    </button>
+                    <button
+                      type="button"
+                      :title="getCacheActionLabel(music)"
+                      :disabled="isCacheActionDisabled(music)"
+                      @click.stop="handleCacheAction(music)"
+                    >
+                      <i :class="getCacheActionIcon(music)" />
                     </button>
                     <button type="button" title="删除" @click.stop="handleDeleteMusic(Number(music.id))">
                       <i class="ri-delete-bin-line" />
@@ -373,13 +360,10 @@ const { message } = createDiscreteApi(['message']);
 const cloudStore = useMusicServerStore();
 const playerStore = usePlayerStore();
 const CLOUD_CAPACITY_BYTES = 40 * 1024 * 1024 * 1024;
+const DEFAULT_CACHE_PROFILE_ID = 'original';
 
 const activeTab = ref<'music' | 'uploading' | 'favorites' | 'playlists'>('music');
 const activePlaylistId = ref<number | null>(null);
-const authLoading = ref(false);
-const username = ref('');
-const password = ref('');
-const displayName = ref('');
 const searchKeyword = ref('');
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFiles = ref<File[]>([]);
@@ -388,6 +372,7 @@ const uploadArtist = ref('');
 const uploadAlbum = ref('');
 const newPlaylistName = ref('');
 const playlistTrackMusicId = ref<number | null>(null);
+const cacheActionLoading = ref<Record<string, boolean>>({});
 const cloudContextSong = ref<SongResult | null>(null);
 const cloudContextMusic = ref<MusicServerMusic | null>(null);
 const driveTabs = [
@@ -481,9 +466,7 @@ const filteredMusic = computed(() => {
   );
 });
 
-const favoriteMusics = computed(() => cloudStore.favorites.map((item) => item.music));
-
-const favoriteSongResults = computed(() => favoriteMusics.value.map(toMusicServerSongResult));
+const favoriteSongResults = computed(() => cloudStore.favoriteSongs);
 
 const musicOptions = computed(() =>
   cloudStore.musicList.map((music) => ({
@@ -510,6 +493,8 @@ const uploadStatusText = computed(() => {
   return `${cloudStore.uploading ? '正在上传' : '待上传'} ${selectedFiles.value.length} 个文件`;
 });
 
+type CacheState = (typeof cloudStore.cacheStates)[string];
+
 watch(
   () => cloudStore.playlists,
   (playlists) => {
@@ -524,75 +509,11 @@ watch(
   { immediate: true }
 );
 
-function validateAuthForm() {
-  const trimmedUsername = username.value.trim();
-  const trimmedDisplayName = displayName.value.trim();
-  if (!trimmedUsername || !password.value) {
-    message.warning('请填写用户名和密码');
-    return false;
-  }
-  if (trimmedUsername.length < 3 || trimmedUsername.length > 80) {
-    message.warning('用户名长度需在 3 到 80 位之间');
-    return false;
-  }
-  if (password.value.length < 8 || password.value.length > 120) {
-    message.warning('密码长度需在 8 到 120 位之间');
-    return false;
-  }
-  if (trimmedDisplayName.length > 120) {
-    message.warning('显示名称不能超过 120 位');
-    return false;
-  }
-  return true;
-}
-
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError<{ message?: string }>(error)) {
     return error.response?.data?.message || error.message || fallback;
   }
   return error instanceof Error ? error.message : fallback;
-}
-
-async function handleLogin() {
-  if (!validateAuthForm()) return;
-  authLoading.value = true;
-  try {
-    await cloudStore.login({
-      username: username.value.trim(),
-      password: password.value
-    });
-    await playerStore.initializeFavoriteList();
-    message.success('登录成功');
-  } catch (error) {
-    console.error('MusicServer 登录失败:', error);
-    message.error(getErrorMessage(error, '登录失败'));
-  } finally {
-    authLoading.value = false;
-  }
-}
-
-async function handleRegister() {
-  if (!validateAuthForm()) return;
-  authLoading.value = true;
-  try {
-    await cloudStore.register({
-      username: username.value.trim(),
-      password: password.value,
-      displayName: displayName.value.trim() || undefined
-    });
-    await playerStore.initializeFavoriteList();
-    message.success('注册成功');
-  } catch (error) {
-    console.error('MusicServer 注册失败:', error);
-    message.error(getErrorMessage(error, '注册失败'));
-  } finally {
-    authLoading.value = false;
-  }
-}
-
-async function handleLogout() {
-  await cloudStore.logout();
-  message.success('已退出云音乐库');
 }
 
 async function handleRefresh() {
@@ -682,13 +603,88 @@ function formatBytes(value?: number | null) {
   return `${size.toFixed(unitIndex === 0 ? 0 : 1)}${units[unitIndex]}`;
 }
 
-function toSongs(musicList: MusicServerMusic[]) {
-  return musicList.map(toMusicServerSongResult);
+function getMusicId(music: MusicServerMusic) {
+  const musicId = Number(music.musicId ?? music.id);
+  return Number.isFinite(musicId) ? musicId : null;
+}
+
+function getMusicCacheState(music: MusicServerMusic): CacheState | null {
+  const musicId = getMusicId(music);
+  if (!cloudStore.user || musicId == null) return null;
+  return (
+    Object.values(cloudStore.cacheStates).find(
+      (entry) =>
+        entry.serverBaseUrl === cloudStore.baseUrl &&
+        entry.userId === cloudStore.user?.id &&
+        entry.musicId === musicId &&
+        entry.profileId === DEFAULT_CACHE_PROFILE_ID
+    ) || null
+  );
+}
+
+function getCacheStatusText(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  if (state === 'ready') return '已缓存';
+  if (state === 'downloading') return '缓存中';
+  if (state === 'queued') return '等待中';
+  if (state === 'paused') return '已暂停';
+  if (state === 'failed') return '失败';
+  if (state === 'stale') return '需更新';
+  return '未缓存';
+}
+
+function getCacheStatusIcon(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  if (state === 'ready') return 'ri-checkbox-circle-fill';
+  if (state === 'downloading' || state === 'queued') return 'ri-loader-4-line animate-spin';
+  if (state === 'paused') return 'ri-pause-circle-line';
+  if (state === 'failed' || state === 'stale') return 'ri-error-warning-line';
+  return 'ri-download-cloud-line';
+}
+
+function getCacheBadgeClass(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  return {
+    ready: state === 'ready',
+    active: state === 'downloading' || state === 'queued',
+    warning: state === 'failed' || state === 'stale',
+    paused: state === 'paused'
+  };
+}
+
+function getCacheActionLabel(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  if (state === 'ready') return '移除缓存';
+  if (state === 'failed' || state === 'stale' || state === 'paused') return '重试缓存';
+  if (state === 'downloading' || state === 'queued') return '缓存中';
+  return '缓存';
+}
+
+function getCacheActionIcon(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  if (cacheActionLoading.value[String(music.id)]) return 'ri-loader-4-line animate-spin';
+  if (state === 'ready') return 'ri-delete-back-2-line';
+  if (state === 'failed' || state === 'stale' || state === 'paused') return 'ri-restart-line';
+  if (state === 'downloading' || state === 'queued') return 'ri-loader-4-line animate-spin';
+  return 'ri-download-cloud-2-line';
+}
+
+function isCacheActionDisabled(music: MusicServerMusic) {
+  const state = getMusicCacheState(music)?.state;
+  return (
+    Boolean(cacheActionLoading.value[String(music.id)]) ||
+    state === 'downloading' ||
+    state === 'queued'
+  );
+}
+
+async function toSongs(musicList: MusicServerMusic[]) {
+  return await Promise.all(musicList.map((music) => cloudStore.toCachedSongResult(music)));
 }
 
 async function handlePlayAll(musicList: MusicServerMusic[]) {
   if (!musicList.length) return;
-  const songs = toSongs(musicList);
+  const songs = await toSongs(musicList);
   playerStore.setPlayList(songs);
   await playerStore.setPlay(songs[0]);
 }
@@ -699,22 +695,51 @@ async function handlePlaySongResult(song: SongResult, context: SongResult[]) {
 }
 
 async function handlePlayMusic(music: MusicServerMusic) {
-  const songs = toSongs(filteredMusic.value);
-  const song = toMusicServerSongResult(music);
+  const songs = await toSongs(filteredMusic.value);
+  const song = await cloudStore.toCachedSongResult(music);
   playerStore.setPlayList(songs);
   await playerStore.setPlay(song);
 }
 
-function handleCloudMusicContextMenu(event: MouseEvent, music: MusicServerMusic) {
+async function handleCloudMusicContextMenu(event: MouseEvent, music: MusicServerMusic) {
   cloudContextMusic.value = music;
-  cloudContextSong.value = toMusicServerSongResult(music);
+  cloudContextSong.value = await cloudStore.toCachedSongResult(music);
   openCloudContextMenu(event);
 }
 
 async function handleCloudContextPlay() {
-  if (!cloudContextSong.value) return;
-  playerStore.setPlayList(toSongs(filteredMusic.value));
-  await playerStore.setPlay(cloudContextSong.value);
+  if (!cloudContextMusic.value) return;
+  const song = await cloudStore.toCachedSongResult(cloudContextMusic.value);
+  cloudContextSong.value = song;
+  playerStore.setPlayList(await toSongs(filteredMusic.value));
+  await playerStore.setPlay(song);
+}
+
+async function handleCacheAction(music: MusicServerMusic) {
+  const key = String(music.id);
+  if (isCacheActionDisabled(music)) return;
+
+  cacheActionLoading.value = { ...cacheActionLoading.value, [key]: true };
+  try {
+    const state = getMusicCacheState(music);
+    if (state?.state === 'ready') {
+      await cloudStore.removeCachedMusic(music);
+      message.success('已移除缓存');
+    } else if (state && ['failed', 'stale', 'paused'].includes(state.state)) {
+      await cloudStore.retryCachedMusic(music);
+      message.success('已重新加入缓存队列');
+    } else {
+      await cloudStore.cacheMusic(music);
+      message.success('已加入缓存队列');
+    }
+  } catch (error) {
+    console.error('处理离线缓存失败:', error);
+    message.error(getErrorMessage(error, '缓存操作失败'));
+  } finally {
+    const nextLoading = { ...cacheActionLoading.value };
+    delete nextLoading[key];
+    cacheActionLoading.value = nextLoading;
+  }
 }
 
 function handleCloudContextDownload() {
@@ -796,7 +821,7 @@ onMounted(async () => {
     await cloudStore.restoreSession();
     await playerStore.initializeFavoriteList();
   } catch {
-    message.warning('云音乐库登录已失效');
+    message.warning('云音乐库连接已失效');
   }
 });
 </script>
@@ -866,7 +891,7 @@ onMounted(async () => {
 .drive-table-head,
 .drive-row {
   display: grid;
-  grid-template-columns: 52px minmax(260px, 1.5fr) minmax(130px, 0.7fr) 92px 132px 92px 84px;
+  grid-template-columns: 52px minmax(240px, 1.5fr) minmax(120px, 0.7fr) 84px 120px 108px 88px 120px;
   align-items: center;
   column-gap: 12px;
 }
@@ -907,11 +932,43 @@ onMounted(async () => {
   @apply truncate text-sm text-neutral-400;
 }
 
+.drive-cache-cell {
+  @apply min-w-0;
+}
+
+.cache-badge {
+  @apply inline-flex h-7 max-w-full items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 text-xs font-medium text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400;
+
+  i {
+    @apply text-sm;
+  }
+
+  &.ready {
+    @apply bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300;
+  }
+
+  &.active {
+    @apply bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300;
+  }
+
+  &.warning {
+    @apply bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-300;
+  }
+
+  &.paused {
+    @apply bg-neutral-100 text-neutral-500 dark:bg-neutral-900 dark:text-neutral-300;
+  }
+}
+
 .drive-row-actions {
   @apply flex justify-end gap-1 opacity-0 transition-opacity;
 
   button {
     @apply flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition hover:bg-white hover:text-primary hover:shadow-sm dark:hover:bg-neutral-800;
+
+    &:disabled {
+      @apply cursor-not-allowed opacity-50 hover:bg-transparent hover:text-neutral-400 hover:shadow-none dark:hover:bg-transparent;
+    }
   }
 }
 
@@ -938,7 +995,7 @@ onMounted(async () => {
 
   .drive-table-head,
   .drive-row {
-    min-width: 900px;
+    min-width: 1040px;
   }
 }
 </style>

@@ -86,12 +86,12 @@ class BlurPlaybackControlsFragment :
         if (artistNames.size > 1) {
             // Show dialog for multiple artists
             MaterialAlertDialogBuilder(requireContext())
-                .setTitle(getString(R.string.go_to_artist))
+                .setTitle(getString(R.string.action_go_to_artist))
                 .setItems(artistNames.toTypedArray()) { _, which ->
                     // TODO: Navigate to artist details when artistByName() is implemented
                     android.widget.Toast.makeText(
                         requireContext(),
-                        getString(R.string.go_to_artist) + ": ${artistNames[which]}",
+                        getString(R.string.action_go_to_artist) + ": ${artistNames[which]}",
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -100,7 +100,7 @@ class BlurPlaybackControlsFragment :
             // Single artist - direct action
             android.widget.Toast.makeText(
                 requireContext(),
-                getString(R.string.go_to_artist) + ": ${artistNames[0]}",
+                getString(R.string.action_go_to_artist) + ": ${artistNames[0]}",
                 android.widget.Toast.LENGTH_SHORT
             ).show()
         }

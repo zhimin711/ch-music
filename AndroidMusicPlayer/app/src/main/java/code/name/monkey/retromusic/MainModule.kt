@@ -11,10 +11,16 @@ import code.name.monkey.retromusic.fragments.artists.ArtistDetailsViewModel
 import code.name.monkey.retromusic.fragments.genres.GenreDetailsViewModel
 import code.name.monkey.retromusic.fragments.playlists.PlaylistDetailsViewModel
 import code.name.monkey.retromusic.model.Genre
+import code.name.monkey.retromusic.viewmodel.HomeViewModel
 import code.name.monkey.retromusic.network.provideDefaultCache
 import code.name.monkey.retromusic.network.provideLastFmRest
 import code.name.monkey.retromusic.network.provideLastFmRetrofit
+import code.name.monkey.retromusic.network.provideNeteaseRest
+import code.name.monkey.retromusic.network.provideNeteaseRetrofit
 import code.name.monkey.retromusic.network.provideOkHttp
+import code.name.monkey.retromusic.network.provideNeteaseOkHttp
+import code.name.monkey.retromusic.musicserver.MusicServerCacheManager
+import code.name.monkey.retromusic.musicserver.MusicServerDataSourceFactory
 import code.name.monkey.retromusic.musicserver.MusicServerRepository
 import code.name.monkey.retromusic.musicserver.MusicServerSession
 import code.name.monkey.retromusic.musicserver.provideMusicServerApi
@@ -38,6 +44,16 @@ val networkModule = module {
     }
     single {
         provideLastFmRest(get())
+    }
+    // 网易云音乐 API
+    factory {
+        provideNeteaseOkHttp(get(), get(), get())
+    }
+    single {
+        provideNeteaseRetrofit(get())
+    }
+    single {
+        provideNeteaseRest(get())
     }
 }
 
@@ -154,10 +170,29 @@ private val dataModule = module {
     }
 
     single {
+        MusicServerCacheManager(androidContext(), provideMusicServerOkHttp(get()))
+    }
+
+    single {
+        MusicServerDataSourceFactory(androidContext(), get(), get())
+    }
+
+    single {
         MusicServerRepository(
             provideMusicServerApi(provideMusicServerOkHttp(get())),
+            get(),
             get()
         )
+    }
+
+    // 网易云音乐数据仓库
+    single {
+        NeteaseRepository(get())
+    }
+
+    // 网易云播放管理器
+    single {
+        code.name.monkey.retromusic.netease.NeteasePlaybackManager(get())
     }
 }
 
@@ -165,6 +200,11 @@ private val viewModules = module {
 
     viewModel {
         LibraryViewModel(get())
+    }
+
+    // 首页 ViewModel（网易云在线音乐）
+    viewModel {
+        HomeViewModel(get())
     }
 
     viewModel { (albumId: Long) ->

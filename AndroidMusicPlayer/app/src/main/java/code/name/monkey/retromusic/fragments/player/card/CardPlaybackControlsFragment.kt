@@ -81,7 +81,7 @@ class CardPlaybackControlsFragment :
             // TODO: Navigate to artist details when artistByName() is implemented
             Toast.makeText(
                 requireContext(),
-                getString(R.string.go_to_artist) + ": $artistName",
+                getString(R.string.action_go_to_artist) + ": $artistName",
                 Toast.LENGTH_SHORT
             ).show()
         }

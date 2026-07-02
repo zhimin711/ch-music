@@ -32,7 +32,7 @@ import code.name.monkey.retromusic.fragments.base.goToLyrics
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.asBitmapPalette
 import code.name.monkey.retromusic.glide.RetroGlideExtension.songCoverOptions
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
+import code.name.monkey.retromusic.glide.ZhaohuaColoredTarget
 import code.name.monkey.retromusic.misc.CustomFragmentStatePagerAdapter
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.util.MusicUtil
@@ -183,7 +183,7 @@ class AlbumCoverPagerAdapter(
                 //.checkIgnoreMediaStore()
                 .load(RetroGlideExtension.getSongModel(song))
                 .dontAnimate()
-                .into(object : RetroMusicColoredTarget(albumCover) {
+                .into(object : ZhaohuaColoredTarget(albumCover) {
                     override fun onColorReady(colors: MediaNotificationProcessor) {
                         setColor(colors)
                     }

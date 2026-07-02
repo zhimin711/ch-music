@@ -29,7 +29,7 @@ import code.name.monkey.retromusic.fragments.player.lockscreen.LockScreenControl
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.asBitmapPalette
 import code.name.monkey.retromusic.glide.RetroGlideExtension.songCoverOptions
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
+import code.name.monkey.retromusic.glide.ZhaohuaColoredTarget
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
 import com.bumptech.glide.Glide
@@ -112,7 +112,7 @@ class LockScreenActivity : AbsMusicServiceActivity() {
             .songCoverOptions(song)
             .load(RetroGlideExtension.getSongModel(song))
             .dontAnimate()
-            .into(object : RetroMusicColoredTarget(binding.image) {
+            .into(object : ZhaohuaColoredTarget(binding.image) {
                 override fun onColorReady(colors: MediaNotificationProcessor) {
                     fragment?.setColor(colors)
                 }
