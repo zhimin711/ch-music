@@ -6,9 +6,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +95,30 @@ class MusicServerApiIntegrationTests {
         mockMvc.perform(delete("/api/music/{musicId}", musicId)
                         .header(HttpHeaders.AUTHORIZATION, bearer(other.token())))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void uploadReadsServerSideId3Metadata() throws Exception {
+        AuthResult owner = register("metadata-owner");
+        byte[] audio = id3v23Audio();
+        MockMultipartFile file = new MockMultipartFile("file", "fallback.mp3", "audio/mpeg", audio);
+
+        MvcResult upload = mockMvc.perform(multipart("/api/music")
+                        .file(file)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner.token())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title", is("Tagged Title")))
+                .andExpect(jsonPath("$.artist", is("Tagged Artist")))
+                .andExpect(jsonPath("$.album", is("Tagged Album")))
+                .andExpect(jsonPath("$.duration", is(123456)))
+                .andExpect(jsonPath("$.picUrl").exists())
+                .andReturn();
+        long musicId = objectMapper.readTree(upload.getResponse().getContentAsString()).get("musicId").asLong();
+
+        mockMvc.perform(get("/api/music/{musicId}/cover", musicId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner.token())))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/png"));
     }
 
     @Test
@@ -250,6 +278,58 @@ class MusicServerApiIntegrationTests {
 
     private static String bearer(String token) {
         return "Bearer " + token;
+    }
+
+    private static byte[] id3v23Audio() throws Exception {
+        ByteArrayOutputStream frames = new ByteArrayOutputStream();
+        writeTextFrame(frames, "TIT2", "Tagged Title");
+        writeTextFrame(frames, "TPE1", "Tagged Artist");
+        writeTextFrame(frames, "TALB", "Tagged Album");
+        writeTextFrame(frames, "TLEN", "123456");
+        writeCoverFrame(frames);
+        byte[] tag = frames.toByteArray();
+
+        ByteArrayOutputStream audio = new ByteArrayOutputStream();
+        audio.write(new byte[] { 'I', 'D', '3', 3, 0, 0 });
+        audio.write(synchsafe(tag.length));
+        audio.write(tag);
+        audio.write("audio-frame-bytes".getBytes(StandardCharsets.UTF_8));
+        return audio.toByteArray();
+    }
+
+    private static void writeTextFrame(ByteArrayOutputStream output, String id, String value) throws Exception {
+        byte[] text = value.getBytes(StandardCharsets.UTF_8);
+        ByteArrayOutputStream payload = new ByteArrayOutputStream();
+        payload.write(3);
+        payload.write(text);
+        writeFrame(output, id, payload.toByteArray());
+    }
+
+    private static void writeCoverFrame(ByteArrayOutputStream output) throws Exception {
+        ByteArrayOutputStream payload = new ByteArrayOutputStream();
+        payload.write(3);
+        payload.write("image/png".getBytes(StandardCharsets.ISO_8859_1));
+        payload.write(0);
+        payload.write(3);
+        payload.write(0);
+        payload.write(new byte[] { (byte) 0x89, 'P', 'N', 'G' });
+        writeFrame(output, "APIC", payload.toByteArray());
+    }
+
+    private static void writeFrame(ByteArrayOutputStream output, String id, byte[] payload) throws Exception {
+        output.write(id.getBytes(StandardCharsets.ISO_8859_1));
+        output.write(ByteBuffer.allocate(4).putInt(payload.length).array());
+        output.write(new byte[] { 0, 0 });
+        output.write(payload);
+    }
+
+    private static byte[] synchsafe(int value) {
+        return new byte[] {
+                (byte) ((value >> 21) & 0x7f),
+                (byte) ((value >> 14) & 0x7f),
+                (byte) ((value >> 7) & 0x7f),
+                (byte) (value & 0x7f)
+        };
     }
 
     private record AuthResult(String token, long userId, String username) {

@@ -58,6 +58,20 @@ export function buildMusicServerStreamUrl(musicId: number, profileId?: string) {
   return url.toString();
 }
 
+export function buildMusicServerAssetUrl(path?: string | null) {
+  if (!path) return '';
+  if (/^(https?:|data:|blob:|local:)/i.test(path)) {
+    return path;
+  }
+  const baseUrl = getMusicServerBaseUrl();
+  const token = getMusicServerToken();
+  const url = new URL(path, baseUrl);
+  if (token && url.pathname.startsWith('/api/music/')) {
+    url.searchParams.set('access_token', token);
+  }
+  return url.toString();
+}
+
 export function registerMusicServer(payload: {
   username: string;
   password: string;

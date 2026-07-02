@@ -38,6 +38,14 @@ public class MusicFile {
 
     private String album;
 
+    @Column(length = 2000)
+    private String coverPath;
+
+    @Column(length = 120)
+    private String coverContentType;
+
+    private Long duration;
+
     @Column(nullable = false, length = 120)
     private String contentType;
 
@@ -58,12 +66,22 @@ public class MusicFile {
 
     public MusicFile(AppUser owner, String originalFilename, String storagePath, String title, String artist,
             String album, String contentType, long fileSize, String checksum) {
+        this(owner, originalFilename, storagePath, title, artist, album, null, null, null, contentType, fileSize,
+                checksum);
+    }
+
+    public MusicFile(AppUser owner, String originalFilename, String storagePath, String title, String artist,
+            String album, String coverPath, String coverContentType, Long duration, String contentType, long fileSize,
+            String checksum) {
         this.owner = owner;
         this.originalFilename = originalFilename;
         this.storagePath = storagePath;
         this.title = title;
         this.artist = artist;
         this.album = album;
+        this.coverPath = coverPath;
+        this.coverContentType = coverContentType;
+        this.duration = duration;
         this.contentType = contentType;
         this.fileSize = fileSize;
         this.checksum = checksum;
@@ -107,6 +125,18 @@ public class MusicFile {
 
     public String getAlbum() {
         return album;
+    }
+
+    public String getCoverPath() {
+        return coverPath;
+    }
+
+    public String getCoverContentType() {
+        return coverContentType;
+    }
+
+    public Long getDuration() {
+        return duration;
     }
 
     public String getContentType() {

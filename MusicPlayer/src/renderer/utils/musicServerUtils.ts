@@ -1,6 +1,6 @@
 import type { MusicServerMusic } from '@/types/musicServer';
 import type { Artist, SongResult } from '@/types/music';
-import { buildMusicServerStreamUrl } from '@/api/musicServer';
+import { buildMusicServerAssetUrl, buildMusicServerStreamUrl } from '@/api/musicServer';
 import { DEFAULT_COVER_URL } from '@/utils';
 
 const UNKNOWN_ARTIST = '未知艺术家';
@@ -33,7 +33,7 @@ export function toMusicServerSongResult(
   const isPrivateMusic = source === 'musicServer';
   const musicId = music.musicId ?? music.id;
   const externalId = music.externalId || String(music.id);
-  const picUrl = music.picUrl || DEFAULT_COVER_URL;
+  const picUrl = buildMusicServerAssetUrl(music.picUrl) || DEFAULT_COVER_URL;
 
   return {
     id: isPrivateMusic ? Number(musicId) : externalId,

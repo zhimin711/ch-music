@@ -15,6 +15,7 @@ public record MusicResponse(String id, Long musicId, Long trackId, String source
 
     public static MusicResponse from(MusicFile music) {
         String streamUrl = "/api/music/" + music.getId() + "/stream";
+        String coverUrl = music.getCoverPath() == null ? null : "/api/music/" + music.getId() + "/cover";
         return new MusicResponse(
                 String.valueOf(music.getId()),
                 music.getId(),
@@ -24,8 +25,8 @@ public record MusicResponse(String id, Long musicId, Long trackId, String source
                 music.getTitle(),
                 music.getArtist(),
                 music.getAlbum(),
-                null,
-                null,
+                coverUrl,
+                music.getDuration(),
                 music.getOriginalFilename(),
                 music.getContentType(),
                 music.getFileSize(),

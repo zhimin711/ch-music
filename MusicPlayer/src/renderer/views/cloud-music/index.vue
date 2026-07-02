@@ -348,6 +348,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import SongItem from '@/components/common/SongItem.vue';
 import SongItemDropdown from '@/components/common/songItemCom/SongItemDropdown.vue';
+import { buildMusicServerAssetUrl } from '@/api/musicServer';
 import { useSongItem } from '@/hooks/useSongItem';
 import { useMusicServerStore } from '@/store/modules/musicServer';
 import { usePlayerStore } from '@/store/modules/player';
@@ -574,7 +575,7 @@ async function handleUpload() {
 }
 
 function getMusicCover(music: MusicServerMusic) {
-  return getImgUrl(music.picUrl || DEFAULT_COVER_URL, '100y100');
+  return getImgUrl(buildMusicServerAssetUrl(music.picUrl) || DEFAULT_COVER_URL, '100y100');
 }
 
 function getMusicFormat(music: MusicServerMusic) {

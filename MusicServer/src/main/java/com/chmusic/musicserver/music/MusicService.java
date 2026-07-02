@@ -19,22 +19,29 @@ public class MusicService {
     private final MusicStorageService storageService;
     private final TranscodeCacheService transcodeCacheService;
     private final MusicServerProperties properties;
+    private final MusicMetadataExtractor metadataExtractor;
 
     public MusicService(MusicFileRepository musicRepository, MusicStorageService storageService,
-            TranscodeCacheService transcodeCacheService, MusicServerProperties properties) {
+            TranscodeCacheService transcodeCacheService, MusicServerProperties properties,
+            MusicMetadataExtractor metadataExtractor) {
         this.musicRepository = musicRepository;
         this.storageService = storageService;
         this.transcodeCacheService = transcodeCacheService;
         this.properties = properties;
+        this.metadataExtractor = metadataExtractor;
     }
 
     @Transactional
     public MusicResponse upload(AppUser owner, MultipartFile file, String title, String artist, String album) {
         validateUploadQuota(owner, file.getSize());
         StoredMusicFile stored = storageService.store(file);
-        ResolvedMetadata metadata = resolveMetadata(stored.originalFilename(), title, artist, album);
+        MusicMetadata extracted = metadataExtractor.extract(storageService.pathOf(stored));
+        StoredCover cover = storageService.storeCover(stored, extracted.cover());
+        ResolvedMetadata metadata = resolveMetadata(stored.originalFilename(), title, artist, album, extracted);
         MusicFile music = new MusicFile(owner, stored.originalFilename(), stored.storagePath(), metadata.title(),
-                metadata.artist(), metadata.album(), stored.contentType(), stored.fileSize(), stored.checksum());
+                metadata.artist(), metadata.album(), cover == null ? null : cover.storagePath(),
+                cover == null ? null : cover.contentType(), metadata.duration(), stored.contentType(),
+                stored.fileSize(), stored.checksum());
         return MusicResponse.from(musicRepository.save(music));
     }
 
@@ -62,6 +69,16 @@ public class MusicService {
         return resource;
     }
 
+    @Transactional(readOnly = true)
+    public Resource cover(AppUser owner, Long musicId) {
+        MusicFile music = requireOwnedMusic(owner, musicId);
+        return storageService.coverOf(music);
+    }
+
+    public Resource cover(MusicFile music) {
+        return storageService.coverOf(music);
+    }
+
     @Transactional
     public void delete(AppUser owner, Long musicId) {
         MusicFile music = requireOwnedMusic(owner, musicId);
@@ -85,19 +102,23 @@ public class MusicService {
         }
     }
 
-    private static ResolvedMetadata resolveMetadata(String filename, String title, String artist, String album) {
-        String resolvedTitle = blankToNull(title);
-        String resolvedArtist = blankToNull(artist);
-        String resolvedAlbum = blankToNull(album);
-        if (resolvedTitle != null) {
-            return new ResolvedMetadata(resolvedTitle, resolvedArtist, resolvedAlbum);
-        }
-
+    private static ResolvedMetadata resolveMetadata(String filename, String title, String artist, String album,
+            MusicMetadata extracted) {
         FilenameMetadata filenameMetadata = parseFilename(stripExtension(filename));
-        if (resolvedArtist == null) {
-            resolvedArtist = filenameMetadata.artist();
+        String resolvedTitle = firstNonBlank(title, extracted.title(), filenameMetadata.title());
+        String resolvedArtist = firstNonBlank(artist, extracted.artist(), filenameMetadata.artist());
+        String resolvedAlbum = firstNonBlank(album, extracted.album());
+        return new ResolvedMetadata(resolvedTitle, resolvedArtist, resolvedAlbum, extracted.duration());
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            String cleaned = blankToNull(value);
+            if (cleaned != null) {
+                return cleaned;
+            }
         }
-        return new ResolvedMetadata(filenameMetadata.title(), resolvedArtist, resolvedAlbum);
+        return null;
     }
 
     private static FilenameMetadata parseFilename(String filenameWithoutExtension) {
@@ -121,7 +142,7 @@ public class MusicService {
         return dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
     }
 
-    private record ResolvedMetadata(String title, String artist, String album) {
+    private record ResolvedMetadata(String title, String artist, String album, Long duration) {
     }
 
     private record FilenameMetadata(String title, String artist) {

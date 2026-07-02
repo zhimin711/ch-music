@@ -7,7 +7,10 @@ import com.chmusic.musicserver.music.MusicService;
 import com.chmusic.musicserver.music.StreamingService;
 import com.chmusic.musicserver.music.TranscodeProfileCatalog;
 import com.chmusic.musicserver.music.TranscodeService;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -63,6 +66,23 @@ public class MusicController {
     public ResponseEntity<?> stream(Authentication authentication, @PathVariable Long musicId,
             @RequestParam(defaultValue = "original") String profile, @RequestHeader HttpHeaders headers) {
         return streamingService.streamVariant(CurrentUser.from(authentication), musicId, profile, headers);
+    }
+
+    @GetMapping("/{musicId}/cover")
+    public ResponseEntity<Resource> cover(Authentication authentication, @PathVariable Long musicId) {
+        MusicFile music = musicService.requireOwnedMusic(CurrentUser.from(authentication), musicId);
+        Resource resource = musicService.cover(music);
+        String contentType = music.getCoverContentType() == null || music.getCoverContentType().isBlank()
+                ? MediaType.APPLICATION_OCTET_STREAM_VALUE
+                : music.getCoverContentType();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.inline()
+                                .filename("cover-" + musicId, StandardCharsets.UTF_8)
+                                .build()
+                                .toString())
+                .body(resource);
     }
 
     @GetMapping("/transcode-capabilities")
