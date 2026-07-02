@@ -11,7 +11,12 @@
     @play="(...args) => $emit('play', ...args)"
     @select="(...args) => $emit('select', ...args)"
     @remove-song="(...args) => $emit('remove-song', ...args)"
-  />
+  >
+    <!-- 自定义副标题插槽（如本地音乐的"碟号/曲目号/年份"） -->
+    <template v-if="$slots.subtitle" #subtitle>
+      <slot name="subtitle" />
+    </template>
+  </component>
 </template>
 
 <script lang="ts" setup>

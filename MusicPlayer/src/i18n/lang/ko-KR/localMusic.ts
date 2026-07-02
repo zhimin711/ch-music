@@ -9,5 +9,23 @@ export default {
   emptyState: '로컬 음악이 없습니다. 폴더를 선택하여 스캔하세요.',
   fileNotFound: '파일을 찾을 수 없거나 이동되었습니다',
   rescan: '다시 스캔',
-  songCount: '{count}곡'
+  songCount: '{count}곡',
+  // 추가: 트랙 정보 / 정렬
+  trackInfo: '트랙 {no}',
+  trackInfoWithTotal: '트랙 {no}/{total}',
+  disc: 'Disc {no}',
+  yearLabel: '{year}년',
+  sortBy: '정렬 기준',
+  sortTrack: '트랙 순서',
+  sortTitle: '제목',
+  sortArtist: '아티스트',
+  sortAlbum: '앨범',
+  sortDuration: '재생 시간',
+  sortYear: '연도',
+  sortAdded: '추가일',
+  // 폴더 관리: 삭제 확인 및 결과
+  confirmRemoveFolder: '이 폴더를 제거하시겠습니까? 캐시된 곡 {count}개도 함께 삭제됩니다(디스크의 파일은 삭제되지 않음).',
+  confirmRemoveFolderEmpty: '이 폴더를 제거하시겠습니까?',
+  removedFolder: '폴더가 제거되었습니다',
+  removedFolderWithCount: '폴더가 제거되었으며, 캐시된 곡 {count}개가 정리되었습니다'
 };

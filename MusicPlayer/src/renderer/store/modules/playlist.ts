@@ -113,6 +113,10 @@ export const usePlaylistStore = defineStore(
         const detailedSongs = await Promise.all(
           songs.map(async (song: SongResult) => {
             try {
+              // 本地音乐（local:// 协议）始终跳过远程详情获取
+              if (song.playMusicUrl?.startsWith('local://')) {
+                return song;
+              }
               if (!song.playMusicUrl || (song.source === 'netease' && !song.backgroundColor)) {
                 return await getSongDetail(song);
               }

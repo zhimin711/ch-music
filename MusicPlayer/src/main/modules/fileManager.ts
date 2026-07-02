@@ -39,7 +39,8 @@ export function initializeFileManager() {
         filePath = filePath.slice(1);
       }
 
-      // 还原为系统路径格式
+      // 部分客户端/Chromium 在解析时会把 URL 中的 \ 还原为 \（已被 encodeURIComponent 转成 %5C，
+      // 此处只是兜底），统一用 normalize 转成系统原生分隔符
       filePath = path.normalize(filePath);
 
       // 检查文件是否存在

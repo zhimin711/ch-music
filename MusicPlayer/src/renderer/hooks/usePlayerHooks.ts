@@ -68,6 +68,12 @@ export const getSongUrl = async (
 ) => {
   const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
 
+  // 本地音乐（local:// 协议）始终早返回：本地文件不会过期、不需要远程拉 URL。
+  // 必须放在 musicServer 短路之前，避免任何"source/source 链"被错认导致去请求 musicserver。
+  if (songData.playMusicUrl?.startsWith('local://')) {
+    return songData.playMusicUrl;
+  }
+
   if (songData.source === 'musicServer' && songData.playMusicUrl) {
     return songData.playMusicUrl;
   }
@@ -386,6 +392,11 @@ export const useSongDetail = () => {
     if (requestId && !playbackRequestManager.isRequestValid(requestId)) {
       console.log(`[getSongDetail] 请求已失效: ${requestId}`);
       throw new Error('Request cancelled');
+    }
+
+    // 本地音乐（local:// 协议）直接返回：不需要任何远程 URL 拉取、不需要过期重算
+    if (playMusic.playMusicUrl?.startsWith('local://')) {
+      return playMusic;
     }
 
     if (playMusic.expiredAt && playMusic.expiredAt < Date.now()) {

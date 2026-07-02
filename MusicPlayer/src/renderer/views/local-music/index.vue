@@ -57,6 +57,23 @@
               </n-input>
             </div>
 
+            <!-- 中间：排序方式（仅在有歌曲时显示） -->
+            <n-dropdown
+              v-if="filteredList.length > 0 || localMusicStore.musicList.length > 0"
+              trigger="click"
+              :options="sortDropdownOptions"
+              @select="(key: string) => handleSortChange(key as SortKey)"
+            >
+              <button
+                class="action-btn-pill flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800"
+                :title="t('localMusic.sortBy')"
+              >
+                <i class="ri-sort-asc" v-if="sortAsc" />
+                <i class="ri-sort-desc" v-else />
+                <span class="hidden md:inline">{{ activeSortLabel }}</span>
+              </button>
+            </n-dropdown>
+
             <!-- 右侧：操作按钮 -->
             <div class="flex items-center gap-3">
               <!-- 播放全部按钮 -->
@@ -144,7 +161,14 @@
               :index="index"
               :item="item"
               @play="handlePlaySong"
-            />
+            >
+              <!-- 自定义副标题：碟号 / 曲目号 / 年份，与 AndroidMusicPlayer 一致 -->
+              <template v-if="formatSubtitle(filteredList[index]!)" #subtitle>
+                <span class="local-track-subtitle">
+                  {{ formatSubtitle(filteredList[index]!) }}
+                </span>
+              </template>
+            </song-item>
           </div>
         </section>
       </div>
@@ -161,16 +185,36 @@
           >
             <div class="flex items-center gap-3 min-w-0 flex-1">
               <i class="ri-folder-line text-lg text-primary flex-shrink-0" />
-              <span class="text-sm text-neutral-700 dark:text-neutral-300 truncate">{{
-                folder
-              }}</span>
+              <div class="min-w-0 flex-1">
+                <span class="text-sm text-neutral-700 dark:text-neutral-300 truncate block">
+                  {{ folder }}
+                </span>
+                <span
+                  v-if="getFolderSongCount(folder) > 0"
+                  class="text-[11px] text-neutral-400 dark:text-neutral-500"
+                >
+                  {{ t('localMusic.songCount', { count: getFolderSongCount(folder) }) }}
+                </span>
+              </div>
             </div>
-            <button
-              class="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-red-500 hover:bg-red-500/10 transition-all flex-shrink-0 ml-2"
-              @click="handleRemoveFolder(folder)"
+            <n-popconfirm
+              :positive-text="t('common.confirm')"
+              :negative-text="t('common.cancel')"
+              @positive-click="handleRemoveFolder(folder)"
             >
-              <i class="ri-delete-bin-line" />
-            </button>
+              <template #trigger>
+                <button
+                  class="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-red-500 hover:bg-red-500/10 transition-all flex-shrink-0 ml-2"
+                >
+                  <i class="ri-delete-bin-line" />
+                </button>
+              </template>
+              {{
+                getFolderSongCount(folder) > 0
+                  ? t('localMusic.confirmRemoveFolder', { count: getFolderSongCount(folder) })
+                  : t('localMusic.confirmRemoveFolderEmpty')
+              }}
+            </n-popconfirm>
           </div>
 
           <!-- 空文件夹列表 -->
@@ -202,7 +246,7 @@ import SongItem from '@/components/common/SongItem.vue';
 import { useLocalMusicStore } from '@/store/modules/localMusic';
 import { usePlayerStore } from '@/store/modules/player';
 import type { SongResult } from '@/types/music';
-import { filterByKeyword, toSongResult } from '@/utils/localMusicUtils';
+import { filterByKeyword, sortByTrackOrder, toSongResult } from '@/utils/localMusicUtils';
 
 // ==================== Stores ====================
 const { t } = useI18n();
@@ -215,17 +259,119 @@ const playerStore = usePlayerStore();
 const searchKeyword = ref('');
 /** 文件夹管理抽屉是否显示 */
 const showFolderManager = ref(false);
+/** 排序方式：默认按 (碟号, 曲目号) 升序，更贴近 AndroidMusicPlayer 的体验 */
+type SortKey = 'track' | 'title' | 'artist' | 'album' | 'duration' | 'year' | 'added';
+const sortKey = ref<SortKey>('track');
+/** 排序方向 */
+const sortAsc = ref(true);
+
+const sortOptions: { key: SortKey; labelKey: string }[] = [
+  { key: 'track', labelKey: 'localMusic.sortTrack' },
+  { key: 'title', labelKey: 'localMusic.sortTitle' },
+  { key: 'artist', labelKey: 'localMusic.sortArtist' },
+  { key: 'album', labelKey: 'localMusic.sortAlbum' },
+  { key: 'duration', labelKey: 'localMusic.sortDuration' },
+  { key: 'year', labelKey: 'localMusic.sortYear' },
+  { key: 'added', labelKey: 'localMusic.sortAdded' }
+];
+
+/** n-dropdown 用的选项格式（key + label） */
+const sortDropdownOptions = computed(() =>
+  sortOptions.map((opt) => ({
+    key: opt.key,
+    label: t(opt.labelKey)
+  }))
+);
+
+/** 当前排序方式的可读文本（用于按钮显示） */
+const activeSortLabel = computed(() => {
+  const opt = sortOptions.find((o) => o.key === sortKey.value);
+  return opt ? t(opt.labelKey) : '';
+});
 
 // ==================== Computed ====================
-/** 根据搜索关键词过滤后的本地音乐列表 */
+/**
+ * 本地音乐按 (碟号, 曲目号) 升序的"自然顺序"列表。
+ * 搜索框为空时直接使用；非空时也用这个顺序作为基础，再做关键词过滤，
+ * 这样可以避免"搜一次就乱序"的问题。
+ */
+const trackOrderedList = computed(() => sortByTrackOrder(localMusicStore.musicList));
+
+/** 根据当前排序方式生成最终列表 */
+const sortedList = computed(() => {
+  const list = [...trackOrderedList.value];
+  const dir = sortAsc.value ? 1 : -1;
+  switch (sortKey.value) {
+    case 'title':
+      list.sort((a, b) => dir * a.title.localeCompare(b.title));
+      break;
+    case 'artist':
+      list.sort((a, b) => dir * a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title));
+      break;
+    case 'album':
+      list.sort(
+        (a, b) =>
+          dir *
+          (a.album.localeCompare(b.album) ||
+            // 同一专辑内按 (碟号, 曲目号) 排，符合 Android 体验
+            (a.discNumber || 1) - (b.discNumber || 1) ||
+            (a.trackNumber || 0) - (b.trackNumber || 0))
+      );
+      break;
+    case 'duration':
+      list.sort((a, b) => dir * (a.duration - b.duration));
+      break;
+    case 'year':
+      list.sort((a, b) => dir * ((a.year || 0) - (b.year || 0)));
+      break;
+    case 'added':
+      list.sort((a, b) => dir * (a.modifiedTime - b.modifiedTime));
+      break;
+    case 'track':
+    default:
+      // 已是 trackOrderedList
+      if (!sortAsc.value) list.reverse();
+      break;
+  }
+  return list;
+});
+
+/** 根据搜索关键词过滤后的本地音乐列表（保持当前排序） */
 const filteredList = computed(() => {
-  return filterByKeyword(localMusicStore.musicList, searchKeyword.value);
+  return filterByKeyword(sortedList.value, searchKeyword.value);
 });
 
 /** 将过滤后的列表转换为 SongResult[] 供 SongItem 使用 */
 const filteredSongResults = computed(() => {
   return filteredList.value.map(toSongResult);
 });
+
+/** 用于渲染"次要信息行"：碟号、曲目号、年份 */
+function formatSubtitle(entry: {
+  discNumber: number;
+  trackNumber: number;
+  trackTotal: number;
+  year: number;
+}): string {
+  const parts: string[] = [];
+  if (entry.discNumber > 1) {
+    // 单碟时一般不写 discNumber 标签，避免噪音
+    parts.push(t('localMusic.disc', { no: entry.discNumber }));
+  }
+  if (entry.trackNumber > 0) {
+    if (entry.trackTotal > 0) {
+      parts.push(
+        t('localMusic.trackInfoWithTotal', { no: entry.trackNumber, total: entry.trackTotal })
+      );
+    } else {
+      parts.push(t('localMusic.trackInfo', { no: entry.trackNumber }));
+    }
+  }
+  if (entry.year > 0) {
+    parts.push(t('localMusic.yearLabel', { year: entry.year }));
+  }
+  return parts.join(' · ');
+}
 
 // ==================== Methods ====================
 
@@ -249,11 +395,30 @@ async function handleAddFolder(): Promise<void> {
 }
 
 /**
- * 移除文件夹
+ * 移除文件夹（并删除该目录下的所有已缓存歌曲）
  * @param folder 要移除的文件夹路径
  */
-function handleRemoveFolder(folder: string): void {
-  localMusicStore.removeFolder(folder);
+async function handleRemoveFolder(folder: string): Promise<void> {
+  const removed = await localMusicStore.removeFolder(folder);
+  if (removed > 0) {
+    message.success(t('localMusic.removedFolderWithCount', { count: removed }));
+  } else {
+    message.success(t('localMusic.removedFolder'));
+  }
+}
+
+/**
+ * 计算某个目录下已缓存的歌曲数
+ * 用于在删除前向用户展示"将删除 N 首歌"
+ */
+function getFolderSongCount(folder: string): number {
+  // 统一用 '/' 比对，避免 Windows 上 \ 与 / 混用漏判
+  const normalize = (p: string) => p.replace(/\\/g, '/').toLowerCase();
+  const normalizedFolder = normalize(folder).replace(/\/$/, '');
+  return localMusicStore.musicList.filter((entry) => {
+    const fp = normalize(entry.filePath);
+    return fp === normalizedFolder || fp.startsWith(normalizedFolder + '/');
+  }).length;
 }
 
 /**
@@ -266,6 +431,18 @@ async function handleScan(): Promise<void> {
     return;
   }
   await localMusicStore.scanFolders();
+}
+
+/**
+ * 切换排序方式：相同 key 反向，不同 key 设为正向
+ */
+function handleSortChange(key: SortKey): void {
+  if (sortKey.value === key) {
+    sortAsc.value = !sortAsc.value;
+  } else {
+    sortKey.value = key;
+    sortAsc.value = true;
+  }
 }
 
 /**
@@ -336,5 +513,17 @@ onMounted(async () => {
 
 .song-virtual-list :deep(.n-virtual-list__scroll)::-webkit-scrollbar-track {
   @apply bg-transparent;
+}
+
+/* 本地音乐扩展副标题：碟号 / 曲目号 / 年份 */
+.local-track-subtitle {
+  display: inline-block;
+  font-size: 11px;
+  color: rgb(156 163 175); /* text-gray-400 */
+  line-height: 1.2;
+}
+
+.dark .local-track-subtitle {
+  color: rgb(107 114 128); /* dark:text-gray-500 */
 }
 </style>

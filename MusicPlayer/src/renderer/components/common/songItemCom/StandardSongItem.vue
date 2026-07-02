@@ -56,6 +56,10 @@
             </template>
           </n-ellipsis>
         </div>
+        <!-- 扩展副标题：本地音乐碟号/曲目号/年份等，不传则不渲染 -->
+        <div v-if="$slots.subtitle" class="song-item-content-subtitle">
+          <slot name="subtitle" />
+        </div>
       </div>
     </template>
 
@@ -171,6 +175,11 @@ const onPlayNext = () => {
 
     &-name {
       @apply text-xs text-gray-500 dark:text-gray-400;
+    }
+
+    &-subtitle {
+      @apply text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate;
+      line-height: 1.2;
     }
   }
 

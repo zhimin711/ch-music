@@ -9,5 +9,23 @@ export default {
   emptyState: '暫無本地音樂，請先選擇資料夾進行掃描',
   fileNotFound: '檔案不存在或已被移動',
   rescan: '重新掃描',
-  songCount: '{count} 首歌曲'
+  songCount: '{count} 首歌曲',
+  // 新增：曲目資訊 / 排序
+  trackInfo: '第 {no} 首',
+  trackInfoWithTotal: '第 {no}/{total} 首',
+  disc: 'Disc {no}',
+  yearLabel: '{year} 年',
+  sortBy: '排序方式',
+  sortTrack: '曲目順序',
+  sortTitle: '標題',
+  sortArtist: '演出者',
+  sortAlbum: '專輯',
+  sortDuration: '時長',
+  sortYear: '年份',
+  sortAdded: '加入時間',
+  // 資料夾管理：刪除確認與結果提示
+  confirmRemoveFolder: '確定移除該資料夾？將同時刪除 {count} 首已快取的歌曲（不會刪除磁碟上的檔案）。',
+  confirmRemoveFolderEmpty: '確定移除該資料夾？',
+  removedFolder: '已移除資料夾',
+  removedFolderWithCount: '已移除資料夾，並清除了 {count} 首歌曲'
 };
