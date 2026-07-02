@@ -14,6 +14,7 @@ import type { MusicServerPlaylist, MusicServerUser } from '@/types/musicServer';
 import { clearLoginStatus } from '@/utils/auth';
 import { toMusicServerSongResult } from '@/utils/musicServerUtils';
 import { DEFAULT_COVER_URL } from '@/utils';
+import { usePlayerStore } from './player';
 
 interface UserData {
   userId: number;
@@ -127,6 +128,7 @@ export const useUserStore = defineStore('user', () => {
     collectedAlbumIds.value.clear();
     playList.value = [];
     albumList.value = [];
+    await usePlayerStore().clearPlayAll();
     clearLoginStatus();
     window.location.reload();
   };
