@@ -6,6 +6,7 @@
     :can-remove="canRemove"
     :is-next="isNext"
     :index="index"
+    :manual-play="manualPlay"
     @play="(...args) => $emit('play', ...args)"
     @select="(...args) => $emit('select', ...args)"
     @remove-song="(...args) => $emit('remove-song', ...args)"
@@ -117,6 +118,7 @@ const props = withDefaults(
     canRemove?: boolean;
     isNext?: boolean;
     index?: number;
+    manualPlay?: boolean;
   }>(),
   {
     favorite: true,
@@ -124,7 +126,8 @@ const props = withDefaults(
     selected: false,
     canRemove: false,
     isNext: false,
-    index: undefined
+    index: undefined,
+    manualPlay: false
   }
 );
 
@@ -148,6 +151,10 @@ const onToggleFavorite = (event: Event) => {
   baseItem.value?.toggleFavorite(event);
 };
 const onPlayMusic = () => {
+  if (props.manualPlay) {
+    emit('play', props.item);
+    return;
+  }
   baseItem.value?.playMusicEvent(props.item);
   emit('play', props.item);
 };

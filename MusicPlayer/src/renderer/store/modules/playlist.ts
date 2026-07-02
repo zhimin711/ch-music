@@ -22,23 +22,42 @@ const getMessage = () => {
   return _message;
 };
 
+const isLocalSong = (song: SongResult | undefined) =>
+  song?.source === 'local' || Boolean(song?.playMusicUrl?.startsWith('local://'));
+
+const minifyAlbum = (s: SongResult) => ({
+  ...s.al,
+  picUrl: isLocalSong(s) && s.al?.picUrl?.startsWith('data:') ? '' : s.al?.picUrl,
+  artist: s.al?.artist
+    ? {
+        ...s.al.artist,
+        picUrl: isLocalSong(s) && s.al.artist.picUrl?.startsWith('data:') ? '' : s.al.artist.picUrl
+      }
+    : s.al?.artist
+});
+
 /**
- * 精简 SongResult 对象，只保留持久化必要字段
- * 排除大体积字段：lyric, song, playMusicUrl, backgroundColor, primaryColor
+ * 精简 SongResult 对象，只保留持久化必要字段。
+ * 本地音乐必须保留 playMusicUrl，否则恢复后会拿本地递增 id 去请求远程歌曲 URL。
  */
 const minifySong = (s: SongResult) => ({
   id: s.id,
   name: s.name,
-  picUrl: s.picUrl,
+  picUrl: isLocalSong(s) && s.picUrl?.startsWith('data:') ? '' : s.picUrl,
   ar: s.ar?.map((a) => ({ id: a.id, name: a.name })),
-  al: s.al,
+  al: minifyAlbum(s),
   source: s.source,
-  dt: s.dt
+  dt: s.dt,
+  duration: s.duration,
+  playMusicUrl: isLocalSong(s) ? s.playMusicUrl : undefined,
+  expiredAt: isLocalSong(s) ? s.expiredAt : undefined,
+  createdAt: isLocalSong(s) ? s.createdAt : undefined
 });
 
 const minifySongList = (list: SongResult[] | undefined) => list?.map(minifySong) ?? [];
 
-const getSongSource = (song: SongResult | undefined) => song?.source || 'netease';
+const getSongSource = (song: SongResult | undefined) =>
+  isLocalSong(song) ? 'local' : song?.source || 'netease';
 
 const isSameSong = (a: SongResult | undefined, b: SongResult | undefined) =>
   Boolean(a && b && a.id === b.id && getSongSource(a) === getSongSource(b));
@@ -132,6 +151,7 @@ export const usePlaylistStore = defineStore(
         if (
           nextSong &&
           nextSong.source !== 'musicServer' &&
+          !isLocalSong(nextSong) &&
           !(nextSong.lyric && nextSong.lyric.lrcTimeArray.length > 0)
         ) {
           try {
@@ -156,7 +176,7 @@ export const usePlaylistStore = defineStore(
           if (nextSong.playMusicUrl) {
             preloadService.load(nextSong);
           }
-          if (nextSong.picUrl) {
+          if (nextSong.picUrl && !nextSong.picUrl.startsWith('data:')) {
             preloadCoverImage(nextSong.picUrl, getImgUrl);
           }
         }

@@ -100,6 +100,21 @@
       </div>
     </div>
   </n-modal>
+
+  <!-- 重新解析面板 -->
+  <n-modal
+    v-model:show="showReparseModal"
+    :mask-closable="true"
+    :unstable-show-mask="false"
+    :z-index="9999999"
+  >
+    <div class="reparse-modal-content">
+      <div class="modal-close" @click="showReparseModal = false">
+        <i class="ri-close-line"></i>
+      </div>
+      <reparse-panel />
+    </div>
+  </n-modal>
 </template>
 
 <script lang="ts" setup>
@@ -108,8 +123,10 @@ import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import EqControl from '@/components/EQControl.vue';
+import ReparsePanel from '@/components/player/ReparsePanel.vue';
 import SleepTimer from '@/components/player/SleepTimer.vue';
 import { usePlayerStore } from '@/store/modules/player';
+import { isElectron } from '@/utils';
 
 const { t } = useI18n();
 const playerStore = usePlayerStore();
@@ -118,6 +135,7 @@ const playerStore = usePlayerStore();
 const showDropdown = ref(false);
 const showEQModal = ref(false);
 const showSpeedModal = ref(false);
+const showReparseModal = ref(false);
 
 // 监听弹窗状态，确保互斥
 watch(showEQModal, (newValue) => {
@@ -125,6 +143,7 @@ watch(showEQModal, (newValue) => {
     // 如果EQ弹窗打开，关闭其他弹窗
     playerStore.showSleepTimer = false;
     showSpeedModal.value = false;
+    showReparseModal.value = false;
   }
 });
 
@@ -135,6 +154,7 @@ watch(
       // 如果睡眠定时器弹窗打开，关闭其他弹窗
       showEQModal.value = false;
       showSpeedModal.value = false;
+      showReparseModal.value = false;
     }
   }
 );
@@ -144,6 +164,15 @@ watch(showSpeedModal, (newValue) => {
     // 如果播放速度弹窗打开，关闭其他弹窗
     showEQModal.value = false;
     playerStore.showSleepTimer = false;
+    showReparseModal.value = false;
+  }
+});
+
+watch(showReparseModal, (newValue) => {
+  if (newValue) {
+    showEQModal.value = false;
+    playerStore.showSleepTimer = false;
+    showSpeedModal.value = false;
   }
 });
 
@@ -168,26 +197,40 @@ const hasActiveSettings = computed(() => {
   return playbackRate.value !== 1.0 || hasActiveSleepTimer.value;
 });
 
+const canShowReparse = computed(() => isElectron && Boolean(playerStore.playMusic?.id));
+
 // 下拉菜单选项
-const dropdownOptions = computed<DropdownOption[]>(() => [
-  {
-    label: t('player.sleepTimer.title'),
-    key: 'timer',
-    icon: () => h('i', { class: 'ri-timer-line' }),
-    // 如果有激活的定时器，添加标记
-    suffix: () => (hasActiveSleepTimer.value ? h('span', { class: 'active-option-mark' }) : null)
-  },
-  {
-    label: t('player.playBar.playbackSpeed') + `(${playbackRate.value}x)`,
-    key: 'speed',
-    icon: () => h('i', { class: 'ri-speed-line' }),
-    // 如果播放速度不是1.0，添加标记
-    suffix: () =>
-      playbackRate.value !== 1.0
-        ? h('span', { class: 'active-option-mark' }, `${playbackRate.value}x`)
-        : null
+const dropdownOptions = computed<DropdownOption[]>(() => {
+  const options: DropdownOption[] = [
+    {
+      label: t('player.sleepTimer.title'),
+      key: 'timer',
+      icon: () => h('i', { class: 'ri-timer-line' }),
+      // 如果有激活的定时器，添加标记
+      suffix: () => (hasActiveSleepTimer.value ? h('span', { class: 'active-option-mark' }) : null)
+    },
+    {
+      label: t('player.playBar.playbackSpeed') + `(${playbackRate.value}x)`,
+      key: 'speed',
+      icon: () => h('i', { class: 'ri-speed-line' }),
+      // 如果播放速度不是1.0，添加标记
+      suffix: () =>
+        playbackRate.value !== 1.0
+          ? h('span', { class: 'active-option-mark' }, `${playbackRate.value}x`)
+          : null
+    }
+  ];
+
+  if (canShowReparse.value) {
+    options.push({
+      label: t('player.playBar.reparse'),
+      key: 'reparse',
+      icon: () => h('i', { class: 'ri-refresh-line' })
+    });
   }
-]);
+
+  return options;
+});
 
 // 处理菜单选择
 const handleSelect = (key: string) => {
@@ -195,6 +238,7 @@ const handleSelect = (key: string) => {
   showEQModal.value = false;
   playerStore.showSleepTimer = false;
   showSpeedModal.value = false;
+  showReparseModal.value = false;
 
   // 然后仅打开所选弹窗
   switch (key) {
@@ -203,6 +247,9 @@ const handleSelect = (key: string) => {
       break;
     case 'speed':
       showSpeedModal.value = true;
+      break;
+    case 'reparse':
+      showReparseModal.value = true;
       break;
   }
 };
@@ -216,6 +263,7 @@ const openEQ = () => {
   showDropdown.value = false;
   playerStore.showSleepTimer = false;
   showSpeedModal.value = false;
+  showReparseModal.value = false;
   showEQModal.value = true;
 };
 </script>
@@ -281,7 +329,8 @@ const openEQ = () => {
 
 .eq-modal-content,
 .timer-modal-content,
-.speed-modal-content {
+.speed-modal-content,
+.reparse-modal-content {
   @apply p-6 rounded-3xl bg-light-100 dark:bg-dark-100 bg-opacity-80 filter backdrop-blur-sm;
   max-width: 600px;
   margin: 0 auto;

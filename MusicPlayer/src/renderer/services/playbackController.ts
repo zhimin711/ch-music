@@ -74,7 +74,7 @@ const loadMetadata = async (
     (async () => {
       // 本地音乐：内嵌歌词已由 toSongResult 注入（如果没有就是 EMPTY_LYRIC），
       // 不应再去 loadLrc 调任何远程接口。
-      if (music.playMusicUrl?.startsWith('local://')) {
+      if (music.source === 'local' || music.playMusicUrl?.startsWith('local://')) {
         return music.lyric || EMPTY_LYRIC;
       }
       if (music.source === 'musicServer') {
@@ -398,6 +398,10 @@ export const reparseCurrentSong = async (
 export const setupUrlExpiredHandler = (): void => {
   audioService.on('url_expired', async (expiredTrack: SongResult) => {
     if (!expiredTrack) return;
+    if (expiredTrack.source === 'local' || expiredTrack.playMusicUrl?.startsWith('local://')) {
+      console.log('[playbackController] 本地音乐不处理URL过期事件:', expiredTrack.name);
+      return;
+    }
 
     console.log('[playbackController] 检测到URL过期事件，准备重新获取URL', expiredTrack.name);
 

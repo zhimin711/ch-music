@@ -190,10 +190,10 @@ export function toSongResult(entry: LocalMusicEntry): SongResult {
       artists: [{ name: entry.artist }],
       album: { name: entry.album }
     },
-    playMusicUrl: `local:///${encodeURIComponent(entry.filePath)}`,
+    playMusicUrl: `local://audio?path=${encodeURIComponent(entry.filePath)}`,
     duration: entry.duration,
     dt: entry.duration,
-    source: 'netease' as const,
+    source: 'local',
     count: 0,
     // 内嵌歌词（如果有）
     lyric: lyric ?? undefined,

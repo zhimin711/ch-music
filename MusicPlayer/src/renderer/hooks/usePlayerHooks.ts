@@ -70,6 +70,13 @@ export const getSongUrl = async (
 
   // 本地音乐（local:// 协议）始终早返回：本地文件不会过期、不需要远程拉 URL。
   // 必须放在 musicServer 短路之前，避免任何"source/source 链"被错认导致去请求 musicserver。
+  if (songData.source === 'local') {
+    if (!songData.playMusicUrl?.startsWith('local://')) {
+      throw new Error('Local music is missing file URL');
+    }
+    return songData.playMusicUrl;
+  }
+
   if (songData.playMusicUrl?.startsWith('local://')) {
     return songData.playMusicUrl;
   }
@@ -395,7 +402,10 @@ export const useSongDetail = () => {
     }
 
     // 本地音乐（local:// 协议）直接返回：不需要任何远程 URL 拉取、不需要过期重算
-    if (playMusic.playMusicUrl?.startsWith('local://')) {
+    if (playMusic.source === 'local' || playMusic.playMusicUrl?.startsWith('local://')) {
+      if (!playMusic.playMusicUrl?.startsWith('local://')) {
+        throw new Error('Local music is missing file URL');
+      }
       return playMusic;
     }
 

@@ -186,11 +186,13 @@ const ensureLyricsLoaded = async (force = false) => {
       console.error('翻译歌词失败，使用原始歌词：', e);
       lrcArray.value = rawLrc as any;
     }
-  } else if (isElectron && playMusic.value.playMusicUrl?.startsWith('local:///')) {
+  } else if (isElectron && playMusic.value.playMusicUrl?.startsWith('local://')) {
     try {
-      let filePath = decodeURIComponent(playMusic.value.playMusicUrl.replace('local:///', ''));
+      const localUrl = playMusic.value.playMusicUrl;
+      const pathParam = new URL(localUrl).searchParams.get('path');
+      let filePath = pathParam ?? decodeURIComponent(localUrl.replace('local:///', ''));
       // 处理 Windows 路径：/C:/... → C:/...
-      if (/^\/[a-zA-Z]:\//.test(filePath)) {
+      if (!pathParam && /^\/[a-zA-Z]:\//.test(filePath)) {
         filePath = filePath.slice(1);
       }
       const embeddedLyrics = await window.api.getEmbeddedLyrics(filePath);

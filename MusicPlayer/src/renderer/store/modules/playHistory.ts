@@ -54,6 +54,37 @@ export type PodcastRadioHistoryItem = {
 // 历史记录最大条数
 const MAX_HISTORY_SIZE = 500;
 
+const isLocalSong = (song: SongResult | undefined) =>
+  song?.source === 'local' || Boolean(song?.playMusicUrl?.startsWith('local://'));
+
+const getSongSource = (song: SongResult | undefined) =>
+  isLocalSong(song) ? 'local' : song?.source || 'netease';
+
+const isSameMusic = (a: SongResult | undefined, b: SongResult | undefined) =>
+  Boolean(a && b && a.id === b.id && getSongSource(a) === getSongSource(b));
+
+const stripLocalDataImage = (song: SongResult, value?: string) =>
+  isLocalSong(song) && value?.startsWith('data:') ? '' : value || '';
+
+const minifyMusicHistoryItem = (music: SongResult): SongResult => ({
+  ...music,
+  picUrl: stripLocalDataImage(music, music.picUrl),
+  al: music.al
+    ? {
+        ...music.al,
+        picUrl: stripLocalDataImage(music, music.al.picUrl),
+        artist: music.al.artist
+          ? {
+              ...music.al.artist,
+              picUrl: stripLocalDataImage(music, music.al.artist.picUrl)
+            }
+          : music.al.artist
+      }
+    : music.al,
+  lyric: undefined,
+  source: isLocalSong(music) ? 'local' : music.source
+});
+
 /**
  * 播放记录统一管理 Store
  * 使用 Pinia 单例模式，解决多实例不同步问题
@@ -72,12 +103,13 @@ export const usePlayHistoryStore = defineStore(
     // ==================== 音乐记录 ====================
 
     const addMusic = (music: SongResult): void => {
-      const index = musicHistory.value.findIndex((item) => item.id === music.id);
+      const historyMusic = minifyMusicHistoryItem(music);
+      const index = musicHistory.value.findIndex((item) => isSameMusic(item, historyMusic));
       if (index !== -1) {
         musicHistory.value[index].count = (musicHistory.value[index].count || 0) + 1;
         musicHistory.value.unshift(musicHistory.value.splice(index, 1)[0]);
       } else {
-        musicHistory.value.unshift({ ...music, count: 1 });
+        musicHistory.value.unshift({ ...historyMusic, count: 1 });
       }
       if (musicHistory.value.length > MAX_HISTORY_SIZE) {
         musicHistory.value.pop();
@@ -85,7 +117,7 @@ export const usePlayHistoryStore = defineStore(
     };
 
     const delMusic = (music: SongResult): void => {
-      const index = musicHistory.value.findIndex((item) => item.id === music.id);
+      const index = musicHistory.value.findIndex((item) => isSameMusic(item, music));
       if (index !== -1) {
         musicHistory.value.splice(index, 1);
       }
@@ -330,7 +362,15 @@ export const usePlayHistoryStore = defineStore(
         'playlistHistory',
         'albumHistory',
         'podcastRadioHistory'
-      ]
+      ],
+      serializer: {
+        serialize: (state: any) =>
+          JSON.stringify({
+            ...state,
+            musicHistory: state.musicHistory?.map(minifyMusicHistoryItem) ?? []
+          }),
+        deserialize: JSON.parse
+      }
     }
   }
 );

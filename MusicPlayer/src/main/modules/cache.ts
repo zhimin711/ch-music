@@ -536,7 +536,7 @@ class DiskCacheManager {
 
   private toLocalUrl(filePath: string): string {
     const normalized = path.normalize(filePath).replace(/\\/g, '/');
-    return `local:///${encodeURIComponent(normalized)}`;
+    return `local://audio?path=${encodeURIComponent(normalized)}`;
   }
 
   private isRemoteAudioUrl(url: string): boolean {

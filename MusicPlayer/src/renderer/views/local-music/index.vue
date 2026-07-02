@@ -160,6 +160,7 @@
               :key="item.id"
               :index="index"
               :item="item"
+              manual-play
               @play="handlePlaySong"
             >
               <!-- 自定义副标题：碟号 / 曲目号 / 年份，与 AndroidMusicPlayer 一致 -->
@@ -447,14 +448,24 @@ function handleSortChange(key: SortKey): void {
 
 /**
  * 播放单曲
- * SongItem 内部已通过 playMusicEvent 调用 playerStore.setPlay 触发播放
- * 此处只需设置播放列表上下文，确保上下一首切换正常
+ * 本地音乐需要先重建 local:// 播放地址，再由播放列表 Store 统一触发播放。
  * @param song SongItem 组件 emit 的 SongResult 对象
  */
-async function handlePlaySong(_song: SongResult): Promise<void> {
+async function handlePlaySong(song: SongResult): Promise<void> {
   try {
-    // 设置播放列表上下文，确保上下一首切换正常
-    playerStore.setPlayList(filteredSongResults.value);
+    const entryIndex = filteredList.value.findIndex((entry) => entry.id === song.id);
+    if (entryIndex === -1) return;
+
+    const entry = filteredList.value[entryIndex];
+    const exists = await window.electron.ipcRenderer.invoke('check-file-exists', entry.filePath);
+    if (!exists) {
+      message.error(t('localMusic.fileNotFound'));
+      return;
+    }
+
+    const songs = filteredList.value.map(toSongResult);
+    playerStore.setPlayList(songs);
+    await playerStore.setPlay(songs[entryIndex]);
   } catch (error) {
     console.error('播放本地音乐失败:', error);
   }

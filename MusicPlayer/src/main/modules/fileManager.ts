@@ -2,6 +2,7 @@ import { app, dialog, ipcMain, protocol, shell } from 'electron';
 import Store from 'electron-store';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Readable } from 'stream';
 
 import { getStore } from './config';
 
@@ -12,6 +13,117 @@ const audioCacheStore = new Store({
     cache: {}
   }
 });
+
+let localProtocolRegistered = false;
+
+const AUDIO_MIME_TYPES: Record<string, string> = {
+  '.aac': 'audio/aac',
+  '.flac': 'audio/flac',
+  '.m4a': 'audio/mp4',
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
+  '.opus': 'audio/ogg',
+  '.wav': 'audio/wav'
+};
+
+function getAudioMimeType(filePath: string): string {
+  return AUDIO_MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
+}
+
+function toWebReadableStream(stream: fs.ReadStream): ReadableStream {
+  return Readable.toWeb(stream) as unknown as ReadableStream;
+}
+
+function createLocalFileResponse(filePath: string, rangeHeader: string | null, method: string): Response {
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const contentType = getAudioMimeType(filePath);
+  const baseHeaders = {
+    'Accept-Ranges': 'bytes',
+    'Access-Control-Allow-Headers': 'Range, Content-Type',
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Expose-Headers': 'Accept-Ranges, Content-Length, Content-Range, Content-Type',
+    'Cache-Control': 'no-store',
+    'Content-Type': contentType
+  };
+
+  if (method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: baseHeaders
+    });
+  }
+
+  if (method === 'HEAD') {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        ...baseHeaders,
+        'Content-Length': String(fileSize)
+      }
+    });
+  }
+
+  if (rangeHeader) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
+    if (!match) {
+      return new Response('Invalid range', {
+        status: 416,
+        headers: {
+          ...baseHeaders,
+          'Content-Range': `bytes */${fileSize}`
+        }
+      });
+    }
+
+    const hasStart = match[1] !== '';
+    const hasEnd = match[2] !== '';
+    if (!hasStart && !hasEnd) {
+      return new Response('Invalid range', {
+        status: 416,
+        headers: {
+          ...baseHeaders,
+          'Content-Range': `bytes */${fileSize}`
+        }
+      });
+    }
+
+    const requestedStart = hasStart ? Number(match[1]) : Math.max(0, fileSize - Number(match[2]));
+    const requestedEnd = hasEnd && hasStart ? Number(match[2]) : fileSize - 1;
+    const start = Math.max(0, requestedStart);
+    const end = Math.min(fileSize - 1, requestedEnd);
+
+    if (start > end || start >= fileSize) {
+      return new Response('Requested range not satisfiable', {
+        status: 416,
+        headers: {
+          ...baseHeaders,
+          'Content-Range': `bytes */${fileSize}`
+        }
+      });
+    }
+
+    const stream = fs.createReadStream(filePath, { start, end });
+    return new Response(toWebReadableStream(stream), {
+      status: 206,
+      headers: {
+        ...baseHeaders,
+        'Content-Length': String(end - start + 1),
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`
+      }
+    });
+  }
+
+  const stream = fs.createReadStream(filePath);
+  return new Response(toWebReadableStream(stream), {
+    status: 200,
+    headers: {
+      ...baseHeaders,
+      'Content-Length': String(fileSize)
+    }
+  });
+}
 
 /**
  * 清理文件名中的非法字符
@@ -28,34 +140,38 @@ function sanitizeFilename(filename: string): string {
  */
 export function initializeFileManager() {
   // 注册本地文件协议
-  protocol.registerFileProtocol('local', (request, callback) => {
-    try {
-      const url = request.url;
-      // local://C:/Users/xxx.mp3
-      let filePath = decodeURIComponent(url.replace('local:///', ''));
+  if (!localProtocolRegistered) {
+    protocol.handle('local', async (request) => {
+      try {
+        const requestUrl = request.url;
+        const parsedUrl = new URL(requestUrl);
+        const pathParam = parsedUrl.searchParams.get('path');
+        // 优先使用 local://audio?path=...，避免媒体元素拒绝 path 中的编码斜杠。
+        // 兼容旧格式 local:///%2FUsers%2Fxxx.mp3 / local:///C:/Users/xxx.mp3。
+        let filePath = pathParam ?? decodeURIComponent(requestUrl.replace('local:///', ''));
 
-      // 兼容 local:///C:/Users/xxx.mp3 这种情况
-      if (/^\/[a-zA-Z]:\//.test(filePath)) {
-        filePath = filePath.slice(1);
+        if (!pathParam && /^\/[a-zA-Z]:\//.test(filePath)) {
+          filePath = filePath.slice(1);
+        }
+
+        // 部分客户端/Chromium 在解析时会把 URL 中的 \ 还原为 \（已被 encodeURIComponent 转成 %5C，
+        // 此处只是兜底），统一用 normalize 转成系统原生分隔符
+        filePath = path.normalize(filePath);
+
+        // 检查文件是否存在
+        if (!fs.existsSync(filePath)) {
+          console.error('File not found:', filePath);
+          return new Response('File not found', { status: 404 });
+        }
+
+        return createLocalFileResponse(filePath, request.headers.get('range'), request.method);
+      } catch (error) {
+        console.error('Error handling local protocol:', error);
+        return new Response('Failed to load local file', { status: 500 });
       }
-
-      // 部分客户端/Chromium 在解析时会把 URL 中的 \ 还原为 \（已被 encodeURIComponent 转成 %5C，
-      // 此处只是兜底），统一用 normalize 转成系统原生分隔符
-      filePath = path.normalize(filePath);
-
-      // 检查文件是否存在
-      if (!fs.existsSync(filePath)) {
-        console.error('File not found:', filePath);
-        callback({ error: -6 }); // net::ERR_FILE_NOT_FOUND
-        return;
-      }
-
-      callback({ path: filePath });
-    } catch (error) {
-      console.error('Error handling local protocol:', error);
-      callback({ error: -2 }); // net::FAILED
-    }
-  });
+    });
+    localProtocolRegistered = true;
+  }
 
   // 检查文件是否存在
   ipcMain.handle('check-file-exists', (_, filePath) => {

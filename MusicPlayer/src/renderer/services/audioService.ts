@@ -489,7 +489,9 @@ class AudioService {
             console.log(`Retrying playback (${retryCount}/${maxRetries})...`);
             setTimeout(tryPlay, 1000 * retryCount);
           } else {
-            this.emit('url_expired', track);
+            if (track.source !== 'local' && !track.playMusicUrl?.startsWith('local://')) {
+              this.emit('url_expired', track);
+            }
             this.releaseOperationLock();
             reject(new Error('音频加载失败，请尝试切换其他歌曲'));
           }
@@ -502,6 +504,8 @@ class AudioService {
 
         this.audio.addEventListener('canplay', onCanPlay, { once: true });
         this.audio.addEventListener('error', onError, { once: true });
+
+        this.audio.crossOrigin = 'anonymous';
 
         // Change source and load
         this.audio.src = url;
