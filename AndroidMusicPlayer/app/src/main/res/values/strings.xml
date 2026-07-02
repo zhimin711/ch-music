@@ -43,6 +43,7 @@
     <!-- NetEase-style home tabs -->
     <string name="tab_heart">心动</string>
     <string name="tab_recommend">首页</string>
+    <string name="tab_local">本地</string>
     <string name="tab_songlist">歌单</string>
     <string name="tab_toplist">排行榜</string>
     <string name="toplist">排行榜</string>
