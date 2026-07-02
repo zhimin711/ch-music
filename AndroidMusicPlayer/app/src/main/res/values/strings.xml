@@ -46,6 +46,15 @@
     <string name="tab_local">本地</string>
     <string name="tab_songlist">歌单</string>
     <string name="tab_toplist">排行榜</string>
+    <string name="folder_scan_start_directory">扫描起始目录</string>
+    <string name="folder_scan_storage_roots">存储根路径</string>
+    <string name="folder_scan_blacklist">已屏蔽目录</string>
+    <string name="folder_scan_blacklist_count">已屏蔽 %1$d 个目录</string>
+    <string name="folder_scan_blacklist_empty">未屏蔽任何目录</string>
+    <string name="folder_scan_last_directory">上次打开：%1$s</string>
+    <string name="folder_scan_last_directory_disabled">未开启"记住上次浏览位置"</string>
+    <string name="folder_scan_browse">打开文件夹浏览器</string>
+    <string name="folder_scan_no_roots">未识别到外部存储</string>
     <string name="toplist">排行榜</string>
     <string name="recommended_playlists">为你推荐</string>
     <string name="hot_artists">热门歌手</string>
