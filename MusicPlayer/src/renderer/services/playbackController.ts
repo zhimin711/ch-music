@@ -72,6 +72,11 @@ const loadMetadata = async (
 }> => {
   const [lyrics, { backgroundColor, primaryColor }] = await Promise.all([
     (async () => {
+      // 本地音乐：内嵌歌词已由 toSongResult 注入（如果没有就是 EMPTY_LYRIC），
+      // 不应再去 loadLrc 调任何远程接口。
+      if (music.playMusicUrl?.startsWith('local://')) {
+        return music.lyric || EMPTY_LYRIC;
+      }
       if (music.source === 'musicServer') {
         return music.lyric || EMPTY_LYRIC;
       }

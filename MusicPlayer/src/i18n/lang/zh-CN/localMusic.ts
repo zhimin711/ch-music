@@ -9,5 +9,23 @@ export default {
   emptyState: '暂无本地音乐，请先选择文件夹进行扫描',
   fileNotFound: '文件不存在或已被移动',
   rescan: '重新扫描',
-  songCount: '{count} 首歌曲'
+  songCount: '{count} 首歌曲',
+  // 新增：曲目信息 / 排序
+  trackInfo: '第 {no} 首',
+  trackInfoWithTotal: '第 {no}/{total} 首',
+  disc: 'Disc {no}',
+  yearLabel: '{year} 年',
+  sortBy: '排序方式',
+  sortTrack: '曲目顺序',
+  sortTitle: '标题',
+  sortArtist: '艺术家',
+  sortAlbum: '专辑',
+  sortDuration: '时长',
+  sortYear: '年份',
+  sortAdded: '添加时间',
+  // 文件夹管理：删除确认与结果提示
+  confirmRemoveFolder: '确定移除该文件夹？将同时删除 {count} 首已缓存的歌曲（不会删除磁盘上的文件）。',
+  confirmRemoveFolderEmpty: '确定移除该文件夹？',
+  removedFolder: '已移除文件夹',
+  removedFolderWithCount: '已移除文件夹，并清除了 {count} 首歌曲'
 };

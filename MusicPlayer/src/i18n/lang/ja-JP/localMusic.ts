@@ -9,5 +9,23 @@ export default {
   emptyState: 'ローカル音楽がありません。フォルダを選択してスキャンしてください。',
   fileNotFound: 'ファイルが見つからないか、移動されました',
   rescan: '再スキャン',
-  songCount: '{count} 曲'
+  songCount: '{count} 曲',
+  // 追加: トラック情報 / 並び替え
+  trackInfo: 'トラック {no}',
+  trackInfoWithTotal: 'トラック {no}/{total}',
+  disc: 'Disc {no}',
+  yearLabel: '{year}年',
+  sortBy: '並び替え',
+  sortTrack: 'トラック順',
+  sortTitle: 'タイトル',
+  sortArtist: 'アーティスト',
+  sortAlbum: 'アルバム',
+  sortDuration: '再生時間',
+  sortYear: '年',
+  sortAdded: '追加日',
+  // フォルダ管理: 削除確認と結果
+  confirmRemoveFolder: 'このフォルダを削除しますか？キャッシュ済みの {count} 曲も削除されます（ディスク上のファイルは削除されません）。',
+  confirmRemoveFolderEmpty: 'このフォルダを削除しますか？',
+  removedFolder: 'フォルダを削除しました',
+  removedFolderWithCount: 'フォルダを削除し、{count} 曲のキャッシュをクリアしました'
 };

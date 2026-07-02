@@ -22,6 +22,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.databinding.FragmentHomeBinding
 import code.name.monkey.retromusic.fragments.base.AbsMainActivityFragment
+import code.name.monkey.retromusic.fragments.local.LocalMusicFragment
 import code.name.monkey.retromusic.fragments.songlist.SonglistFragment
 import code.name.monkey.retromusic.fragments.toplist.ToplistFragment
 import code.name.monkey.retromusic.glide.RetroGlideExtension
@@ -38,6 +39,7 @@ class HomeFragment :
 
     private val tabTitles = listOf(
         R.string.tab_recommend,
+        R.string.tab_local,
         R.string.tab_songlist,
         R.string.tab_toplist
     )
@@ -115,11 +117,12 @@ class HomeFragment :
 
     /** Pager that uses distinct fragments for each tab. */
     private class HomePagerAdapter(host: HomeFragment) : FragmentStateAdapter(host) {
-        override fun getItemCount(): Int = 3
+        override fun getItemCount(): Int = 4
         override fun createFragment(position: Int): Fragment = when (position) {
             0 -> HomeRecommendFragment.newInstance()  // 推荐
-            1 -> SonglistFragment.newInstance()       // 歌单
-            2 -> ToplistFragment.newInstance()        // 排行榜
+            1 -> LocalMusicFragment.newInstance()     // 本地
+            2 -> SonglistFragment.newInstance()       // 歌单
+            3 -> ToplistFragment.newInstance()        // 排行榜
             else -> HomeRecommendFragment.newInstance()
         }
     }

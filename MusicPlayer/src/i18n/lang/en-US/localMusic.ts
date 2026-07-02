@@ -9,5 +9,23 @@ export default {
   emptyState: 'No local music found. Please select a folder to scan.',
   fileNotFound: 'File not found or has been moved',
   rescan: 'Rescan',
-  songCount: '{count} songs'
+  songCount: '{count} songs',
+  // New: track info / sorting
+  trackInfo: 'Track {no}',
+  trackInfoWithTotal: 'Track {no}/{total}',
+  disc: 'Disc {no}',
+  yearLabel: '{year}',
+  sortBy: 'Sort by',
+  sortTrack: 'Track order',
+  sortTitle: 'Title',
+  sortArtist: 'Artist',
+  sortAlbum: 'Album',
+  sortDuration: 'Duration',
+  sortYear: 'Year',
+  sortAdded: 'Date added',
+  // Folder management: remove confirmation & result
+  confirmRemoveFolder: 'Remove this folder? {count} cached songs will also be deleted (files on disk are not touched).',
+  confirmRemoveFolderEmpty: 'Remove this folder?',
+  removedFolder: 'Folder removed',
+  removedFolderWithCount: 'Folder removed, {count} cached songs cleared'
 };
