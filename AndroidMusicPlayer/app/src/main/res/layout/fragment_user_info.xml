@@ -34,90 +34,101 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="16dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="24dp">
 
-            <!-- Header card: banner with overlapping avatar -->
+            <!-- Header card: minimalist centered avatar + identity -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/profileHeaderCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="0dp">
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="0dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingBottom="16dp">
+                    android:layout_height="wrap_content">
 
+                    <!-- Ambient banner as soft backdrop -->
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/bannerImage"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
+                        android:alpha="0.35"
                         android:scaleType="centerCrop"
                         android:transitionName="banner_image"
-                        app:layout_constraintDimensionRatio="21:9"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintDimensionRatio="16:9"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:shapeAppearanceOverlay="@style/BannerShapeAppearance"
                         app:srcCompat="@drawable/material_design_default" />
 
+                    <!-- Soft fade so the avatar/text remain readable -->
                     <View
                         android:layout_width="0dp"
-                        android:layout_height="56dp"
+                        android:layout_height="0dp"
                         android:background="@drawable/shadow_up"
+                        android:alpha="0.55"
                         app:layout_constraintBottom_toBottomOf="@id/bannerImage"
                         app:layout_constraintEnd_toEndOf="@id/bannerImage"
-                        app:layout_constraintStart_toStartOf="@id/bannerImage" />
+                        app:layout_constraintStart_toStartOf="@id/bannerImage"
+                        app:layout_constraintTop_toTopOf="@id/bannerImage" />
 
                     <code.name.monkey.retromusic.views.RetroShapeableImageView
                         android:id="@+id/userImage"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="-40dp"
+                        android:layout_width="96dp"
+                        android:layout_height="96dp"
+                        android:layout_marginTop="28dp"
                         android:scaleType="centerCrop"
                         android:transitionName="user_image"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/bannerImage"
-                        app:retroCornerSize="40dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:retroCornerSize="48dp"
                         app:strokeColor="?attr/colorSurface"
-                        app:strokeWidth="3dp"
+                        app:strokeWidth="4dp"
                         app:srcCompat="@drawable/ic_person_flat" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/accountTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
+                        android:layout_marginHorizontal="24dp"
                         android:layout_marginTop="16dp"
-                        android:layout_marginEnd="16dp"
                         android:ellipsize="end"
+                        android:gravity="center"
+                        android:letterSpacing="0.01"
                         android:maxLines="1"
                         android:text="@string/music_server"
-                        android:textAppearance="@style/TextViewHeadline6"
+                        android:textAppearance="@style/TextViewHeadline5"
+                        android:textColor="?android:attr/textColorPrimary"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/userImage"
-                        app:layout_constraintTop_toBottomOf="@id/bannerImage" />
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/userImage" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/accountSubtitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
+                        android:layout_marginHorizontal="24dp"
                         android:layout_marginTop="4dp"
-                        android:layout_marginEnd="16dp"
+                        android:layout_marginBottom="28dp"
                         android:ellipsize="end"
+                        android:gravity="center"
                         android:maxLines="2"
                         android:textAppearance="@style/TextViewBody2"
                         android:textColor="?android:attr/textColorSecondary"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/userImage"
+                        app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/accountTitle"
-                        tools:text="http://10.0.2.2:8080" />
+                        tools:text="Signed in" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -126,25 +137,30 @@
                 android:id="@+id/loginGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="20dp"
                 android:orientation="vertical">
 
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp">
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="28dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp">
+                        android:paddingHorizontal="24dp"
+                        android:paddingVertical="24dp">
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/loginTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:letterSpacing="0.01"
                             android:text="@string/music_server_login_title"
                             android:textAppearance="@style/TextViewHeadline6"
                             android:textColor="?android:attr/textColorPrimary" />
@@ -153,8 +169,8 @@
                             android:id="@+id/loginSubtitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:layout_marginBottom="16dp"
+                            android:layout_marginTop="6dp"
+                            android:layout_marginBottom="20dp"
                             android:text="@string/music_server_login_subtitle"
                             android:textAppearance="@style/TextViewBody2"
                             android:textColor="?android:attr/textColorSecondary" />
@@ -186,8 +202,12 @@
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:hint="@string/username">
+                            android:layout_marginTop="20dp"
+                            android:hint="@string/username"
+                            app:boxCornerRadiusBottomEnd="14dp"
+                            app:boxCornerRadiusBottomStart="14dp"
+                            app:boxCornerRadiusTopEnd="14dp"
+                            app:boxCornerRadiusTopStart="14dp">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/username"
@@ -204,6 +224,10 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
                             android:hint="@string/password"
+                            app:boxCornerRadiusBottomEnd="14dp"
+                            app:boxCornerRadiusBottomStart="14dp"
+                            app:boxCornerRadiusTopEnd="14dp"
+                            app:boxCornerRadiusTopStart="14dp"
                             app:endIconMode="password_toggle">
 
                             <com.google.android.material.textfield.TextInputEditText
@@ -220,7 +244,11 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:hint="@string/display_name">
+                            android:hint="@string/display_name"
+                            app:boxCornerRadiusBottomEnd="14dp"
+                            app:boxCornerRadiusBottomStart="14dp"
+                            app:boxCornerRadiusTopEnd="14dp"
+                            app:boxCornerRadiusTopStart="14dp">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/displayName"
@@ -233,9 +261,11 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/authSubmit"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:text="@string/login" />
+                            android:layout_height="52dp"
+                            android:layout_marginTop="20dp"
+                            android:letterSpacing="0.02"
+                            android:text="@string/login"
+                            app:cornerRadius="26dp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -245,7 +275,7 @@
                 android:id="@+id/accountGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="20dp"
                 android:orientation="vertical"
                 android:visibility="gone"
                 tools:visibility="visible">
@@ -253,21 +283,29 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp">
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="28dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp">
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="20dp">
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/nameContainer"
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="@string/display_name">
+                            android:hint="@string/display_name"
+                            app:boxCornerRadiusBottomEnd="14dp"
+                            app:boxCornerRadiusBottomStart="14dp"
+                            app:boxCornerRadiusTopEnd="14dp"
+                            app:boxCornerRadiusTopStart="14dp">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/name"
@@ -281,35 +319,33 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
+                            android:layout_marginTop="16dp"
                             android:orientation="horizontal">
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/saveProfile"
                                 style="@style/Widget.Material3.Button"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="@string/save" />
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:text="@string/save"
+                                app:cornerRadius="24dp" />
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/uploadAvatar"
                                 style="@style/Widget.Material3.Button.TonalButton"
                                 android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:layout_weight="1"
-                                android:text="@string/upload_avatar" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/logout"
-                                style="@style/Widget.Material3.Button.OutlinedButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:layout_weight="1"
-                                android:text="@string/logout" />
+                                android:layout_height="0dp"
+                                android:visibility="gone" />
                         </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/logout"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="@string/logout"
+                            android:textColor="?attr/colorError" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -319,7 +355,7 @@
                 android:id="@+id/musicLibrarySection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="32dp"
                 android:orientation="vertical"
                 android:visibility="gone"
                 tools:visibility="visible">
@@ -327,23 +363,22 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginHorizontal="4dp"
+                    android:layout_marginBottom="12dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_audiotrack"
-                        app:tint="?attr/colorPrimary" />
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="18dp"
+                        android:background="?attr/colorPrimary" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
+                        android:letterSpacing="0.01"
                         android:text="@string/private_music"
                         android:textAppearance="@style/TextViewSubtitle1"
                         android:textColor="?android:attr/textColorPrimary"
@@ -353,7 +388,7 @@
                         android:id="@+id/musicLibrarySummary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textAppearance="@style/TextViewBody2"
+                        android:textAppearance="@style/TextViewCaption"
                         android:textColor="?android:attr/textColorSecondary"
                         tools:text="12 首" />
                 </LinearLayout>
@@ -361,13 +396,17 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    app:cardBackgroundColor="?attr/colorSurface"
                     app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp">
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:paddingVertical="8dp">
 
                         <LinearLayout
                             android:id="@+id/musicList"
@@ -379,9 +418,12 @@
                             android:id="@+id/uploadMusic"
                             style="@style/Widget.Material3.Button.TonalButton"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_margin="12dp"
+                            android:layout_height="48dp"
+                            android:layout_marginHorizontal="12dp"
+                            android:layout_marginTop="4dp"
+                            android:layout_marginBottom="8dp"
                             android:text="@string/upload_music"
+                            app:cornerRadius="24dp"
                             app:icon="@drawable/ic_playlist_add" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -392,7 +434,7 @@
                 android:id="@+id/favoritesSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="28dp"
                 android:orientation="vertical"
                 android:visibility="gone"
                 tools:visibility="visible">
@@ -400,23 +442,22 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginHorizontal="4dp"
+                    android:layout_marginBottom="12dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_favorite"
-                        app:tint="?attr/colorPrimary" />
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="18dp"
+                        android:background="?attr/colorPrimary" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
+                        android:letterSpacing="0.01"
                         android:text="@string/favorites"
                         android:textAppearance="@style/TextViewSubtitle1"
                         android:textColor="?android:attr/textColorPrimary"
@@ -426,7 +467,7 @@
                         android:id="@+id/favoritesSummary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textAppearance="@style/TextViewBody2"
+                        android:textAppearance="@style/TextViewCaption"
                         android:textColor="?android:attr/textColorSecondary"
                         tools:text="8 首" />
                 </LinearLayout>
@@ -434,14 +475,18 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    app:cardBackgroundColor="?attr/colorSurface"
                     app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp">
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:id="@+id/favoriteList"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical" />
+                        android:orientation="vertical"
+                        android:paddingVertical="8dp" />
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
@@ -450,7 +495,7 @@
                 android:id="@+id/playlistsSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="28dp"
                 android:orientation="vertical"
                 android:visibility="gone"
                 tools:visibility="visible">
@@ -458,23 +503,22 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginHorizontal="4dp"
+                    android:layout_marginBottom="12dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_library_music"
-                        app:tint="?attr/colorPrimary" />
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="18dp"
+                        android:background="?attr/colorPrimary" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
+                        android:letterSpacing="0.01"
                         android:text="@string/playlists"
                         android:textAppearance="@style/TextViewSubtitle1"
                         android:textColor="?android:attr/textColorPrimary"
@@ -484,8 +528,8 @@
                         android:id="@+id/playlistsSummary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:textAppearance="@style/TextViewBody2"
+                        android:layout_marginEnd="4dp"
+                        android:textAppearance="@style/TextViewCaption"
                         android:textColor="?android:attr/textColorSecondary"
                         tools:text="3 个" />
 
@@ -494,6 +538,7 @@
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:minWidth="0dp"
                         android:text="@string/create_action"
                         app:icon="@drawable/ic_playlist_add" />
                 </LinearLayout>
@@ -501,14 +546,18 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    app:cardBackgroundColor="?attr/colorSurface"
                     app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp">
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:id="@+id/playlistList"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical" />
+                        android:orientation="vertical"
+                        android:paddingVertical="8dp" />
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
