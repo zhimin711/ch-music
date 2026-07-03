@@ -12,7 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,6 +113,44 @@ class MusicServerApiIntegrationTests {
                 .andExpect(jsonPath("$.artist", is("Tagged Artist")))
                 .andExpect(jsonPath("$.album", is("Tagged Album")))
                 .andExpect(jsonPath("$.duration", is(123456)))
+                .andExpect(jsonPath("$.picUrl").exists())
+                .andReturn();
+        long musicId = objectMapper.readTree(upload.getResponse().getContentAsString()).get("musicId").asLong();
+
+        mockMvc.perform(get("/api/music/{musicId}/cover", musicId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner.token())))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/png"));
+    }
+
+    @Test
+    void uploadRepairsChineseMetadataWithWrongIsoEncoding() throws Exception {
+        AuthResult owner = register("metadata-encoding-owner");
+        MockMultipartFile file = new MockMultipartFile("file", "mojibake.mp3", "audio/mpeg",
+                id3v23GbkMislabeledAudio());
+
+        mockMvc.perform(multipart("/api/music")
+                        .file(file)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner.token())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title", is("中文歌名")))
+                .andExpect(jsonPath("$.artist", is("中文歌手")))
+                .andExpect(jsonPath("$.album", is("中文专辑")));
+    }
+
+    @Test
+    void uploadReadsFlacVorbisCommentMetadata() throws Exception {
+        AuthResult owner = register("metadata-flac-owner");
+        MockMultipartFile file = new MockMultipartFile("file", "tagged.flac", "audio/flac", flacAudio());
+
+        MvcResult upload = mockMvc.perform(multipart("/api/music")
+                        .file(file)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner.token())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title", is("云里的歌")))
+                .andExpect(jsonPath("$.artist", is("朝华歌手")))
+                .andExpect(jsonPath("$.album", is("无损专辑")))
+                .andExpect(jsonPath("$.duration", is(10000)))
                 .andExpect(jsonPath("$.picUrl").exists())
                 .andReturn();
         long musicId = objectMapper.readTree(upload.getResponse().getContentAsString()).get("musicId").asLong();
@@ -303,6 +343,112 @@ class MusicServerApiIntegrationTests {
         payload.write(3);
         payload.write(text);
         writeFrame(output, id, payload.toByteArray());
+    }
+
+    private static byte[] id3v23GbkMislabeledAudio() throws Exception {
+        ByteArrayOutputStream frames = new ByteArrayOutputStream();
+        writeGbkAsIsoTextFrame(frames, "TIT2", "中文歌名");
+        writeGbkAsIsoTextFrame(frames, "TPE1", "中文歌手");
+        writeGbkAsIsoTextFrame(frames, "TALB", "中文专辑");
+        byte[] tag = frames.toByteArray();
+
+        ByteArrayOutputStream audio = new ByteArrayOutputStream();
+        audio.write(new byte[] { 'I', 'D', '3', 3, 0, 0 });
+        audio.write(synchsafe(tag.length));
+        audio.write(tag);
+        audio.write("audio-frame-bytes".getBytes(StandardCharsets.UTF_8));
+        return audio.toByteArray();
+    }
+
+    private static void writeGbkAsIsoTextFrame(ByteArrayOutputStream output, String id, String value) throws Exception {
+        byte[] text = value.getBytes(Charset.forName("GB18030"));
+        ByteArrayOutputStream payload = new ByteArrayOutputStream();
+        payload.write(0);
+        payload.write(text);
+        writeFrame(output, id, payload.toByteArray());
+    }
+
+    private static byte[] flacAudio() throws Exception {
+        ByteArrayOutputStream audio = new ByteArrayOutputStream();
+        audio.write(new byte[] { 'f', 'L', 'a', 'C' });
+        writeFlacBlock(audio, 0, false, flacStreamInfoBlock());
+        writeFlacBlock(audio, 4, true, flacVorbisCommentBlock());
+        audio.write("flac-frame-bytes".getBytes(StandardCharsets.UTF_8));
+        return audio.toByteArray();
+    }
+
+    private static byte[] flacStreamInfoBlock() {
+        byte[] block = new byte[34];
+        int sampleRate = 44_100;
+        long totalSamples = 441_000L;
+        long packed = ((long) sampleRate << 44)
+                | (1L << 41)
+                | (15L << 36)
+                | totalSamples;
+        for (int index = 0; index < 8; index += 1) {
+            block[10 + index] = (byte) (packed >>> (56 - (index * 8)));
+        }
+        return block;
+    }
+
+    private static byte[] flacVorbisCommentBlock() throws Exception {
+        ByteArrayOutputStream block = new ByteArrayOutputStream();
+        byte[] vendor = "MusicServerTest".getBytes(StandardCharsets.UTF_8);
+        writeLittleEndianInt(block, vendor.length);
+        block.write(vendor);
+        String[] comments = {
+                "TITLE=云里的歌",
+                "ARTIST=朝华歌手",
+                "ALBUM=无损专辑",
+                "METADATA_BLOCK_PICTURE=" + Base64.getEncoder().encodeToString(flacPictureBlock())
+        };
+        writeLittleEndianInt(block, comments.length);
+        for (String comment : comments) {
+            byte[] bytes = comment.getBytes(StandardCharsets.UTF_8);
+            writeLittleEndianInt(block, bytes.length);
+            block.write(bytes);
+        }
+        return block.toByteArray();
+    }
+
+    private static byte[] flacPictureBlock() throws Exception {
+        ByteArrayOutputStream block = new ByteArrayOutputStream();
+        writeBigEndianInt(block, 3);
+        byte[] mime = "image/png".getBytes(StandardCharsets.ISO_8859_1);
+        writeBigEndianInt(block, mime.length);
+        block.write(mime);
+        writeBigEndianInt(block, 0);
+        writeBigEndianInt(block, 1);
+        writeBigEndianInt(block, 1);
+        writeBigEndianInt(block, 24);
+        writeBigEndianInt(block, 0);
+        byte[] image = new byte[] { (byte) 0x89, 'P', 'N', 'G' };
+        writeBigEndianInt(block, image.length);
+        block.write(image);
+        return block.toByteArray();
+    }
+
+    private static void writeFlacBlock(ByteArrayOutputStream output, int type, boolean last, byte[] payload)
+            throws Exception {
+        output.write((last ? 0x80 : 0) | (type & 0x7f));
+        output.write((payload.length >> 16) & 0xff);
+        output.write((payload.length >> 8) & 0xff);
+        output.write(payload.length & 0xff);
+        output.write(payload);
+    }
+
+    private static void writeLittleEndianInt(ByteArrayOutputStream output, int value) {
+        output.write(value & 0xff);
+        output.write((value >> 8) & 0xff);
+        output.write((value >> 16) & 0xff);
+        output.write((value >> 24) & 0xff);
+    }
+
+    private static void writeBigEndianInt(ByteArrayOutputStream output, int value) {
+        output.write((value >> 24) & 0xff);
+        output.write((value >> 16) & 0xff);
+        output.write((value >> 8) & 0xff);
+        output.write(value & 0xff);
     }
 
     private static void writeCoverFrame(ByteArrayOutputStream output) throws Exception {

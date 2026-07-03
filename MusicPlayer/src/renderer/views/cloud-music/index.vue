@@ -532,9 +532,6 @@ function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
   const files = Array.from(target.files || []);
   selectedFiles.value = files;
-  if (files.length === 1 && !uploadTitle.value.trim()) {
-    uploadTitle.value = files[0].name.replace(/\.[^.]+$/, '');
-  }
   if (files.length > 1) {
     uploadTitle.value = '';
   }
