@@ -1,6 +1,7 @@
 package code.name.monkey.retromusic.musicserver
 
 import android.content.Context
+import android.util.Base64
 import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -34,6 +35,24 @@ class MusicServerSession(context: Context) {
             if (value == null) remove(KEY_USER) else putString(KEY_USER, gson.toJson(value))
         }
 
+    /** Small local avatar cache (JPEG bytes) so we don't need `profile.jpg` on disk. */
+    var avatarBlob: ByteArray?
+        get() {
+            val raw = preferences.getString(KEY_AVATAR_BLOB, null) ?: return null
+            return try {
+                Base64.decode(raw, Base64.NO_WRAP)
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+        }
+        set(value) = preferences.edit {
+            if (value == null) {
+                remove(KEY_AVATAR_BLOB)
+            } else {
+                putString(KEY_AVATAR_BLOB, Base64.encodeToString(value, Base64.NO_WRAP))
+            }
+        }
+
     val isLoggedIn: Boolean
         get() = accessToken.isNotBlank() && user != null
 
@@ -52,6 +71,7 @@ class MusicServerSession(context: Context) {
             remove(KEY_TOKEN)
             remove(KEY_EXPIRES_AT)
             remove(KEY_USER)
+            remove(KEY_AVATAR_BLOB)
         }
     }
 
@@ -59,5 +79,6 @@ class MusicServerSession(context: Context) {
         const val KEY_TOKEN = "access_token"
         const val KEY_EXPIRES_AT = "expires_at"
         const val KEY_USER = "user"
+        const val KEY_AVATAR_BLOB = "avatar_blob"
     }
 }

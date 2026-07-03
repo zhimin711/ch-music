@@ -1,15 +1,19 @@
 package code.name.monkey.retromusic.fragments.other
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.doOnPreDraw
@@ -33,6 +37,7 @@ import code.name.monkey.retromusic.extensions.showToast
 import code.name.monkey.retromusic.fragments.LibraryViewModel
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.profileBannerOptions
+import code.name.monkey.retromusic.glide.RetroGlideExtension.simpleSongCoverOptions
 import code.name.monkey.retromusic.glide.RetroGlideExtension.userProfileOptions
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
@@ -41,6 +46,7 @@ import code.name.monkey.retromusic.musicserver.MusicServerCacheState
 import code.name.monkey.retromusic.musicserver.MusicServerMusic
 import code.name.monkey.retromusic.musicserver.MusicServerPlaylist
 import code.name.monkey.retromusic.musicserver.MusicServerRepository
+import code.name.monkey.retromusic.musicserver.MusicServerSession
 import code.name.monkey.retromusic.musicserver.MusicServerSongMapper
 import code.name.monkey.retromusic.musicserver.MusicServerState
 import code.name.monkey.retromusic.musicserver.readableMessage
@@ -58,6 +64,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 class UserInfoFragment : Fragment() {
@@ -66,6 +73,7 @@ class UserInfoFragment : Fragment() {
     private val binding get() = _binding!!
     private val libraryViewModel: LibraryViewModel by activityViewModel()
     private val musicServerRepository: MusicServerRepository by inject()
+    private val musicServerSession: MusicServerSession by inject()
     private var registerMode = false
     private var lastState = MusicServerState()
 
@@ -184,11 +192,12 @@ class UserInfoFragment : Fragment() {
         binding.authSubmit?.setOnClickListener { submitAuth() }
         binding.saveProfile?.setOnClickListener { saveProfile() }
         binding.next?.setOnClickListener { saveProfile() }
-        binding.uploadAvatar?.setOnClickListener {
+        val pickAvatar = View.OnClickListener {
             pickAvatarLauncher.launch(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
             )
         }
+        binding.userImage.setOnClickListener(pickAvatar)
         binding.logout?.setOnClickListener {
             runServerAction { musicServerRepository.logout() }
         }
@@ -364,38 +373,56 @@ class UserInfoFragment : Fragment() {
             binding.playlistList?.addView(emptyText(getString(R.string.music_server_empty_playlists)))
             return
         }
+        val inflater = LayoutInflater.from(requireContext())
         state.playlists.forEach { playlist ->
-            val row = rowContainer()
-            val title = titleText(playlist.name)
-            val subtitle = subtitleText("${playlist.tracks.size} songs")
-            val play = smallButton(R.string.action_play) {
+            val row = inflater.inflate(R.layout.item_user_info_playlist, binding.playlistList, false)
+            row.findViewById<MaterialTextView>(R.id.playlistTitle).text = playlist.name
+            row.findViewById<MaterialTextView>(R.id.playlistSubtitle).text =
+                "${playlist.tracks.size} 首"
+
+            row.findViewById<MaterialButton>(R.id.playlistPlay).setOnClickListener {
                 playSongs(playlist.tracks.filter { it.isPrivateMusic }.map { musicServerRepository.toSong(it) })
             }
-            val details = smallButton(R.string.action_details) {
-                showPlaylistDetailsDialog(playlist)
+            val overflowClick = View.OnClickListener { anchor ->
+                showPlaylistOverflow(anchor, playlist)
             }
-            val edit = smallButton(R.string.action_edit) {
-                showPlaylistEditorDialog(playlist)
-            }
-            val delete = smallButton(R.string.action_delete) {
-                confirm("Delete ${playlist.name}?") {
-                    runServerAction { musicServerRepository.deletePlaylist(playlist.id) }
-                }
-            }
-            val addLocal = smallTextButton("Add current local") {
-                val currentSong = MusicPlayerRemote.currentSong
-                if (currentSong == Song.emptySong || MusicServerSongMapper.isRemoteSong(currentSong)) {
-                    showToast("Play a local song first")
-                } else {
-                    runServerAction { musicServerRepository.addLocalTrackToPlaylist(playlist.id, currentSong) }
-                }
-            }
-            row.addView(title)
-            row.addView(subtitle)
-            row.addView(buttonRow(play, details, edit, delete))
-            row.addView(buttonRow(addLocal))
+            row.findViewById<MaterialButton>(R.id.playlistOverflow).setOnClickListener(overflowClick)
+            row.setOnClickListener { showPlaylistDetailsDialog(playlist) }
             binding.playlistList?.addView(row)
         }
+    }
+
+    private fun showPlaylistOverflow(anchor: View, playlist: MusicServerPlaylist) {
+        val popup = PopupMenu(requireContext(), anchor)
+        val menu = popup.menu
+        val ids = mutableMapOf<Int, () -> Unit>()
+        var next = 1
+        fun add(titleRes: Int, action: () -> Unit) {
+            menu.add(0, next, next, titleRes)
+            ids[next] = action
+            next++
+        }
+        add(R.string.action_details) { showPlaylistDetailsDialog(playlist) }
+        add(R.string.action_edit) { showPlaylistEditorDialog(playlist) }
+        menu.add(0, next, next, "Add current local").also { ids[next] = {
+            val currentSong = MusicPlayerRemote.currentSong
+            if (currentSong == Song.emptySong || MusicServerSongMapper.isRemoteSong(currentSong)) {
+                showToast("Play a local song first")
+            } else {
+                runServerAction { musicServerRepository.addLocalTrackToPlaylist(playlist.id, currentSong) }
+            }
+        } }
+        next++
+        add(R.string.action_delete) {
+            confirm("Delete ${playlist.name}?") {
+                runServerAction { musicServerRepository.deletePlaylist(playlist.id) }
+            }
+        }
+        popup.setOnMenuItemClickListener { item ->
+            ids[item.itemId]?.invoke()
+            true
+        }
+        popup.show()
     }
 
     private fun musicRow(
@@ -404,38 +431,129 @@ class UserInfoFragment : Fragment() {
         showDelete: Boolean,
         cacheEntry: MusicServerCacheEntry?
     ): View {
-        val row = rowContainer()
+        val ctx = requireContext()
+        val row = LayoutInflater.from(ctx)
+            .inflate(R.layout.item_user_info_track, binding.musicList, false)
         val song = musicServerRepository.toSong(music)
-        row.addView(titleText(music.title))
-        row.addView(subtitleText(listOfNotNull(music.artist, music.album).joinToString(" · ").ifBlank {
-            getString(R.string.music_server)
-        }))
-        row.addView(subtitleText(cacheStatusText(music, cacheEntry)))
-        val play = smallButton(R.string.action_play) { playSongs(listOf(song)) }
-        val next = smallButton(R.string.action_play_next) { MusicPlayerRemote.playNext(song) }
-        val queue = smallButton(R.string.action_add_to_playing_queue) { MusicPlayerRemote.enqueue(song) }
-        val favorite = smallTextButton(
-            getString(if (isFavorite) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)
-        ) {
+
+        val artView = row.findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.trackArt)
+        val cover = music.picUrl
+        val glide = Glide.with(this)
+        if (!cover.isNullOrBlank()) {
+            glide.load(cover)
+                .placeholder(R.drawable.default_audio_art)
+                .error(R.drawable.default_audio_art)
+                .into(artView)
+        } else {
+            glide.load(RetroGlideExtension.getSongModel(song))
+                .simpleSongCoverOptions(song)
+                .placeholder(R.drawable.default_audio_art)
+                .error(R.drawable.default_audio_art)
+                .into(artView)
+        }
+
+        row.findViewById<MaterialTextView>(R.id.trackTitle).text = music.title
+        row.findViewById<MaterialTextView>(R.id.trackSubtitle).text =
+            listOfNotNull(music.artist, music.album).joinToString(" · ")
+                .ifBlank { getString(R.string.music_server) }
+
+        val metaView = row.findViewById<MaterialTextView>(R.id.trackMeta)
+        val metaText = cacheStatusText(music, cacheEntry)
+        if (metaText.isBlank()) {
+            metaView.isVisible = false
+        } else {
+            metaView.isVisible = true
+            metaView.text = metaText
+        }
+
+        val favoriteBtn = row.findViewById<MaterialButton>(R.id.trackFavorite)
+        favoriteBtn.setIconResource(
+            if (isFavorite) R.drawable.ic_favorite else R.drawable.ic_favorite_border
+        )
+        favoriteBtn.iconTint =
+            android.content.res.ColorStateList.valueOf(
+                if (isFavorite) accentColor()
+                else ctx.getColor(android.R.color.darker_gray)
+            )
+        favoriteBtn.setOnClickListener {
             runServerAction { musicServerRepository.toggleFavorite(music) }
         }
-        row.addView(buttonRow(play, next, queue, favorite))
 
-        val secondaryButtons = mutableListOf<MaterialButton>()
-        secondaryButtons.add(smallTextButton(getString(R.string.action_add_to_playlist)) {
-            showAddToPlaylistDialog(music)
-        })
-        cacheActionButton(music, cacheEntry)?.let { secondaryButtons.add(it) }
+        val overflow = row.findViewById<MaterialButton>(R.id.trackOverflow)
+        overflow.setOnClickListener { anchor ->
+            showTrackOverflow(anchor, music, song, cacheEntry, showDelete)
+        }
+
+        row.setOnClickListener { playSongs(listOf(song)) }
+        return row
+    }
+
+    private fun showTrackOverflow(
+        anchor: View,
+        music: MusicServerMusic,
+        song: Song,
+        cacheEntry: MusicServerCacheEntry?,
+        showDelete: Boolean
+    ) {
+        val popup = PopupMenu(requireContext(), anchor)
+        val menu = popup.menu
+        val ids = mutableMapOf<Int, () -> Unit>()
+        var next = 1
+
+        fun add(titleRes: Int, action: () -> Unit) {
+            menu.add(0, next, next, titleRes)
+            ids[next] = action
+            next++
+        }
+        fun add(title: String, action: () -> Unit) {
+            menu.add(0, next, next, title)
+            ids[next] = action
+            next++
+        }
+
+        add(R.string.action_play) { playSongs(listOf(song)) }
+        add(R.string.action_play_next) { MusicPlayerRemote.playNext(song) }
+        add(R.string.action_add_to_playing_queue) { MusicPlayerRemote.enqueue(song) }
+        add(R.string.action_add_to_playlist) { showAddToPlaylistDialog(music) }
+
+        val supportsCache = music.playback?.supportsOfflineCache != false
+        if (supportsCache) {
+            when (cacheEntry?.state) {
+                MusicServerCacheState.READY -> add(R.string.action_remove_cache) {
+                    runServerAction { musicServerRepository.removeCachedMusic(music) }
+                }
+                MusicServerCacheState.DOWNLOADING,
+                MusicServerCacheState.QUEUED -> { /* no action */ }
+                MusicServerCacheState.FAILED,
+                MusicServerCacheState.STALE,
+                MusicServerCacheState.PAUSED,
+                MusicServerCacheState.WAITING_FOR_WIFI,
+                MusicServerCacheState.STORAGE_LOW -> add(R.string.action_retry_cache) {
+                    runServerAction {
+                        cacheEntry.let { musicServerRepository.retryCachedMusic(it.cacheKey) }
+                        musicServerRepository.downloadCachedMusic(music)
+                    }
+                }
+                null -> add(R.string.action_cache_offline) {
+                    runServerAction { musicServerRepository.downloadCachedMusic(music) }
+                }
+            }
+        }
+
         if (showDelete) {
-            secondaryButtons.add(smallButton(R.string.action_delete) {
+            add(R.string.action_delete) {
                 confirm("Delete ${music.title}?") {
                     val musicId = music.stableMusicId ?: return@confirm
                     runServerAction { musicServerRepository.deleteMusic(musicId) }
                 }
-            })
+            }
         }
-        row.addView(buttonRow(*secondaryButtons.toTypedArray()))
-        return row
+
+        popup.setOnMenuItemClickListener { item: MenuItem ->
+            ids[item.itemId]?.invoke()
+            true
+        }
+        popup.show()
     }
 
     private fun MusicServerState.cacheEntryFor(music: MusicServerMusic): MusicServerCacheEntry? {
@@ -447,10 +565,10 @@ class UserInfoFragment : Fragment() {
 
     private fun cacheStatusText(music: MusicServerMusic, entry: MusicServerCacheEntry?): String {
         if (music.playback?.supportsOfflineCache == false) {
-            return getString(R.string.cache_status_unavailable)
+            return ""
         }
         return when (entry?.state) {
-            null -> getString(R.string.cache_status_not_cached)
+            null -> ""
             MusicServerCacheState.QUEUED -> getString(R.string.cache_status_queued)
             MusicServerCacheState.DOWNLOADING -> getString(R.string.cache_status_downloading)
             MusicServerCacheState.READY -> getString(R.string.cache_status_ready)
@@ -605,11 +723,70 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun uploadAvatar(uri: Uri) {
-        runServerAction {
-            val file = copyUriToCache(uri)
-            musicServerRepository.uploadAvatar(file, requireContext().contentResolver.getType(uri))
-            file.delete()
+        val compressed = compressAvatar(uri)
+        if (compressed == null) {
+            showToast(getString(R.string.error_load_failed))
+            return
         }
+        // Persist the tiny blob locally so avatar survives without profile.jpg on disk
+        musicServerSession.avatarBlob = compressed
+        // Refresh UI right away
+        loadProfile()
+        // Still try to sync to the server (best effort)
+        runServerAction(showErrors = false) {
+            val tmp = File.createTempFile("avatar_", ".jpg", requireContext().cacheDir)
+            tmp.writeBytes(compressed)
+            try {
+                musicServerRepository.uploadAvatar(tmp, "image/jpeg")
+            } finally {
+                tmp.delete()
+            }
+        }
+    }
+
+    /**
+     * Downscale the picked image to a small square JPEG (max 256px, ~40-80KB) so we
+     * can safely stash it inside SharedPreferences as a base64 blob.
+     */
+    private fun compressAvatar(uri: Uri): ByteArray? {
+        val ctx = requireContext()
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        ctx.contentResolver.openInputStream(uri)?.use {
+            BitmapFactory.decodeStream(it, null, bounds)
+        } ?: return null
+        val (w, h) = bounds.outWidth to bounds.outHeight
+        if (w <= 0 || h <= 0) return null
+
+        var sample = 1
+        val target = 512
+        while (w / (sample * 2) >= target && h / (sample * 2) >= target) sample *= 2
+
+        val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sample }
+        val decoded = ctx.contentResolver.openInputStream(uri)?.use {
+            BitmapFactory.decodeStream(it, null, decodeOpts)
+        } ?: return null
+
+        // Center-crop to square, then scale to MAX_SIDE
+        val side = minOf(decoded.width, decoded.height)
+        val cropX = (decoded.width - side) / 2
+        val cropY = (decoded.height - side) / 2
+        val square = Bitmap.createBitmap(decoded, cropX, cropY, side, side)
+        if (square !== decoded) decoded.recycle()
+        val scaled = if (square.width > MAX_AVATAR_SIDE) {
+            Bitmap.createScaledBitmap(square, MAX_AVATAR_SIDE, MAX_AVATAR_SIDE, true).also {
+                if (it !== square) square.recycle()
+            }
+        } else square
+
+        val out = ByteArrayOutputStream()
+        scaled.compress(Bitmap.CompressFormat.JPEG, AVATAR_JPEG_QUALITY, out)
+        scaled.recycle()
+        return out.toByteArray()
+    }
+
+    private companion object {
+        const val MAX_AVATAR_SIDE = 256
+        const val AVATAR_JPEG_QUALITY = 82
     }
 
     private fun showBannerImageOptions() {
@@ -675,14 +852,34 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun loadProfile() {
-        Glide.with(this)
-            .load(RetroGlideExtension.getBannerModel())
-            .profileBannerOptions(RetroGlideExtension.getBannerModel())
-            .into(binding.bannerImage)
-        Glide.with(this)
-            .load(RetroGlideExtension.getUserModel())
-            .userProfileOptions(RetroGlideExtension.getUserModel(), requireContext())
-            .into(binding.userImage)
+        val bannerFile = RetroGlideExtension.getBannerModel()
+        if (bannerFile.exists() && bannerFile.length() > 0) {
+            Glide.with(this)
+                .load(bannerFile)
+                .profileBannerOptions(bannerFile)
+                .into(binding.bannerImage)
+        } else {
+            binding.bannerImage.setImageResource(R.drawable.material_design_default)
+        }
+
+        val blob = musicServerSession.avatarBlob
+        if (blob != null && blob.isNotEmpty()) {
+            Glide.with(this)
+                .load(blob)
+                .placeholder(R.drawable.ic_person_flat)
+                .error(R.drawable.ic_person_flat)
+                .into(binding.userImage)
+            return
+        }
+        val avatarFile = RetroGlideExtension.getUserModel()
+        if (avatarFile.exists() && avatarFile.length() > 0) {
+            Glide.with(this)
+                .load(avatarFile)
+                .userProfileOptions(avatarFile, requireContext())
+                .into(binding.userImage)
+        } else {
+            binding.userImage.setImageResource(R.drawable.ic_person_flat)
+        }
     }
 
     private fun playSongs(songs: List<Song>) {
@@ -699,7 +896,7 @@ class UserInfoFragment : Fragment() {
         action: suspend () -> Unit
     ) {
         viewLifecycleOwner.lifecycleScope.launch {
-            binding.refresh?.isEnabled = false
+            _binding?.refresh?.isEnabled = false
             try {
                 withContext(Dispatchers.IO) { action() }
             } catch (error: Throwable) {
@@ -710,7 +907,7 @@ class UserInfoFragment : Fragment() {
                 }
                 onError(error)
             } finally {
-                binding.refresh?.isEnabled = true
+                _binding?.refresh?.isEnabled = true
             }
         }
     }
