@@ -407,7 +407,7 @@ class UserInfoFragment : Fragment() {
         menu.add(0, next, next, "Add current local").also { ids[next] = {
             val currentSong = MusicPlayerRemote.currentSong
             if (currentSong == Song.emptySong || MusicServerSongMapper.isRemoteSong(currentSong)) {
-                showToast("Play a local song first")
+                showToast("请先播放一首本地歌曲")
             } else {
                 runServerAction { musicServerRepository.addLocalTrackToPlaylist(playlist.id, currentSong) }
             }
@@ -612,7 +612,7 @@ class UserInfoFragment : Fragment() {
     private fun showAddToPlaylistDialog(music: MusicServerMusic) {
         val playlists = lastState.playlists
         if (playlists.isEmpty()) {
-            showToast("Create a playlist first")
+            showToast("请先创建一个歌单")
             return
         }
         MaterialAlertDialogBuilder(requireContext())
@@ -725,13 +725,14 @@ class UserInfoFragment : Fragment() {
     private fun uploadAvatar(uri: Uri) {
         val compressed = compressAvatar(uri)
         if (compressed == null) {
-            showToast(getString(R.string.error_load_failed))
+            showToast("头像处理失败，请换一张图片")
             return
         }
         // Persist the tiny blob locally so avatar survives without profile.jpg on disk
         musicServerSession.avatarBlob = compressed
         // Refresh UI right away
         loadProfile()
+        showToast("头像已更新")
         // Still try to sync to the server (best effort)
         runServerAction(showErrors = false) {
             val tmp = File.createTempFile("avatar_", ".jpg", requireContext().cacheDir)
@@ -787,6 +788,7 @@ class UserInfoFragment : Fragment() {
     private companion object {
         const val MAX_AVATAR_SIDE = 256
         const val AVATAR_JPEG_QUALITY = 82
+        const val ORIGINAL_PROFILE_ID = "original"
     }
 
     private fun showBannerImageOptions() {
@@ -884,7 +886,7 @@ class UserInfoFragment : Fragment() {
 
     private fun playSongs(songs: List<Song>) {
         if (songs.isEmpty()) {
-            showToast("No playable private tracks")
+            showToast("暂无可播放的私人音乐")
             return
         }
         MusicPlayerRemote.openQueue(songs, 0, true)
@@ -1021,10 +1023,6 @@ class UserInfoFragment : Fragment() {
         if (!popped) {
             nav.navigateUp()
         }
-    }
-
-    private companion object {
-        const val ORIGINAL_PROFILE_ID = "original"
     }
 
     override fun onDestroyView() {
