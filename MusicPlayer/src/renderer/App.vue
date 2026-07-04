@@ -13,10 +13,11 @@
 <script setup lang="ts">
 import { cloneDeep } from 'lodash';
 import { darkTheme, lightTheme } from 'naive-ui';
-import { computed, nextTick, onMounted, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+import { useMusicServerStore } from '@/store/modules/musicServer';
 import { usePlayerStore } from '@/store/modules/player';
 import { usePlayerCoreStore } from '@/store/modules/playerCore';
 import { useSettingsStore } from '@/store/modules/settings';
@@ -35,7 +36,9 @@ const settingsStore = useSettingsStore();
 const playerStore = usePlayerStore();
 const playerCoreStore = usePlayerCoreStore();
 const userStore = useUserStore();
+const musicServerStore = useMusicServerStore();
 const router = useRouter();
+let onlineRecoveryPromise: Promise<void> | null = null;
 
 // 监听语言变化
 watch(
@@ -121,6 +124,35 @@ if (isElectron) {
 // 使用应用内快捷键
 useAppShortcuts();
 
+const recoverOnlineData = async () => {
+  if (!localStorage.getItem('musicServerToken')) return;
+  if (onlineRecoveryPromise) return onlineRecoveryPromise;
+
+  onlineRecoveryPromise = (async () => {
+    console.log('[App] 网络已恢复，刷新后端数据');
+    const results = await Promise.allSettled([
+      musicServerStore.loadAll(),
+      playerStore.initializeFavoriteList()
+    ]);
+
+    results.forEach((result) => {
+      if (result.status === 'rejected') {
+        console.warn('[App] 网络恢复后刷新后端数据失败:', result.reason);
+      }
+    });
+
+    if (playerStore.playList.length > 0) {
+      playerStore.preloadNextSongs(Math.max(0, playerStore.playListIndex));
+    }
+
+    window.dispatchEvent(new CustomEvent('music-network-restored'));
+  })().finally(() => {
+    onlineRecoveryPromise = null;
+  });
+
+  return onlineRecoveryPromise;
+};
+
 onMounted(async () => {
   playerStore.setIsPlay(false);
   if (isLyricWindow.value) {
@@ -132,13 +164,18 @@ onMounted(async () => {
     router.push('/local-music');
   }
 
-  // 监听网络状态变化，断网时跳转到本地音乐页面
+  // 监听网络状态变化：断网时跳转本地音乐；恢复后主动刷新后端数据
   const handleOffline = () => {
     router.push('/local-music');
   };
+  const handleOnline = () => {
+    void recoverOnlineData();
+  };
   window.addEventListener('offline', handleOffline);
+  window.addEventListener('online', handleOnline);
   onUnmounted(() => {
     window.removeEventListener('offline', handleOffline);
+    window.removeEventListener('online', handleOnline);
   });
 
   // 初始化 MusicHook，注入 playerStore

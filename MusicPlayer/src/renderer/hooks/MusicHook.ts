@@ -53,6 +53,7 @@ export let playMusic: ComputedRef<SongResult>;
 export let artistList: ComputedRef<Artist[]>;
 
 let lastIndex = -1;
+let lyricClearListenerInitialized = false;
 
 // 缓存平台信息，避免每次歌词变化时同步 IPC 调用
 const cachedPlatform = isElectron ? window.electron.ipcRenderer.sendSync('get-platform') : 'web';
@@ -68,6 +69,13 @@ export const musicDB = await useIndexedDB(
   ],
   3
 );
+
+export const clearLyrics = () => {
+  lrcArray.value = [];
+  lrcTimeArray.value = [];
+  nowIndex.value = 0;
+  currentLrcProgress.value = 0;
+};
 
 // 键盘事件处理器（提取为命名函数，防止重复注册）
 const handleKeyUp = (e: KeyboardEvent) => {
@@ -153,10 +161,11 @@ const parseLyricsString = async (
 const ensureLyricsLoaded = async (force = false) => {
   const songId = playMusic.value?.id;
   if (!songId) {
-    lrcArray.value = [];
-    lrcTimeArray.value = [];
-    nowIndex.value = 0;
+    clearLyrics();
     return;
+  }
+  if (force) {
+    clearLyrics();
   }
   if (!force && lrcArray.value.length > 0) return;
 
@@ -209,14 +218,12 @@ const ensureLyricsLoaded = async (force = false) => {
         }
       } else if (typeof songId === 'number') {
         try {
-          const { getMusicLrc } = await import('@/api/music');
-          const res = await getMusicLrc(songId);
-          if (res?.data?.lrc?.lyric) {
-            const { lrcArray: apiLrcArray, lrcTimeArray: apiTimeArray } = await parseLyricsString(
-              res.data.lrc.lyric
-            );
-            lrcArray.value = apiLrcArray;
-            lrcTimeArray.value = apiTimeArray;
+          const { loadLrcBySong } = await import('@/hooks/usePlayerHooks');
+          const lyric = await loadLrcBySong(playMusic.value);
+          if (lyric.lrcArray.length > 0) {
+            lrcArray.value = lyric.lrcArray;
+            lrcTimeArray.value = lyric.lrcTimeArray;
+            playMusic.value.lyric = lyric;
           }
         } catch (apiErr) {
           console.error('API lyrics fallback failed:', apiErr);
@@ -228,14 +235,12 @@ const ensureLyricsLoaded = async (force = false) => {
   } else if (typeof songId === 'number') {
     // 在线歌曲但 lyric 字段尚未加载, 主动调 API 兜底
     try {
-      const { getMusicLrc } = await import('@/api/music');
-      const res = await getMusicLrc(songId);
-      if (res?.data?.lrc?.lyric) {
-        const { lrcArray: apiLrcArray, lrcTimeArray: apiTimeArray } = await parseLyricsString(
-          res.data.lrc.lyric
-        );
-        lrcArray.value = apiLrcArray;
-        lrcTimeArray.value = apiTimeArray;
+      const { loadLrcBySong } = await import('@/hooks/usePlayerHooks');
+      const lyric = await loadLrcBySong(playMusic.value);
+      if (lyric.lrcArray.length > 0) {
+        lrcArray.value = lyric.lrcArray;
+        lrcTimeArray.value = lyric.lrcTimeArray;
+        playMusic.value.lyric = lyric;
       }
     } catch (apiErr) {
       console.error('API lyrics fallback failed:', apiErr);
@@ -250,6 +255,11 @@ const ensureLyricsLoaded = async (force = false) => {
 
 const setupMusicWatchers = () => {
   const store = getPlayerStore();
+
+  if (!lyricClearListenerInitialized) {
+    window.addEventListener('music-lyric-clear', clearLyrics);
+    lyricClearListenerInitialized = true;
+  }
 
   // 切歌时 id 变化, 强制重新解析
   watch(
@@ -997,6 +1007,12 @@ export const initAudioListeners = async () => {
     // 确保有音频实例
     const initialSound = audioService.getCurrentSound();
     if (!initialSound) {
+      if (!getPlayerStore().play) {
+        console.log('自动播放未启用，暂无音频实例，先注册监听器等待后续播放');
+        setupAudioListeners();
+        return;
+      }
+
       console.log('没有音频实例，等待音频加载...');
       // 等待音频加载完成
       await new Promise<void>((resolve) => {
@@ -1040,7 +1056,7 @@ export const initAudioListeners = async () => {
     if (finalSound) {
       // 更新全局 sound 引用
       sound.value = finalSound;
-    } else {
+    } else if (getPlayerStore().play) {
       console.warn('无法获取音频实例，跳过进度更新初始化');
     }
   } catch (error) {

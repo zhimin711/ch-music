@@ -73,6 +73,28 @@ class MusicServerApiIntegrationTests {
     }
 
     @Test
+    void avatarUploadStoresAndServesBlobFromDatabase() throws Exception {
+        AuthResult owner = register("avatar-owner");
+        MockMultipartFile file = new MockMultipartFile("file", "avatar.png", "image/png",
+                new byte[] { (byte) 0x89, 'P', 'N', 'G' });
+
+        mockMvc.perform(multipart("/api/auth/me/avatar")
+                        .file(file)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner.token())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.avatarUrl").value("http://localhost/api/auth/avatars/" + owner.userId()));
+
+        mockMvc.perform(get("/api/auth/avatars/{userId}", owner.userId()))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/png"))
+                .andExpect(header().longValue(HttpHeaders.CONTENT_LENGTH, 4));
+
+        mockMvc.perform(get("/api/auth/avatars/{userId}/{filename}", owner.userId(), "legacy.png"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/png"));
+    }
+
+    @Test
     void uploadListDetailAndOwnerIsolationWorkTogether() throws Exception {
         AuthResult owner = register("music-owner");
         AuthResult other = register("music-other");

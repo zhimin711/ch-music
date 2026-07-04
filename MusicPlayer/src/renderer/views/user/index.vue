@@ -198,7 +198,10 @@
               round
               :size="88"
               :src="getImgUrl(avatarPreviewUrl || profileForm.avatarUrl, '100y100')"
-              :img-props="{ class: 'profile-avatar-img' }"
+              :img-props="{
+                class: 'profile-avatar-img',
+                style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' }
+              }"
             />
             <button type="button" class="profile-avatar-button" @click="avatarFileInput?.click()">
               <i class="ri-camera-line" />
@@ -832,14 +835,15 @@ const currentLoginType = computed(() => userStore.loginType);
 }
 
 .profile-avatar-wrap {
-  @apply relative flex h-[78px] w-[78px] flex-shrink-0 items-center justify-center;
+  @apply relative flex h-[88px] w-[88px] flex-shrink-0 items-center justify-center;
 
   :deep(.n-avatar) {
-    @apply ring-4 ring-white shadow-xl dark:ring-neutral-950;
+    @apply h-[88px] w-[88px] overflow-hidden rounded-full ring-4 ring-white shadow-xl dark:ring-neutral-950;
   }
 
   :deep(.profile-avatar-img) {
-    @apply h-full w-full object-cover;
+    @apply block h-full w-full rounded-full object-cover;
+    aspect-ratio: 1 / 1;
   }
 }
 

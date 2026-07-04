@@ -12,13 +12,13 @@ import com.chmusic.musicserver.user.StoredAvatar;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.nio.charset.StandardCharsets;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.core.io.Resource;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -81,18 +81,28 @@ public class AuthController {
         AppUser user = CurrentUser.from(authentication);
         StoredAvatar avatar = avatarStorageService.store(user, file);
         String avatarUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/api/auth/avatars/{userId}/{filename}")
-                .buildAndExpand(user.getId(), avatar.filename())
+                .path("/api/auth/avatars/{userId}")
+                .buildAndExpand(user.getId())
                 .toUriString();
-        return authService.updateAvatar(user, avatarUrl);
+        return authService.updateAvatar(user, avatarUrl, avatar);
     }
 
-    @GetMapping("/avatars/{userId}/{filename}")
-    public ResponseEntity<Resource> avatar(@PathVariable Long userId, @PathVariable String filename) {
-        Resource resource = avatarStorageService.load(userId, filename);
-        MediaType mediaType = MediaTypeFactory.getMediaType(filename).orElse(MediaType.APPLICATION_OCTET_STREAM);
+    @GetMapping({ "/avatars/{userId}", "/avatars/{userId}/{filename}" })
+    public ResponseEntity<Resource> avatar(@PathVariable Long userId) {
+        AppUser user = authService.requireUser(userId);
+        if (user.getAvatarData() == null || user.getAvatarData().length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        Resource resource = new ByteArrayResource(user.getAvatarData());
+        String filename = user.getAvatarFilename() == null || user.getAvatarFilename().isBlank()
+                ? "avatar"
+                : user.getAvatarFilename();
+        String contentType = user.getAvatarContentType() == null || user.getAvatarContentType().isBlank()
+                ? MediaType.APPLICATION_OCTET_STREAM_VALUE
+                : user.getAvatarContentType();
         return ResponseEntity.ok()
-                .contentType(mediaType)
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(user.getAvatarSize() == null ? user.getAvatarData().length : user.getAvatarSize())
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.inline()
                                 .filename(filename, StandardCharsets.UTF_8)

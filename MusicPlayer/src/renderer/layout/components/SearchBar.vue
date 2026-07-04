@@ -408,15 +408,27 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 // ── User / misc ───────────────────────────────────────
 const loadHotSearch = async () => {
-  const { data } = await getSearchKeyword();
-  hotSearchKeyword.value = data.data.showKeyword;
-  hotSearchValue.value = data.data.realkeyword;
+  try {
+    const { data } = await getSearchKeyword();
+    hotSearchKeyword.value = data?.data?.showKeyword || '';
+    hotSearchValue.value = data?.data?.realkeyword || '';
+  } catch (error) {
+    hotSearchKeyword.value = '';
+    hotSearchValue.value = '';
+    console.warn('加载默认搜索词失败，已跳过:', error);
+  }
 };
 const loadPage = async () => {
-  if (!localStorage.getItem('musicServerToken')) return;
-  await userStore.initializeUser();
+  if (!localStorage.getItem('musicServerToken')) {
+    userStore.clearMusicServerSession();
+    return;
+  }
+  try {
+    await userStore.initializeUser();
+  } catch (error) {
+    console.warn('初始化用户信息失败，已跳过:', error);
+  }
 };
-loadPage();
 
 const restartApp = () => window.electron.ipcRenderer.send('restart');
 const toLogin = () => router.push('/login');
@@ -444,8 +456,8 @@ const selectItem = (key: string) => {
 };
 
 onMounted(() => {
-  loadHotSearch();
-  loadPage();
+  void loadHotSearch();
+  void loadPage();
   isElectron && initZoomFactor();
 });
 </script>

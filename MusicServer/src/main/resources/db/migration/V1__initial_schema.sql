@@ -4,6 +4,11 @@ create table app_users (
     password_hash varchar(255) not null,
     display_name varchar(120) not null,
     avatar_url varchar(1000),
+    avatar_data bytea,
+    avatar_content_type varchar(120),
+    avatar_filename varchar(255),
+    avatar_size bigint,
+    avatar_updated_at timestamp(6) with time zone,
     created_at timestamp(6) with time zone not null,
     updated_at timestamp(6) with time zone not null
 );

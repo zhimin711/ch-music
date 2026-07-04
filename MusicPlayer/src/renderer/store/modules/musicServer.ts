@@ -267,7 +267,21 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     }
   };
 
-  const clearAuth = () => {
+  const syncUserSession = async (nextUser: MusicServerUser | null) => {
+    try {
+      const { useUserStore } = await import('./user');
+      const userStore = useUserStore();
+      if (nextUser) {
+        await userStore.applyMusicServerUser(nextUser);
+      } else {
+        userStore.clearMusicServerSession();
+      }
+    } catch (error) {
+      console.warn('同步 MusicServer 登录状态失败:', error);
+    }
+  };
+
+  const clearAuth = async () => {
     token.value = '';
     user.value = null;
     musicList.value = [];
@@ -276,17 +290,20 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     cacheStates.value = {};
     setMusicServerToken('');
     persistUser(null);
+    await syncUserSession(null);
   };
 
   const login = async (payload: { username: string; password: string }) => {
     const { data } = await loginMusicServer(payload);
     persistAuth(data);
+    await syncUserSession(data.user);
     await loadAll();
   };
 
   const register = async (payload: { username: string; password: string; displayName?: string }) => {
     const { data } = await registerMusicServer(payload);
     persistAuth(data);
+    await syncUserSession(data.user);
     await loadAll();
   };
 
@@ -296,13 +313,13 @@ export const useMusicServerStore = defineStore('musicServer', () => {
         await logoutMusicServer();
       }
     } finally {
-      clearAuth();
+      await clearAuth();
     }
   };
 
   const restoreSession = async () => {
     if (!token.value) {
-      clearAuth();
+      await clearAuth();
       return;
     }
 
@@ -313,9 +330,10 @@ export const useMusicServerStore = defineStore('musicServer', () => {
       }
       user.value = data;
       persistUser(data);
+      await syncUserSession(data);
       await loadAll();
     } catch (error) {
-      clearAuth();
+      await clearAuth();
       throw error;
     }
   };
@@ -324,6 +342,7 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     const { data } = await updateMusicServerMe(payload);
     user.value = data;
     persistUser(data);
+    await syncUserSession(data);
     return data;
   };
 
@@ -333,6 +352,7 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     const { data } = await uploadMusicServerAvatar(formData);
     user.value = data;
     persistUser(data);
+    await syncUserSession(data);
     return data;
   };
 

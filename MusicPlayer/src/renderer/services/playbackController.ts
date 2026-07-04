@@ -12,7 +12,7 @@ import { createDiscreteApi } from 'naive-ui';
 
 import i18n from '@/../i18n/renderer';
 import { getParsingMusicUrl } from '@/api/music';
-import { loadLrc, useSongDetail } from '@/hooks/usePlayerHooks';
+import { loadLrcBySong, useSongDetail } from '@/hooks/usePlayerHooks';
 import { audioService } from '@/services/audioService';
 import { playbackRequestManager } from '@/services/playbackRequestManager';
 // preloadService 用于预加载下一首的 URL 验证（triggerPreload 中使用）
@@ -77,13 +77,10 @@ const loadMetadata = async (
       if (music.source === 'local' || music.playMusicUrl?.startsWith('local://')) {
         return music.lyric || EMPTY_LYRIC;
       }
-      if (music.source === 'musicServer') {
-        return music.lyric || EMPTY_LYRIC;
-      }
       if (music.lyric && music.lyric.lrcTimeArray.length > 0) {
         return music.lyric;
       }
-      return await loadLrc(music.id);
+      return await loadLrcBySong(music);
     })(),
     (async () => {
       if (music.backgroundColor && music.primaryColor) {
@@ -184,8 +181,11 @@ export const playTrack = async (
 
   // 如果是新歌曲，重置已尝试的音源
   const playerCore = await getPlayerCoreStore();
-  if (music.id !== playerCore.playMusic.id) {
+  const isNewTrack =
+    music.id !== playerCore.playMusic.id || music.source !== playerCore.playMusic.source;
+  if (isNewTrack) {
     SongSourceConfigManager.clearTriedSources(music.id);
+    window.dispatchEvent(new CustomEvent('music-lyric-clear', { detail: { songId: music.id } }));
   }
 
   // 2. 停止当前音频

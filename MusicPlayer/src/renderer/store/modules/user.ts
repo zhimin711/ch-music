@@ -11,7 +11,7 @@ import {
 } from '@/api/musicServer';
 import type { IUserDetail } from '@/types/user';
 import type { MusicServerPlaylist, MusicServerUser } from '@/types/musicServer';
-import { clearLoginStatus } from '@/utils/auth';
+import { checkLoginStatus, clearLoginStatus } from '@/utils/auth';
 import { toMusicServerSongResult } from '@/utils/musicServerUtils';
 import { DEFAULT_COVER_URL } from '@/utils';
 import { usePlayerStore } from './player';
@@ -81,13 +81,25 @@ const toPlaylistItem = (playlist: MusicServerPlaylist, owner: UserData) => ({
   raw: playlist
 });
 
+const isMusicServerUser = (value: any): value is MusicServerUser => {
+  return typeof value?.id === 'number' && typeof value?.username === 'string';
+};
+
 export const useUserStore = defineStore('user', () => {
+  const loginInfo = checkLoginStatus();
+  const initialUser =
+    loginInfo.isLoggedIn && loginInfo.loginType === 'musicServer' && isMusicServerUser(loginInfo.user)
+      ? toUserData(loginInfo.user)
+      : loginInfo.isLoggedIn
+        ? getLocalStorageItem<UserData | null>('user', null)
+        : null;
+
   // 状态
-  const user = ref<UserData | null>(getLocalStorageItem('user', null));
+  const user = ref<UserData | null>(initialUser);
   const userDetail = ref<IUserDetail | null>(null);
   const recordList = ref<any[]>([]);
   const loginType = ref<'token' | 'cookie' | 'qr' | 'uid' | 'musicServer' | null>(
-    getLocalStorageItem('loginType', null)
+    loginInfo.isLoggedIn ? loginInfo.loginType : null
   );
   const searchValue = ref('');
   const searchType = ref(1);
@@ -111,6 +123,42 @@ export const useUserStore = defineStore('user', () => {
     } else {
       localStorage.removeItem('loginType');
     }
+  };
+
+  const setMusicServerUser = (data: MusicServerUser) => {
+    const nextUser = toUserData(data);
+    user.value = nextUser;
+    userDetail.value = toUserDetail(nextUser);
+    loginType.value = 'musicServer';
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    localStorage.setItem('loginType', 'musicServer');
+    localStorage.setItem('musicServerUser', JSON.stringify(data));
+    return nextUser;
+  };
+
+  const clearMusicServerSession = () => {
+    const storedLoginType = localStorage.getItem('loginType');
+    const hasStoredMusicServerUser = Boolean(localStorage.getItem('musicServerUser'));
+    const ownsVisibleUser =
+      loginType.value === 'musicServer' ||
+      storedLoginType === 'musicServer' ||
+      (!loginType.value && !storedLoginType && hasStoredMusicServerUser);
+
+    if (!ownsVisibleUser) {
+      localStorage.removeItem('musicServerUser');
+      return;
+    }
+
+    user.value = null;
+    userDetail.value = null;
+    recordList.value = [];
+    loginType.value = null;
+    collectedAlbumIds.value.clear();
+    playList.value = [];
+    albumList.value = [];
+    localStorage.removeItem('user');
+    localStorage.removeItem('loginType');
+    localStorage.removeItem('musicServerUser');
   };
 
   const handleLogout = async () => {
@@ -163,22 +211,14 @@ export const useUserStore = defineStore('user', () => {
       displayName: payload.displayName,
       avatarUrl: payload.avatarUrl || null
     });
-    const nextUser = toUserData(data);
-    user.value = nextUser;
-    userDetail.value = toUserDetail(nextUser);
-    localStorage.setItem('user', JSON.stringify(nextUser));
-    localStorage.setItem('musicServerUser', JSON.stringify(data));
+    const nextUser = setMusicServerUser(data);
     const { useMusicServerStore } = await import('./musicServer');
     useMusicServerStore().user = data;
     return nextUser;
   };
 
   const applyMusicServerUser = async (data: MusicServerUser) => {
-    const nextUser = toUserData(data);
-    user.value = nextUser;
-    userDetail.value = toUserDetail(nextUser);
-    localStorage.setItem('user', JSON.stringify(nextUser));
-    localStorage.setItem('musicServerUser', JSON.stringify(data));
+    const nextUser = setMusicServerUser(data);
     const { useMusicServerStore } = await import('./musicServer');
     useMusicServerStore().user = data;
     return nextUser;
@@ -231,12 +271,7 @@ export const useUserStore = defineStore('user', () => {
 
     try {
       const { data } = await getMusicServerMe();
-      const musicServerUser = toUserData(data);
-      user.value = musicServerUser;
-      userDetail.value = toUserDetail(musicServerUser);
-      loginType.value = 'musicServer';
-      localStorage.setItem('user', JSON.stringify(musicServerUser));
-      localStorage.setItem('loginType', 'musicServer');
+      setMusicServerUser(data);
       await initializePlaylist();
     } catch (error) {
       console.error('恢复 MusicServer 登录失败:', error);
@@ -265,6 +300,8 @@ export const useUserStore = defineStore('user', () => {
     initializeUser,
     updateMusicServerProfile,
     uploadMusicServerProfileAvatar,
+    applyMusicServerUser,
+    clearMusicServerSession,
     initializePlaylist,
     initializeAlbumList,
     initializeCollectedAlbums,

@@ -6,6 +6,7 @@ import com.chmusic.musicserver.api.dto.ProfileUpdateRequest;
 import com.chmusic.musicserver.api.dto.UserResponse;
 import com.chmusic.musicserver.user.AppUser;
 import com.chmusic.musicserver.user.AppUserRepository;
+import com.chmusic.musicserver.user.StoredAvatar;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -58,11 +59,17 @@ public class AuthService {
     }
 
     @Transactional
-    public UserResponse updateAvatar(AppUser currentUser, String avatarUrl) {
+    public UserResponse updateAvatar(AppUser currentUser, String avatarUrl, StoredAvatar avatar) {
         AppUser user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        user.updateProfile(user.getDisplayName(), blankToNull(avatarUrl));
+        user.updateAvatar(blankToNull(avatarUrl), avatar);
         return UserResponse.from(user);
+    }
+
+    @Transactional(readOnly = true)
+    public AppUser requireUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     private static String normalizeUsername(String username) {
