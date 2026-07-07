@@ -152,13 +152,29 @@ class DrawerViewController(
             headerSubtitle?.text = ctx.getString(R.string.drawer_tap_to_login)
         }
 
-        // 头像：使用现有 Glide 头像加载
+        // 头像：blob > avatarUrl > 默认占位图（放弃本地 profile.jpg 兜底，避免频繁 ENOENT）
         headerAvatar?.let { avatar ->
-            val userFile = RetroGlideExtension.getUserModel()
-            Glide.with(ctx)
-                .load(state.user?.avatarUrl ?: userFile)
-                .userProfileOptions(userFile, ctx)
-                .into(avatar)
+            val blob = musicServerRepository.avatarBlob
+            val avatarUrl = state.user?.avatarUrl
+            when {
+                blob != null && blob.isNotEmpty() -> {
+                    Glide.with(ctx)
+                        .load(blob)
+                        .placeholder(R.drawable.ic_person_flat)
+                        .error(R.drawable.ic_person_flat)
+                        .into(avatar)
+                }
+                !avatarUrl.isNullOrBlank() -> {
+                    Glide.with(ctx)
+                        .load(avatarUrl)
+                        .placeholder(R.drawable.ic_person_flat)
+                        .error(R.drawable.ic_person_flat)
+                        .into(avatar)
+                }
+                else -> {
+                    avatar.setImageResource(R.drawable.ic_person_flat)
+                }
+            }
             avatar.isVisible = true
         }
     }

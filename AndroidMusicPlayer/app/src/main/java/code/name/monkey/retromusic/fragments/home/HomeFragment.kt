@@ -28,14 +28,18 @@ import code.name.monkey.retromusic.fragments.toplist.ToplistFragment
 import code.name.monkey.retromusic.glide.RetroGlideExtension
 import code.name.monkey.retromusic.glide.RetroGlideExtension.userProfileOptions
 import code.name.monkey.retromusic.interfaces.IScrollHelper
+import code.name.monkey.retromusic.musicserver.MusicServerSession
 import com.bumptech.glide.Glide
 import com.google.android.material.tabs.TabLayoutMediator
+import org.koin.android.ext.android.inject
 
 class HomeFragment :
     AbsMainActivityFragment(R.layout.fragment_home), IScrollHelper {
 
     private var _binding: HomeBinding? = null
     private val binding get() = _binding!!
+
+    private val musicServerSession: MusicServerSession by inject()
 
     private val tabTitles = listOf(
         R.string.tab_recommend,
@@ -96,11 +100,27 @@ class HomeFragment :
     }
 
     private fun loadUserAvatar() {
-        val userFile = RetroGlideExtension.getUserModel()
-        Glide.with(this)
-            .load(userFile)
-            .userProfileOptions(userFile, requireContext())
-            .into(binding.userImage)
+        val blob = musicServerSession.avatarBlob
+        val avatarUrl = musicServerSession.user?.avatarUrl
+        when {
+            blob != null && blob.isNotEmpty() -> {
+                Glide.with(this)
+                    .load(blob)
+                    .placeholder(R.drawable.ic_person_flat)
+                    .error(R.drawable.ic_person_flat)
+                    .into(binding.userImage)
+            }
+            !avatarUrl.isNullOrBlank() -> {
+                Glide.with(this)
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.ic_person_flat)
+                    .error(R.drawable.ic_person_flat)
+                    .into(binding.userImage)
+            }
+            else -> {
+                binding.userImage.setImageResource(R.drawable.ic_person_flat)
+            }
+        }
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {

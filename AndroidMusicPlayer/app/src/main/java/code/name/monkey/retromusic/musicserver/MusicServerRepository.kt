@@ -27,6 +27,10 @@ class MusicServerRepository(
     val currentUser: MusicServerUser?
         get() = _state.value.user
 
+    /** Local avatar blob (base64-decoded JPEG bytes), or null if unset. */
+    val avatarBlob: ByteArray?
+        get() = session.avatarBlob
+
     suspend fun login(username: String, password: String) {
         val auth = api.login(MusicServerAuthRequest(username, password))
         session.save(auth)
@@ -58,14 +62,27 @@ class MusicServerRepository(
         }
     }
 
-    suspend fun updateProfile(displayName: String) {
-        val user = api.updateMe(MusicServerProfileUpdateRequest(displayName = displayName))
+    suspend fun updateProfile(displayName: String, avatarUrl: String? = null) {
+        val user = api.updateMe(
+            MusicServerProfileUpdateRequest(displayName = displayName, avatarUrl = avatarUrl)
+        )
         session.saveUser(user)
         _state.value = _state.value.copy(user = user)
     }
 
     suspend fun uploadAvatar(file: File, contentType: String?) {
-        val user = api.uploadAvatar(file.toMultipart("file", contentType))
+        // Step 1: upload the raw file — server returns the user (may or may not carry avatarUrl).
+        val uploaded = api.uploadAvatar(file.toMultipart("file", contentType))
+        // Step 2: mirror the web client — persist the returned avatarUrl back onto the user
+        // record via PUT /api/auth/me. Some server builds don't attach the URL until this
+        // second call, so without it the avatar isn't returned on subsequent logins.
+        val displayName = uploaded.displayName ?: session.user?.displayName ?: uploaded.username
+        val avatarUrl = uploaded.avatarUrl
+        val user = if (!avatarUrl.isNullOrBlank()) {
+            api.updateMe(MusicServerProfileUpdateRequest(displayName = displayName, avatarUrl = avatarUrl))
+        } else {
+            uploaded
+        }
         session.saveUser(user)
         _state.value = _state.value.copy(user = user)
     }

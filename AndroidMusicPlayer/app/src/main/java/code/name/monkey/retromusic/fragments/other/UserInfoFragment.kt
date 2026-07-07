@@ -4,8 +4,11 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -318,10 +321,28 @@ class UserInfoFragment : Fragment() {
         if (user != null) {
             binding.name.setText(user.displayLabel)
             userName = user.displayLabel
-            Glide.with(requireContext())
-                .load(user.avatarUrl ?: RetroGlideExtension.getUserModel())
-                .userProfileOptions(RetroGlideExtension.getUserModel(), requireContext())
-                .into(binding.userImage)
+            // Prefer local blob (survives server responses that drop avatarUrl),
+            // then remote URL, then default drawable — mirror loadProfile()'s priority.
+            val blob = musicServerSession.avatarBlob
+            when {
+                blob != null && blob.isNotEmpty() -> {
+                    Glide.with(this)
+                        .load(blob)
+                        .placeholder(R.drawable.ic_person_flat)
+                        .error(R.drawable.ic_person_flat)
+                        .into(binding.userImage)
+                }
+                !user.avatarUrl.isNullOrBlank() -> {
+                    Glide.with(requireContext())
+                        .load(user.avatarUrl)
+                        .placeholder(R.drawable.ic_person_flat)
+                        .error(R.drawable.ic_person_flat)
+                        .into(binding.userImage)
+                }
+                else -> {
+                    binding.userImage.setImageResource(R.drawable.ic_person_flat)
+                }
+            }
         } else {
             loadProfile()
         }
@@ -723,7 +744,12 @@ class UserInfoFragment : Fragment() {
     }
 
     private fun uploadAvatar(uri: Uri) {
-        val compressed = compressAvatar(uri)
+        val compressed = try {
+            compressAvatar(uri)
+        } catch (t: Throwable) {
+            Log.w("UserInfoFragment", "compressAvatar failed for $uri", t)
+            null
+        }
         if (compressed == null) {
             showToast("头像处理失败，请换一张图片")
             return
@@ -751,28 +777,66 @@ class UserInfoFragment : Fragment() {
      */
     private fun compressAvatar(uri: Uri): ByteArray? {
         val ctx = requireContext()
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        ctx.contentResolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, bounds)
-        } ?: return null
-        val (w, h) = bounds.outWidth to bounds.outHeight
-        if (w <= 0 || h <= 0) return null
 
-        var sample = 1
-        val target = 512
-        while (w / (sample * 2) >= target && h / (sample * 2) >= target) sample *= 2
+        // Prefer ImageDecoder on API 28+ — handles HEIC/WEBP/animated + does downsampling for us.
+        val decoded: Bitmap? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                val source = ImageDecoder.createSource(ctx.contentResolver, uri)
+                ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+                    decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                    decoder.isMutableRequired = false
+                    val w = info.size.width
+                    val h = info.size.height
+                    if (w > 0 && h > 0) {
+                        val target = MAX_AVATAR_SIDE * 2
+                        val long = maxOf(w, h)
+                        if (long > target) {
+                            val scale = target.toFloat() / long
+                            decoder.setTargetSize(
+                                (w * scale).toInt().coerceAtLeast(1),
+                                (h * scale).toInt().coerceAtLeast(1)
+                            )
+                        }
+                    }
+                }
+            } catch (t: Throwable) {
+                Log.w("UserInfoFragment", "ImageDecoder failed, falling back to BitmapFactory", t)
+                null
+            }
+        } else null
 
-        val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sample }
-        val decoded = ctx.contentResolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, decodeOpts)
-        } ?: return null
+        val bitmap = decoded ?: run {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            ctx.contentResolver.openInputStream(uri)?.use {
+                BitmapFactory.decodeStream(it, null, bounds)
+            } ?: return null
+            val w = bounds.outWidth
+            val h = bounds.outHeight
+            if (w <= 0 || h <= 0) return null
+
+            var sample = 1
+            val target = MAX_AVATAR_SIDE * 2
+            while (w / (sample * 2) >= target && h / (sample * 2) >= target) sample *= 2
+
+            val decodeOpts = BitmapFactory.Options().apply {
+                inSampleSize = sample
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            ctx.contentResolver.openInputStream(uri)?.use {
+                BitmapFactory.decodeStream(it, null, decodeOpts)
+            } ?: return null
+        }
 
         // Center-crop to square, then scale to MAX_SIDE
-        val side = minOf(decoded.width, decoded.height)
-        val cropX = (decoded.width - side) / 2
-        val cropY = (decoded.height - side) / 2
-        val square = Bitmap.createBitmap(decoded, cropX, cropY, side, side)
-        if (square !== decoded) decoded.recycle()
+        val side = minOf(bitmap.width, bitmap.height)
+        if (side <= 0) {
+            bitmap.recycle()
+            return null
+        }
+        val cropX = (bitmap.width - side) / 2
+        val cropY = (bitmap.height - side) / 2
+        val square = Bitmap.createBitmap(bitmap, cropX, cropY, side, side)
+        if (square !== bitmap) bitmap.recycle()
         val scaled = if (square.width > MAX_AVATAR_SIDE) {
             Bitmap.createScaledBitmap(square, MAX_AVATAR_SIDE, MAX_AVATAR_SIDE, true).also {
                 if (it !== square) square.recycle()
@@ -873,11 +937,12 @@ class UserInfoFragment : Fragment() {
                 .into(binding.userImage)
             return
         }
-        val avatarFile = RetroGlideExtension.getUserModel()
-        if (avatarFile.exists() && avatarFile.length() > 0) {
+        val avatarUrl = musicServerSession.user?.avatarUrl
+        if (!avatarUrl.isNullOrBlank()) {
             Glide.with(this)
-                .load(avatarFile)
-                .userProfileOptions(avatarFile, requireContext())
+                .load(avatarUrl)
+                .placeholder(R.drawable.ic_person_flat)
+                .error(R.drawable.ic_person_flat)
                 .into(binding.userImage)
         } else {
             binding.userImage.setImageResource(R.drawable.ic_person_flat)
@@ -902,10 +967,14 @@ class UserInfoFragment : Fragment() {
             try {
                 withContext(Dispatchers.IO) { action() }
             } catch (error: Throwable) {
-                if (showErrors) {
-                    showToast(error.readableMessage().ifBlank {
-                        getString(R.string.error_load_failed)
-                    })
+                if (showErrors && isAdded) {
+                    val ctx = context
+                    if (ctx != null) {
+                        val message = error.readableMessage().ifBlank {
+                            ctx.getString(R.string.error_load_failed)
+                        }
+                        showToast(message)
+                    }
                 }
                 onError(error)
             } finally {
