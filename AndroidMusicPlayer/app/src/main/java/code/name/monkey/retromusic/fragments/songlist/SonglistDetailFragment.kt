@@ -96,6 +96,10 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
             onResolveError = { msg ->
                 binding.errorInfo.visibility = View.VISIBLE
                 binding.errorMessage.text = getString(R.string.failed_to_load_playlist, msg ?: "未知错误")
+            },
+            onLongClick = { song ->
+                code.name.monkey.retromusic.netease.NeteaseAddToPlaylistDialog.show(this, song)
+                true
             }
         )
 
