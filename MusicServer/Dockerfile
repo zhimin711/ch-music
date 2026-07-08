@@ -20,5 +20,6 @@ ARG JAR_FILE=target/*.jar
 COPY --from=build /app/${JAR_FILE} app.jar
 
 EXPOSE 8080
+ENV SPRING_PROFILES_ACTIVE=prod
 # Use a small set of sensible JVM options; adjust as needed for production
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app/app.jar"]
+ENTRYPOINT ["sh","-c","java -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE} -jar /app/app.jar"]
