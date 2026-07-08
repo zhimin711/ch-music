@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 底色渐变（深紫 -> 品红） -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="28dp" />
+            <gradient
+                android:startColor="#3B1E6E"
+                android:centerColor="#7A2A8C"
+                android:endColor="#D74177"
+                android:angle="135"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- 右上光晕 -->
+    <item android:top="-40dp" android:right="-40dp" android:gravity="top|end">
+        <shape android:shape="oval">
+            <size android:width="200dp" android:height="200dp" />
+            <gradient
+                android:type="radial"
+                android:gradientRadius="180dp"
+                android:startColor="#66FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+    <!-- 左下柔光 -->
+    <item android:bottom="-30dp" android:left="-30dp" android:gravity="bottom|start">
+        <shape android:shape="oval">
+            <size android:width="160dp" android:height="160dp" />
+            <gradient
+                android:type="radial"
+                android:gradientRadius="140dp"
+                android:startColor="#33FFCFE8"
+                android:endColor="#00FFCFE8" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <resources>
+    <string name="added_to_playlist">已添加到 %s</string>
+    <string name="add_to_playlist_failed">添加失败：%s</string>
+    <string name="add_to_playlist">添加到我的歌单</string>
+    <string name="add_to_playlist_hint">加入云端播放列表</string>
+    <string name="error_not_netease_song">仅支持云音乐歌曲</string>
+    <string name="music_server_login_required">请先登录后再操作</string>
+    <string name="music_server_no_playlists">请先创建一个歌单</string>
     <string name="about_album_label">About %s</string>
     <string name="accent_color">Accent color</string>
     <string name="accent_color_desc">The theme accent color, defaults to purple</string>
@@ -386,12 +393,12 @@
     <string name="playlist_is_empty">Playlist is empty</string>
     <string name="playlist_name_empty">Playlist name</string>
     <string name="playlists">Playlists</string>
-    <string name="private_music">Private music</string>
+    <string name="private_music">云端音乐</string>
     <string name="display_name">Display name</string>
     <string name="music_server">MusicServer</string>
     <string name="register">Register</string>
     <string name="upload_avatar">Upload avatar</string>
-    <string name="upload_music">Upload music</string>
+    <string name="upload_music">上传音乐</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_banner">Banner image</string>
     <string name="action_avatar">Profile image</string>

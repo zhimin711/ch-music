@@ -352,83 +352,117 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
-            <!-- Private music section -->
+            <!-- Private music section - redesigned with hero card -->
             <LinearLayout
                 android:id="@+id/musicLibrarySection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="24dp"
                 android:orientation="vertical"
                 android:visibility="gone"
                 tools:visibility="visible">
 
-                <LinearLayout
+                <!-- Hero header card -->
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="4dp"
-                    android:layout_marginBottom="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="3dp"
-                        android:layout_height="18dp"
-                        android:background="?attr/colorPrimary" />
-
-                    <com.google.android.material.textview.MaterialTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:letterSpacing="0.01"
-                        android:text="@string/private_music"
-                        android:textAppearance="@style/TextViewSubtitle1"
-                        android:textColor="?android:attr/textColorPrimary"
-                        android:textStyle="bold" />
-
-                    <com.google.android.material.textview.MaterialTextView
-                        android:id="@+id/musicLibrarySummary"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="@style/TextViewCaption"
-                        android:textColor="?android:attr/textColorSecondary"
-                        tools:text="12 首" />
-                </LinearLayout>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardBackgroundColor="?attr/colorSurface"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="?attr/colorOutlineVariant"
-                    app:strokeWidth="1dp">
+                    android:background="@drawable/bg_music_library_hero"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="22dp"
+                    android:paddingBottom="20dp"
+                    android:clipToPadding="false">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:paddingVertical="8dp">
+                        android:orientation="vertical">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:alpha="0.85"
+                            android:letterSpacing="0.16"
+                            android:text="云端音乐库"
+                            android:textColor="#FFFFFF"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/private_music"
+                            android:textColor="#FFFFFF"
+                            android:textSize="28sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/musicLibrarySummary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:alpha="0.9"
+                            android:textColor="#FFFFFF"
+                            android:textSize="13sp"
+                            tools:text="12 首云端曲目 · 4 首已下载" />
 
                         <LinearLayout
-                            android:id="@+id/musicList"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical" />
+                            android:layout_marginTop="18dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/uploadMusic"
-                            style="@style/Widget.Material3.Button.TonalButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginHorizontal="12dp"
-                            android:layout_marginTop="4dp"
-                            android:layout_marginBottom="8dp"
-                            android:text="@string/upload_music"
-                            app:cornerRadius="24dp"
-                            app:icon="@drawable/ic_playlist_add" />
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/musicLibraryPlayAll"
+                                style="@style/Widget.Material3.Button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="42dp"
+                                android:minWidth="120dp"
+                                android:text="@string/action_play_all"
+                                android:textColor="#3B1E6E"
+                                android:textStyle="bold"
+                                app:backgroundTint="#FFFFFF"
+                                app:cornerRadius="21dp"
+                                app:icon="@drawable/ic_play_arrow_white_32dp"
+                                app:iconSize="18dp"
+                                app:iconTint="#3B1E6E" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/musicLibraryShuffle"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="10dp"
+                                android:text="@string/action_shuffle_all"
+                                android:textColor="#FFFFFF"
+                                app:cornerRadius="21dp"
+                                app:icon="@drawable/ic_shuffle"
+                                app:iconSize="18dp"
+                                app:iconTint="#FFFFFF"
+                                app:strokeColor="#66FFFFFF" />
+                        </LinearLayout>
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </FrameLayout>
+
+                <!-- Upload button (pinned above list) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/uploadMusic"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/upload_music"
+                    app:cornerRadius="24dp"
+                    app:icon="@drawable/ic_playlist_add" />
+
+                <!-- Song list -->
+                <LinearLayout
+                    android:id="@+id/musicList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical" />
             </LinearLayout>
 
             <!-- Favorites section -->

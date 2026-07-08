@@ -22,7 +22,8 @@ class NeteaseSongAdapter(
     private var songs: List<Song>,
     private val playbackManager: NeteasePlaybackManager? = null,
     private val lifecycleScope: LifecycleCoroutineScope? = null,
-    private val onResolveError: ((String?) -> Unit)? = null
+    private val onResolveError: ((String?) -> Unit)? = null,
+    private val onLongClick: ((Song) -> Unit)? = null
 ) : RecyclerView.Adapter<NeteaseSongAdapter.ViewHolder>() {
 
     fun swapData(newData: List<Song>) {
@@ -90,6 +91,13 @@ class NeteaseSongAdapter(
             binding.root.setOnClickListener {
                 val pos = bindingAdapterPosition
                 if (pos != RecyclerView.NO_POSITION) playFrom(pos)
+            }
+            binding.root.setOnLongClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    onLongClick?.invoke(songs[pos])
+                    true
+                } else false
             }
             binding.songPlay.setOnClickListener {
                 val pos = bindingAdapterPosition

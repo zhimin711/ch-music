@@ -24,7 +24,8 @@ class NeteaseStreamSongAdapter(
     itemLayoutRes: Int,
     private val lifecycleScope: LifecycleCoroutineScope,
     private val playbackManager: NeteasePlaybackManager,
-    private val onResolveError: ((String?) -> Unit)? = null
+    private val onResolveError: ((String?) -> Unit)? = null,
+    private val onLongClick: ((Song) -> Boolean)? = null
 ) : SongAdapter(activity, dataSet, itemLayoutRes, showSectionName = false) {
 
     override fun createViewHolder(view: View): ViewHolder {
@@ -54,6 +55,16 @@ class NeteaseStreamSongAdapter(
 
                 MusicPlayerRemote.openQueue(arrayListOf(resolved), 0, true)
             }
+        }
+
+        override fun onLongClick(v: View?): Boolean {
+            val handler = onLongClick
+            val position = layoutPosition
+            if (handler != null && position != -1) {
+                val song = dataSet.getOrNull(position) ?: return super.onLongClick(v)
+                return handler.invoke(song)
+            }
+            return super.onLongClick(v)
         }
     }
 }

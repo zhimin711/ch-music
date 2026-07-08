@@ -210,6 +210,18 @@ class UserInfoFragment : Fragment() {
         binding.uploadMusic?.setOnClickListener {
             pickMusicLauncher.launch(arrayOf("audio/*"))
         }
+        binding.musicLibraryPlayAll?.setOnClickListener {
+            val songs = musicServerRepository.state.value.music.map { musicServerRepository.toSong(it) }
+            playSongs(songs)
+        }
+        binding.musicLibraryShuffle?.setOnClickListener {
+            val songs = musicServerRepository.state.value.music.map { musicServerRepository.toSong(it) }
+            if (songs.isEmpty()) {
+                showToast("暂无可播放的私人音乐")
+            } else {
+                MusicPlayerRemote.openAndShuffleQueue(ArrayList(songs), true)
+            }
+        }
         binding.createPlaylist?.setOnClickListener {
             showPlaylistEditorDialog()
         }
@@ -307,7 +319,12 @@ class UserInfoFragment : Fragment() {
         val user = state.user
         binding.accountTitle?.text = user?.displayLabel ?: getString(R.string.music_server)
         binding.accountSubtitle?.text = getString(R.string.music_server_profile_subtitle)
-        binding.musicLibrarySummary?.text = getString(R.string.music_server_library_summary, state.music.size)
+        val cachedCount = state.cacheEntries.values.count { it.state == MusicServerCacheState.READY }
+        binding.musicLibrarySummary?.text = if (cachedCount > 0) {
+            "${state.music.size} 首云端曲目 · $cachedCount 首已下载"
+        } else {
+            getString(R.string.music_server_library_summary, state.music.size)
+        }
         binding.favoritesSummary?.text = getString(R.string.music_server_favorites_summary, state.favorites.size)
         binding.playlistsSummary?.text = getString(R.string.music_server_playlists_summary, state.playlists.size)
 
@@ -516,31 +533,105 @@ class UserInfoFragment : Fragment() {
         cacheEntry: MusicServerCacheEntry?,
         showDelete: Boolean
     ) {
-        val popup = PopupMenu(requireContext(), anchor)
-        val menu = popup.menu
-        val ids = mutableMapOf<Int, () -> Unit>()
-        var next = 1
+        val ctx = context ?: return
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(ctx)
+        val sheet = LayoutInflater.from(ctx).inflate(R.layout.sheet_track_actions, null)
+        dialog.setContentView(sheet)
 
-        fun add(titleRes: Int, action: () -> Unit) {
-            menu.add(0, next, next, titleRes)
-            ids[next] = action
-            next++
+        // Header
+        val artView = sheet.findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.sheetTrackArt)
+        val titleView = sheet.findViewById<MaterialTextView>(R.id.sheetTrackTitle)
+        val subtitleView = sheet.findViewById<MaterialTextView>(R.id.sheetTrackSubtitle)
+        titleView.text = music.title
+        val subtitleParts = listOfNotNull(music.artist?.takeIf { it.isNotBlank() }, music.album?.takeIf { it.isNotBlank() })
+        subtitleView.text = if (subtitleParts.isEmpty()) music.title else subtitleParts.joinToString(" · ")
+        Glide.with(this)
+            .load(music.picUrl ?: R.drawable.default_album_art)
+            .placeholder(R.drawable.default_album_art)
+            .error(R.drawable.default_album_art)
+            .into(artView)
+
+        // Featured: add to playlist
+        sheet.findViewById<View>(R.id.sheetActionAddToPlaylist).setOnClickListener {
+            dialog.dismiss()
+            showAddToPlaylistDialog(music)
         }
-        fun add(title: String, action: () -> Unit) {
-            menu.add(0, next, next, title)
-            ids[next] = action
-            next++
+
+        // Play next
+        sheet.findViewById<View>(R.id.sheetActionPlayNext).setOnClickListener {
+            dialog.dismiss()
+            MusicPlayerRemote.playNext(song)
         }
 
-        add(R.string.action_play) { playSongs(listOf(song)) }
-        add(R.string.action_play_next) { MusicPlayerRemote.playNext(song) }
-        add(R.string.action_add_to_playing_queue) { MusicPlayerRemote.enqueue(song) }
-        add(R.string.action_add_to_playlist) { showAddToPlaylistDialog(music) }
+        // Add to queue
+        sheet.findViewById<View>(R.id.sheetActionAddToQueue).setOnClickListener {
+            dialog.dismiss()
+            MusicPlayerRemote.enqueue(song)
+        }
 
+        // Share (hide if we don't have a shareable url) – simply hide unless supported
+        sheet.findViewById<View>(R.id.sheetActionShare).visibility = View.GONE
+
+        // Delete
+        val deleteRow = sheet.findViewById<View>(R.id.sheetActionDelete)
+        if (showDelete) {
+            deleteRow.setOnClickListener {
+                dialog.dismiss()
+                confirm("Delete ${music.title}?") {
+                    val musicId = music.stableMusicId ?: return@confirm
+                    runServerAction { musicServerRepository.deleteMusic(musicId) }
+                }
+            }
+        } else {
+            deleteRow.visibility = View.GONE
+        }
+
+        // Optional: append cache action row dynamically
         val supportsCache = music.playback?.supportsOfflineCache != false
         if (supportsCache) {
+            val container = sheet as? LinearLayout ?: return dialog.show()
+            fun addRow(iconRes: Int, titleRes: Int, action: () -> Unit) {
+                val ll = LinearLayout(ctx).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        dip(56)
+                    )
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                    setPadding(dip(24), 0, dip(24), 0)
+                    isClickable = true
+                    isFocusable = true
+                    val outValue = android.util.TypedValue()
+                    ctx.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
+                    setBackgroundResource(outValue.resourceId)
+                    setOnClickListener {
+                        dialog.dismiss()
+                        action()
+                    }
+                }
+                val icon = androidx.appcompat.widget.AppCompatImageView(ctx).apply {
+                    layoutParams = LinearLayout.LayoutParams(dip(22), dip(22))
+                    setImageResource(iconRes)
+                    imageTintList = android.content.res.ColorStateList.valueOf(
+                        ctx.getColor(android.R.color.darker_gray)
+                    )
+                }
+                val label = MaterialTextView(ctx).apply {
+                    val lp = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    lp.marginStart = dip(18)
+                    layoutParams = lp
+                    setText(titleRes)
+                    textSize = 15f
+                }
+                ll.addView(icon)
+                ll.addView(label)
+                container.addView(ll)
+            }
             when (cacheEntry?.state) {
-                MusicServerCacheState.READY -> add(R.string.action_remove_cache) {
+                MusicServerCacheState.READY -> addRow(R.drawable.ic_delete, R.string.action_remove_cache) {
                     runServerAction { musicServerRepository.removeCachedMusic(music) }
                 }
                 MusicServerCacheState.DOWNLOADING,
@@ -549,32 +640,19 @@ class UserInfoFragment : Fragment() {
                 MusicServerCacheState.STALE,
                 MusicServerCacheState.PAUSED,
                 MusicServerCacheState.WAITING_FOR_WIFI,
-                MusicServerCacheState.STORAGE_LOW -> add(R.string.action_retry_cache) {
+                MusicServerCacheState.STORAGE_LOW -> addRow(R.drawable.ic_redo, R.string.action_retry_cache) {
                     runServerAction {
                         cacheEntry.let { musicServerRepository.retryCachedMusic(it.cacheKey) }
                         musicServerRepository.downloadCachedMusic(music)
                     }
                 }
-                null -> add(R.string.action_cache_offline) {
+                null -> addRow(R.drawable.ic_playlist_add, R.string.action_cache_offline) {
                     runServerAction { musicServerRepository.downloadCachedMusic(music) }
                 }
             }
         }
 
-        if (showDelete) {
-            add(R.string.action_delete) {
-                confirm("Delete ${music.title}?") {
-                    val musicId = music.stableMusicId ?: return@confirm
-                    runServerAction { musicServerRepository.deleteMusic(musicId) }
-                }
-            }
-        }
-
-        popup.setOnMenuItemClickListener { item: MenuItem ->
-            ids[item.itemId]?.invoke()
-            true
-        }
-        popup.show()
+        dialog.show()
     }
 
     private fun MusicServerState.cacheEntryFor(music: MusicServerMusic): MusicServerCacheEntry? {

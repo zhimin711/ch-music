@@ -147,6 +147,35 @@ class MusicServerRepository(
         refreshPlaylists()
     }
 
+    /**
+     * Add a NetEase cloud song to a server-side playlist. The song is stored as an
+     * external reference (source = "netease", externalId = the NetEase song id) so the
+     * server keeps enough metadata to re-render the entry without owning the file.
+     */
+    suspend fun addNeteaseTrackToPlaylist(
+        playlistId: Long,
+        neteaseId: Long,
+        title: String,
+        artist: String?,
+        album: String?,
+        picUrl: String?,
+        duration: Long?
+    ) {
+        api.addPlaylistTrack(
+            playlistId,
+            MusicServerAddTrackRequest(
+                source = MusicServerDefaults.NETEASE_SOURCE,
+                externalId = neteaseId.toString(),
+                title = title,
+                artist = artist,
+                album = album,
+                picUrl = picUrl,
+                duration = duration
+            )
+        )
+        refreshPlaylists()
+    }
+
     suspend fun removePlaylistTrack(playlistId: Long, trackId: Long) {
         api.removePlaylistTrack(playlistId, trackId)
         refreshPlaylists()
