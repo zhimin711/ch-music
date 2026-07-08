@@ -56,7 +56,7 @@ public class NeteasePublicClient {
         } catch (DatabindException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Netease sidecar returned invalid JSON", ex);
         } catch (ResourceAccessException ex) {
-            log.warn("netease sidecar unavailable traceId={} endpoint={}", traceId, endpoint.name());
+            log.warn("netease sidecar unavailable traceId={} endpoint={} baseUrl={}", traceId, endpoint.name(), settings.baseUrl(), ex);
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Netease sidecar is unavailable", ex);
         } catch (RestClientResponseException ex) {
             HttpStatus status = resolveStatus(ex);
