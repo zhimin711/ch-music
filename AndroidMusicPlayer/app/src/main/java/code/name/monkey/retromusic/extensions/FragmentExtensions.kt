@@ -61,9 +61,12 @@ inline fun <reified T : Any> Fragment.extraNotNull(key: String, default: T? = nu
 }
 
 fun AppCompatActivity.currentFragment(navHostId: Int): Fragment? {
-    val navHostFragment: NavHostFragment =
-        supportFragmentManager.findFragmentById(navHostId) as NavHostFragment
-    return navHostFragment.childFragmentManager.fragments.firstOrNull()
+    val hostFragment = supportFragmentManager.findFragmentById(navHostId) ?: return null
+    // 当我们直接 replace 掉 R.id.fragment_container（例如打开歌单详情页）时，
+    // 这里拿到的可能不是 NavHostFragment 本身，而是被替换上去的普通 Fragment。
+    // 直接返回它即可，避免 ClassCastException。
+    if (hostFragment !is NavHostFragment) return hostFragment
+    return hostFragment.childFragmentManager.fragments.firstOrNull()
 }
 
 @Suppress("UNCHECKED_CAST")

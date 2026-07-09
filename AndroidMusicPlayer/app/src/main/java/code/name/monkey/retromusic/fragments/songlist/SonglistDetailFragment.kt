@@ -70,7 +70,11 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
         _binding = FragmentSonglistDetailBinding.bind(view)
         enterTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true).addTarget(view)
         returnTransition = MaterialSharedAxis(MaterialSharedAxis.Z, false)
-        binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
+        binding.toolbar.setNavigationOnClickListener {
+            if (!findNavController().navigateUp()) {
+                requireActivity().onBackPressedDispatcher.onBackPressed()
+            }
+        }
         binding.toolbar.title = null
 
         setUpRecyclerView()
@@ -254,6 +258,23 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
                     putString(ARG_PLAYLIST_NAME, playlistName)
                 }
             }
+        }
+
+        /**
+         * 通过 NavController 导航到歌单详情页。保留 R.id.fragment_container 处的 NavHostFragment。
+         */
+        fun navigateTo(
+            activity: androidx.fragment.app.FragmentActivity,
+            playlistId: Long,
+            playlistName: String
+        ) {
+            val args = Bundle().apply {
+                putLong(ARG_PLAYLIST_ID, playlistId)
+                putString(ARG_PLAYLIST_NAME, playlistName)
+            }
+            androidx.navigation.Navigation
+                .findNavController(activity, R.id.fragment_container)
+                .navigate(R.id.songlist_detail_fragment, args)
         }
     }
 }

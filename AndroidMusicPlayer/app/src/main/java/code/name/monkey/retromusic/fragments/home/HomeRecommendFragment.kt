@@ -80,17 +80,8 @@ class HomeRecommendFragment : Fragment() {
         // 推荐歌单 - 3列网格
         playlistAdapter = HomePlaylistCardAdapter(emptyList()) { playlistId, playlistName ->
             // 跳转到歌单详情页
-            val fragment = code.name.monkey.retromusic.fragments.songlist.SonglistDetailFragment.newInstance(playlistId, playlistName)
-            parentFragmentManager.beginTransaction()
-                .setCustomAnimations(
-                    R.anim.retro_fragment_open_enter,
-                    R.anim.retro_fragment_open_exit,
-                    R.anim.retro_fragment_close_enter,
-                    R.anim.retro_fragment_close_exit
-                )
-                .replace(R.id.fragment_container, fragment)
-                .addToBackStack(null)
-                .commit()
+            code.name.monkey.retromusic.fragments.songlist.SonglistDetailFragment
+                .navigateTo(requireActivity(), playlistId, playlistName)
         }
         binding.recommendedPlaylists.apply {
             layoutManager = GridLayoutManager(context, 3)

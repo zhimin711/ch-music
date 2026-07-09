@@ -49,17 +49,7 @@ class ToplistFragment : Fragment() {
     private fun setupRecyclerView() {
         toplistAdapter = ToplistAdapter(emptyList()) { playlistId, playlistName ->
             // 跳转到歌单详情页
-            val fragment = SonglistDetailFragment.newInstance(playlistId, playlistName)
-            parentFragmentManager.beginTransaction()
-                .setCustomAnimations(
-                    R.anim.retro_fragment_open_enter,
-                    R.anim.retro_fragment_open_exit,
-                    R.anim.retro_fragment_close_enter,
-                    R.anim.retro_fragment_close_exit
-                )
-                .replace(R.id.fragment_container, fragment)
-                .addToBackStack(null)
-                .commit()
+            SonglistDetailFragment.navigateTo(requireActivity(), playlistId, playlistName)
         }
         binding.toplistGrid.apply {
             layoutManager = GridLayoutManager(context, 3)
