@@ -479,7 +479,7 @@ class UserInfoFragment : Fragment() {
         val song = musicServerRepository.toSong(music)
 
         val artView = row.findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.trackArt)
-        val cover = music.picUrl
+        val cover = MusicServerSongMapper.coverUrl(music, musicServerSession)
         val glide = Glide.with(this)
         if (!cover.isNullOrBlank()) {
             glide.load(cover)
@@ -550,7 +550,7 @@ class UserInfoFragment : Fragment() {
         val subtitleParts = listOfNotNull(music.artist?.takeIf { it.isNotBlank() }, music.album?.takeIf { it.isNotBlank() })
         subtitleView.text = if (subtitleParts.isEmpty()) music.title else subtitleParts.joinToString(" · ")
         Glide.with(this)
-            .load(music.picUrl ?: R.drawable.default_album_art)
+            .load(MusicServerSongMapper.coverUrl(music, musicServerSession) ?: R.drawable.default_album_art)
             .placeholder(R.drawable.default_album_art)
             .error(R.drawable.default_album_art)
             .into(artView)

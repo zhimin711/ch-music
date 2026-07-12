@@ -47,19 +47,30 @@ object MusicServerSongMapper {
         return Uri.parse(song.data).withoutAccessToken()
     }
 
+    fun coverUrl(music: MusicServerMusic, session: MusicServerSession): String? {
+        val coverPath = music.picUrl?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        return if (coverPath.isHttpUrl()) {
+            coverPath
+        } else {
+            buildAuthenticatedUrl(coverPath, session)
+        }
+    }
+
     private fun buildStreamUrl(music: MusicServerMusic, session: MusicServerSession): String {
         val streamPath = music.streamUrl?.takeIf { it.isNotBlank() }
             ?: "/api/music/${music.stableMusicId}/stream"
-        val base = if (streamPath.startsWith("http://") || streamPath.startsWith("https://")) {
-            streamPath
-        } else {
-            "${MusicServerDefaults.baseUrl}${streamPath}"
-        }
+        return buildAuthenticatedUrl(streamPath, session)
+    }
+
+    private fun buildAuthenticatedUrl(path: String, session: MusicServerSession): String {
+        val base = if (path.isHttpUrl()) path else "${MusicServerDefaults.baseUrl}${path}"
         if (session.accessToken.isBlank()) return base
         val separator = if (base.contains("?")) "&" else "?"
         val token = URLEncoder.encode(session.accessToken, StandardCharsets.UTF_8.name())
         return "$base${separator}access_token=$token"
     }
+
+    private fun String.isHttpUrl(): Boolean = startsWith("http://") || startsWith("https://")
 
     private fun stableHash(value: String): Long {
         return abs(value.hashCode()).toLong().coerceAtLeast(1L)
