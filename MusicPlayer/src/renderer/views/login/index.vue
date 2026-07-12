@@ -23,60 +23,54 @@
           </button>
         </div>
 
-        <transition
-          name="login-content"
-          mode="out-in"
-          enter-active-class="animate__animated animate__fadeIn"
-          leave-active-class="animate__animated animate__fadeOut"
-        >
-          <form
-            v-if="!isTransitioning"
-            :key="activeMode"
-            class="login-form"
-            @submit.prevent="submit"
-          >
-            <div>
-              <div class="login-title">{{ activeMode === 'login' ? '账号登录' : '创建账号' }}</div>
-              <div class="login-hint">
-                {{ activeMode === 'login' ? '输入账号继续使用' : '填写信息完成注册' }}
+        <div class="login-form-stage">
+          <transition name="login-content">
+            <form :key="activeMode" class="login-form" @submit.prevent="submit">
+              <div>
+                <div class="login-title">
+                  {{ activeMode === 'login' ? '账号登录' : '创建账号' }}
+                </div>
+                <div class="login-hint">
+                  {{ activeMode === 'login' ? '输入账号继续使用' : '填写信息完成注册' }}
+                </div>
               </div>
-            </div>
 
-            <div class="form-fields">
-              <label class="field">
-                <i class="ri-user-line"></i>
-                <input
-                  v-model="username"
-                  type="text"
-                  autocomplete="username"
-                  placeholder="用户名（3-80 位）"
-                />
-              </label>
-              <label class="field">
-                <i class="ri-lock-line"></i>
-                <input
-                  v-model="password"
-                  type="password"
-                  autocomplete="current-password"
-                  placeholder="密码（8-120 位）"
-                />
-              </label>
-              <label v-if="activeMode === 'register'" class="field">
-                <i class="ri-id-card-line"></i>
-                <input
-                  v-model="displayName"
-                  type="text"
-                  autocomplete="nickname"
-                  placeholder="显示名称（可选）"
-                />
-              </label>
-            </div>
+              <div class="form-fields">
+                <label class="field">
+                  <i class="ri-user-line"></i>
+                  <input
+                    v-model="username"
+                    type="text"
+                    autocomplete="username"
+                    placeholder="用户名（3-80 位）"
+                  />
+                </label>
+                <label class="field">
+                  <i class="ri-lock-line"></i>
+                  <input
+                    v-model="password"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="密码（8-120 位）"
+                  />
+                </label>
+                <label v-if="activeMode === 'register'" class="field">
+                  <i class="ri-id-card-line"></i>
+                  <input
+                    v-model="displayName"
+                    type="text"
+                    autocomplete="nickname"
+                    placeholder="显示名称（可选）"
+                  />
+                </label>
+              </div>
 
-            <n-button attr-type="submit" class="btn-login" type="primary" :loading="loading">
-              {{ activeMode === 'login' ? t('login.button.login') : '注册并登录' }}
-            </n-button>
-          </form>
-        </transition>
+              <n-button attr-type="submit" class="btn-login" type="primary" :loading="loading">
+                {{ activeMode === 'login' ? t('login.button.login') : '注册并登录' }}
+              </n-button>
+            </form>
+          </transition>
+        </div>
       </section>
     </div>
   </div>
@@ -107,7 +101,6 @@ const musicServerStore = useMusicServerStore();
 const playerStore = usePlayerStore();
 
 const activeMode = ref<'login' | 'register'>('login');
-const isTransitioning = ref(false);
 const loginTabs = computed(() => [
   { key: 'login' as const, label: '登录' },
   { key: 'register' as const, label: '注册' }
@@ -120,14 +113,7 @@ const displayName = ref('');
 
 const switchToMode = (mode: 'login' | 'register') => {
   if (mode === activeMode.value) return;
-
-  isTransitioning.value = true;
-  setTimeout(() => {
-    activeMode.value = mode;
-    setTimeout(() => {
-      isTransitioning.value = false;
-    }, 50);
-  }, 150);
+  activeMode.value = mode;
 };
 
 const validate = () => {
@@ -242,8 +228,16 @@ const submit = async () => {
   }
 }
 
+.login-form-stage {
+  position: relative;
+  min-height: 340px;
+}
+
 .login-form {
   @apply flex flex-col gap-7;
+  position: absolute;
+  inset: 0;
+  width: 100%;
 }
 
 .login-title {
@@ -278,20 +272,33 @@ const submit = async () => {
   @apply h-12 rounded-lg text-sm font-semibold;
 }
 
-/* 登录内容切换动画 */
 .login-content-enter-active,
 .login-content-leave-active {
-  animation-duration: 0.3s;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+  will-change: opacity, transform;
 }
 
 .login-content-enter-from {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(8px);
 }
 
 .login-content-leave-to {
   opacity: 0;
-  transform: translateY(-16px);
+  transform: translateY(-8px);
+}
+
+.login-content-leave-active {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-content-enter-active,
+  .login-content-leave-active {
+    transition: none;
+  }
 }
 
 .mobile {
