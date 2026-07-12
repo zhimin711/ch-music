@@ -151,6 +151,60 @@ class NeteaseRepository(
         }
     }
 
+    // ==================== 歌手 ====================
+
+    suspend fun getArtistDetail(id: Long): Result<ArtistDetail> {
+        return try {
+            val response = neteaseApi.getArtistDetail(id)
+            val artist = response.artist ?: response.data?.artist
+            if (response.code == 200 && artist != null) {
+                Success(artist)
+            } else {
+                Error(IllegalStateException("Failed to fetch artist detail: code ${response.code}"))
+            }
+        } catch (e: Exception) {
+            logE(e)
+            Error(e)
+        }
+    }
+
+    suspend fun getArtistTopSongs(
+        id: Long,
+        order: String = "hot",
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<List<NeteaseSong>> {
+        return try {
+            val response = neteaseApi.getArtistTopSongs(id, order, limit, offset)
+            if (response.code == 200 && response.songs != null) {
+                Success(response.songs)
+            } else {
+                Error(IllegalStateException("Failed to fetch artist songs: code ${response.code}"))
+            }
+        } catch (e: Exception) {
+            logE(e)
+            Error(e)
+        }
+    }
+
+    suspend fun getArtistAlbums(
+        id: Long,
+        limit: Int = 30,
+        offset: Int = 0
+    ): Result<List<NeteaseAlbum>> {
+        return try {
+            val response = neteaseApi.getArtistAlbums(id, limit, offset)
+            if (response.code == 200 && response.hotAlbums != null) {
+                Success(response.hotAlbums)
+            } else {
+                Error(IllegalStateException("Failed to fetch artist albums: code ${response.code}"))
+            }
+        } catch (e: Exception) {
+            logE(e)
+            Error(e)
+        }
+    }
+
     // ==================== 歌曲播放 ====================
 
     /**

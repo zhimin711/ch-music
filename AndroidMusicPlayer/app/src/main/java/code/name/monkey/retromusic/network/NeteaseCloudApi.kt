@@ -1,5 +1,8 @@
 package code.name.monkey.retromusic.network
 
+import code.name.monkey.retromusic.network.models.NeteaseArtistAlbumsResponse
+import code.name.monkey.retromusic.network.models.NeteaseArtistDetailResponse
+import code.name.monkey.retromusic.network.models.NeteaseArtistSongsResponse
 import code.name.monkey.retromusic.network.models.NeteaseResponse
 import code.name.monkey.retromusic.network.models.NeteaseToplistResponse
 import code.name.monkey.retromusic.network.models.NeteaseBannerResponse
@@ -107,6 +110,41 @@ interface NeteaseCloudApi {
      */
     @GET("toplist")
     suspend fun getToplist(): NeteaseToplistResponse
+
+    // ==================== 歌手相关 ====================
+
+    /**
+     * 获取歌手详情
+     * 后端：/api/netease/public/artist?id=
+     */
+    @GET("artist")
+    suspend fun getArtistDetail(
+        @Query("id") id: Long
+    ): NeteaseArtistDetailResponse
+
+    /**
+     * 获取歌手热门歌曲 / 全部歌曲
+     * 后端：/api/netease/public/artist/songs?id=&order=hot&limit=&offset=
+     */
+    @GET("artist/songs")
+    suspend fun getArtistTopSongs(
+        @Query("id") id: Long,
+        @Query("order") order: String = "hot",
+        @Query("limit") limit: Int = 50,
+        @Query("offset") offset: Int = 0
+    ): NeteaseArtistSongsResponse
+
+    /**
+     * 获取歌手专辑
+     * 后端：/api/netease/public/artist/album?id=&limit=&offset=
+     */
+    @GET("artist/album")
+    suspend fun getArtistAlbums(
+        @Query("id") id: Long,
+        @Query("limit") limit: Int = 30,
+        @Query("offset") offset: Int = 0
+    ): NeteaseArtistAlbumsResponse
+
     // ==================== 歌曲播放相关 ====================
 
     /**

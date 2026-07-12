@@ -55,6 +55,18 @@ class HomeViewModel(
     private val _playlistDetail = MutableLiveData<Result<PlaylistDetail>>()
     val playlistDetail: LiveData<Result<PlaylistDetail>> = _playlistDetail
 
+    // 歌手详情
+    private val _artistDetail = MutableLiveData<Result<ArtistDetail>>()
+    val artistDetail: LiveData<Result<ArtistDetail>> = _artistDetail
+
+    // 歌手热门歌曲
+    private val _artistTopSongs = MutableLiveData<Result<List<NeteaseSong>>>()
+    val artistTopSongs: LiveData<Result<List<NeteaseSong>>> = _artistTopSongs
+
+    // 歌手专辑
+    private val _artistAlbums = MutableLiveData<Result<List<NeteaseAlbum>>>()
+    val artistAlbums: LiveData<Result<List<NeteaseAlbum>>> = _artistAlbums
+
     init {
         loadHomeData()
     }
@@ -156,6 +168,24 @@ class HomeViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val result = neteaseRepository.getPlaylistDetail(playlistId)
             _playlistDetail.postValue(result)
+        }
+    }
+
+    // ==================== 歌手详情 ====================
+
+    /**
+     * 并行加载歌手详情 + 热门歌曲 + 专辑。
+     */
+    fun loadArtistDetail(artistId: Long) {
+        _artistDetail.postValue(Result.Loading)
+        _artistTopSongs.postValue(Result.Loading)
+        _artistAlbums.postValue(Result.Loading)
+        viewModelScope.launch(Dispatchers.IO) {
+            awaitAll(
+                async { _artistDetail.postValue(neteaseRepository.getArtistDetail(artistId)) },
+                async { _artistTopSongs.postValue(neteaseRepository.getArtistTopSongs(artistId)) },
+                async { _artistAlbums.postValue(neteaseRepository.getArtistAlbums(artistId)) }
+            )
         }
     }
 }
