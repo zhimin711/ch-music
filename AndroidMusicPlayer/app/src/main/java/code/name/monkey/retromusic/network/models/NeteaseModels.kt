@@ -219,3 +219,53 @@ data class NeteaseMusicQuality(
     val extension: String?,       // "flac" / "mp3" 等
     val size: Long?
 )
+
+// ==================== 歌手详情 ====================
+
+/**
+ * 歌手详情响应。
+ * 后端返回结构包含 `artist` 顶层字段 (以及 hotSongs 若干)，我们只解析必需部分。
+ */
+data class NeteaseArtistDetailResponse(
+    val code: Int,
+    val artist: ArtistDetail? = null,
+    val data: ArtistDetailData? = null
+)
+
+/**
+ * 有些接口返回把 artist 放在 data.artist 下，包装一层。
+ */
+data class ArtistDetailData(
+    val artist: ArtistDetail?
+)
+
+data class ArtistDetail(
+    val id: Long,
+    val name: String,
+    val picUrl: String?,
+    val img1v1Url: String?,
+    val briefDesc: String? = null,
+    val musicSize: Int? = null,
+    val albumSize: Int? = null,
+    val mvSize: Int? = null,
+    val alias: List<String>? = null,
+    val followed: Boolean? = null
+)
+
+// ==================== 歌手热门歌曲 ====================
+
+data class NeteaseArtistSongsResponse(
+    val code: Int,
+    val songs: List<NeteaseSong>? = null,
+    val more: Boolean? = null,
+    val total: Int? = null
+)
+
+// ==================== 歌手专辑 ====================
+
+data class NeteaseArtistAlbumsResponse(
+    val code: Int,
+    val hotAlbums: List<NeteaseAlbum>? = null,
+    val artist: ArtistDetail? = null,
+    val more: Boolean? = null
+)

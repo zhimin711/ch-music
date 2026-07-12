@@ -156,4 +156,9 @@
         android:id="@id/songlist_detail_fragment"
         android:name="code.name.monkey.retromusic.fragments.songlist.SonglistDetailFragment"
         tools:layout="@layout/fragment_songlist_detail" />
+
+    <fragment
+        android:id="@id/artist_detail_fragment"
+        android:name="code.name.monkey.retromusic.fragments.artistdetail.ArtistDetailFragment"
+        tools:layout="@layout/fragment_artist_detail" />
 </navigation>

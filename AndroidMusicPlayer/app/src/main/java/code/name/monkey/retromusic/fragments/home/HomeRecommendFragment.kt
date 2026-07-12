@@ -90,7 +90,10 @@ class HomeRecommendFragment : Fragment() {
         }
 
         // 热门歌手 - 横向滚动
-        artistAdapter = HomeArtistAdapter(emptyList())
+        artistAdapter = HomeArtistAdapter(emptyList()) { artist ->
+            code.name.monkey.retromusic.fragments.artistdetail.ArtistDetailFragment
+                .navigateTo(requireActivity(), artist.id, artist.name)
+        }
         binding.hotArtists.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = artistAdapter
