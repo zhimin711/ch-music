@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.ImageDecoder
 import android.net.Uri
+import android.media.MediaMetadataRetriever
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -121,7 +122,10 @@ class UserInfoFragment : Fragment() {
     private val pickMusicLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
-                showUploadMusicDialog(uri)
+                lifecycleScope.launch {
+                    val metadata = withContext(Dispatchers.IO) { readMusicMetadata(uri) }
+                    showUploadMusicDialog(uri, metadata)
+                }
             }
         }
 
@@ -790,10 +794,10 @@ class UserInfoFragment : Fragment() {
             .show()
     }
 
-    private fun showUploadMusicDialog(uri: Uri) {
-        val title = dialogInput("Title", uri.displayNameWithoutExtension())
-        val artist = dialogInput(getString(R.string.artist), "")
-        val album = dialogInput(getString(R.string.album), "")
+    private fun showUploadMusicDialog(uri: Uri, metadata: UploadMusicMetadata) {
+        val title = dialogInput("Title", metadata.title ?: uri.displayNameWithoutExtension())
+        val artist = dialogInput(getString(R.string.artist), metadata.artist.orEmpty())
+        val album = dialogInput(getString(R.string.album), metadata.album.orEmpty())
         val container = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dip(16))
@@ -1149,6 +1153,35 @@ class UserInfoFragment : Fragment() {
         }
         return file
     }
+
+    /**
+     * Reads the tags from the document URI before showing the upload form. The form keeps
+     * the filename as a fallback because some audio formats or providers expose no tags.
+     */
+    private fun readMusicMetadata(uri: Uri): UploadMusicMetadata {
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(requireContext(), uri)
+            UploadMusicMetadata(
+                title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE).nonBlank(),
+                artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST).nonBlank(),
+                album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM).nonBlank()
+            )
+        } catch (error: Throwable) {
+            Log.w("UserInfoFragment", "Unable to read metadata for $uri", error)
+            UploadMusicMetadata()
+        } finally {
+            retriever.release()
+        }
+    }
+
+    private fun String?.nonBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
+
+    private data class UploadMusicMetadata(
+        val title: String? = null,
+        val artist: String? = null,
+        val album: String? = null
+    )
 
     private fun hideKeyboard() {
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
