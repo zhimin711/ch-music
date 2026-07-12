@@ -15,6 +15,7 @@ import code.name.monkey.retromusic.glide.audiocover.AudioFileCover
 import code.name.monkey.retromusic.glide.palette.BitmapPaletteWrapper
 import code.name.monkey.retromusic.model.Artist
 import code.name.monkey.retromusic.model.Song
+import code.name.monkey.retromusic.musicserver.MusicServerRepository
 import code.name.monkey.retromusic.util.ArtistSignatureUtil
 import code.name.monkey.retromusic.util.CustomArtistImageUtil.Companion.getFile
 import code.name.monkey.retromusic.util.CustomArtistImageUtil.Companion.getInstance
@@ -34,10 +35,12 @@ import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
 import com.bumptech.glide.request.transition.DrawableCrossFadeFactory
 import com.bumptech.glide.request.transition.Transition
 import com.bumptech.glide.signature.MediaStoreSignature
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import java.io.File
 
 
-object RetroGlideExtension {
+object RetroGlideExtension : KoinComponent {
 
     private val DEFAULT_ARTIST_IMAGE
         get() = R.drawable.default_artist_art
@@ -58,6 +61,8 @@ object RetroGlideExtension {
     }
 
     private fun getSongModel(song: Song, ignoreMediaStore: Boolean): Any {
+        musicServerCoverUrl(song)?.let { return it }
+
         // 优先识别网易云在线歌曲：Song.albumId 是负偏移，MediaStore 拿不到封面，
         // 直接使用 NeteaseCoverCache 里缓存的 HTTP URL。
         code.name.monkey.retromusic.netease.NeteaseSongMapper.neteaseIdFromSong(song)?.let { neteaseId ->
@@ -70,6 +75,11 @@ object RetroGlideExtension {
             getMediaStoreAlbumCoverUri(song.albumId)
         }
     }
+
+    private fun musicServerCoverUrl(song: Song): String? = runCatching {
+        val repository: MusicServerRepository = get()
+        repository.coverUrlFor(song)
+    }.getOrNull()
 
     fun getSongModel(song: Song): Any {
         return getSongModel(song, PreferenceUtil.isIgnoreMediaStoreArtwork)

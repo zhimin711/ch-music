@@ -183,6 +183,17 @@ class MusicServerRepository(
 
     fun toSong(music: MusicServerMusic): Song = MusicServerSongMapper.toSong(music, session)
 
+    fun coverUrlFor(song: Song): String? {
+        val musicId = MusicServerSongMapper.musicIdFromSong(song) ?: return null
+        val state = _state.value
+        val music = state.music.firstOrNull { it.stableMusicId == musicId }
+            ?: state.favorites.firstOrNull { it.music.stableMusicId == musicId }?.music
+            ?: state.playlists.asSequence()
+                .flatMap { it.tracks.asSequence() }
+                .firstOrNull { it.stableMusicId == musicId }
+        return music?.takeIf { it.isPrivateMusic }?.let { MusicServerSongMapper.coverUrl(it, session) }
+    }
+
     suspend fun cacheMusic(music: MusicServerMusic, profileId: String = ORIGINAL_PROFILE_ID) {
         val user = currentUser ?: return
         cacheManager.enqueue(user, music, profileId)
