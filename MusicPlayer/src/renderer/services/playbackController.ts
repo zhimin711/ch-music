@@ -58,6 +58,18 @@ const getSettingsStore = async () => {
   return useSettingsStore();
 };
 
+const cacheMusicServerTrack = async (music: SongResult): Promise<void> => {
+  if (music.source !== 'musicServer') return;
+
+  try {
+    const { useMusicServerStore } = await import('@/store/modules/musicServer');
+    await useMusicServerStore().cachePlayedMusic(music.id);
+  } catch (error) {
+    // 缓存失败不应影响正在进行的在线播放。
+    console.warn('[playbackController] 加入云音乐缓存队列失败:', error);
+  }
+};
+
 // ==================== 内部辅助函数 ====================
 
 /**
@@ -291,6 +303,8 @@ export const playTrack = async (
       playerCore.playMusic.playLoading = false;
       playerCore.playMusic.isFirstPlay = false;
       playbackRequestManager.completeRequest(requestId);
+      // 私有云音乐在确认可播放后异步入队，避免播放列表预处理时缓存整张列表。
+      void cacheMusicServerTrack(playerCore.playMusic);
       console.log(`[playbackController] gen=${gen} 播放成功: ${music.name}`);
       return true;
     } else {
@@ -430,10 +444,22 @@ export const setupUrlExpiredHandler = (): void => {
     }
 
     try {
+      let playMusicUrl = expiredTrack.playMusicUrl;
+      if (expiredTrack.source === 'musicServer') {
+        const { useMusicServerStore } = await import('@/store/modules/musicServer');
+        const resolvedUrl = await useMusicServerStore().resolvePlayedMusicUrl(expiredTrack.id);
+        if (!resolvedUrl) {
+          throw new Error('云音乐库中未找到可用的播放地址');
+        }
+        playMusicUrl = resolvedUrl;
+      } else {
+        playMusicUrl = undefined;
+      }
+
       const trackToPlay: SongResult = {
         ...expiredTrack,
         isFirstPlay: true,
-        playMusicUrl: undefined
+        playMusicUrl
       };
 
       const success = await playTrack(trackToPlay, true);

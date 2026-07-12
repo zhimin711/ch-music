@@ -1,5 +1,4 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { pathToFileURL } from 'node:url';
 import { pipeline } from 'node:stream/promises';
 
 import axios from 'axios';
@@ -232,7 +231,7 @@ class MusicServerOfflineCacheManager {
 
     const validated = await this.validateEntry(entry, query.checksum);
     if (validated.state !== 'ready') return null;
-    return pathToFileURL(validated.localPath).toString();
+    return this.toPlaybackUrl(validated.localPath);
   }
 
   public async syncIndex(payload: {
@@ -624,7 +623,7 @@ class MusicServerOfflineCacheManager {
     const { localPath, tempPath, streamUrl, ...publicEntry } = entry;
     return {
       ...publicEntry,
-      playbackUrl: entry.state === 'ready' ? pathToFileURL(localPath).toString() : undefined
+      playbackUrl: entry.state === 'ready' ? this.toPlaybackUrl(localPath) : undefined
     };
   }
 
@@ -706,6 +705,10 @@ class MusicServerOfflineCacheManager {
         ? diskCacheDir
         : path.join(app.getPath('userData'), 'cache');
     return path.join(path.resolve(baseDirectory), CACHE_DIR_NAME);
+  }
+
+  private toPlaybackUrl(filePath: string): string {
+    return `local://audio?path=${encodeURIComponent(path.resolve(filePath))}`;
   }
 
   private ensureRootDirectory(): void {

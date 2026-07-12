@@ -239,9 +239,12 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     const musicId = getMusicId(music);
     if (!user.value || musicId == null || !isPrivateMusic(music)) return null;
     const variant = music.playback?.variants.find((item) => item.profileId === profileId);
-    const streamUrl =
-      variant?.streamUrl ||
-      buildMusicServerStreamUrl(musicId, profileId === DEFAULT_CACHE_PROFILE_ID ? undefined : profileId);
+    // 服务端播放变体里的 streamUrl 为相对路径，主进程下载时必须使用绝对地址，
+    // 同时带上访问令牌，才能通过鉴权。
+    const streamUrl = buildMusicServerStreamUrl(
+      musicId,
+      profileId === DEFAULT_CACHE_PROFILE_ID ? undefined : profileId
+    );
     return {
       serverBaseUrl: baseUrl.value,
       userId: user.value.id,
@@ -486,6 +489,29 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     return cacheKeys;
   };
 
+  const cachePlayedMusic = async (musicId: number | string) => {
+    const normalizedMusicId = Number(musicId);
+    if (!Number.isFinite(normalizedMusicId)) return [];
+
+    const music = musicList.value.find((item) => getMusicId(item) === normalizedMusicId);
+    if (!music) return [];
+
+    const state = findCacheState(music);
+    if (state && ['queued', 'downloading', 'ready'].includes(state.state)) {
+      return [state.cacheKey];
+    }
+
+    return await cacheMusic(music);
+  };
+
+  const resolvePlayedMusicUrl = async (musicId: number | string) => {
+    const normalizedMusicId = Number(musicId);
+    if (!Number.isFinite(normalizedMusicId)) return null;
+    const music = musicList.value.find((item) => getMusicId(item) === normalizedMusicId);
+    if (!music) return null;
+    return await resolveMusicServerPlaybackUrl(music);
+  };
+
   const removeCachedMusic = async (
     music: MusicServerMusic,
     profileId = DEFAULT_CACHE_PROFILE_ID
@@ -585,6 +611,8 @@ export const useMusicServerStore = defineStore('musicServer', () => {
     addExternalTrackToPlaylist,
     removeTrackFromPlaylist,
     cacheMusic,
+    cachePlayedMusic,
+    resolvePlayedMusicUrl,
     removeCachedMusic,
     retryCachedMusic,
     resolveMusicServerPlaybackUrl,

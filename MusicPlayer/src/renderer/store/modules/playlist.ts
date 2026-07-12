@@ -653,7 +653,7 @@ export const usePlaylistStore = defineStore(
 
         // Check URL expiration
         if (song.expiredAt && song.expiredAt < Date.now()) {
-          if (!song.playMusicUrl?.startsWith('local://')) {
+          if (!song.playMusicUrl?.startsWith('local://') && song.source !== 'musicServer') {
             console.info(`歌曲URL已过期，重新获取: ${song.name}`);
             song.playMusicUrl = undefined;
             song.expiredAt = undefined;
