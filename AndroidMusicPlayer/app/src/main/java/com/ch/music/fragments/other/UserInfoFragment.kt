@@ -255,7 +255,7 @@ class UserInfoFragment : Fragment() {
         val password = binding.password?.text?.toString().orEmpty()
         val displayName = binding.displayName?.text?.toString()?.trim()?.takeIf { it.isNotBlank() }
         if (username.isBlank() || password.isBlank()) {
-            showToast("Username and password are required")
+            showToast(R.string.hint_username_password_required)
             return
         }
         hideKeyboard()

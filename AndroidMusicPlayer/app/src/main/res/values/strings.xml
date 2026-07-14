@@ -102,7 +102,7 @@
     <string name="drawer_logout">退出登录</string>
     <string name="drawer_login_required_toast">请先登录以使用此功能</string>
     <string name="drawer_server_prefix">服务器：%1$s</string>
-    <string name="music_server_login_title">登录 MusicServer</string>
+    <string name="music_server_login_title">登录云端账号</string>
     <string name="music_server_login_subtitle">同步你的云音乐库、收藏和歌单</string>
     <string name="music_server_profile_subtitle">管理头像、昵称和账号会话</string>
     <string name="music_server_library_summary">%1$d 首云端歌曲</string>
@@ -319,7 +319,7 @@
     <string name="listeners_label">Listeners</string>
     <string name="listing_files">Listing files</string>
     <string name="loading_products">Loading products…</string>
-    <string name="login">Login</string>
+    <string name="login">登录</string>
     <string name="logout">Logout</string>
     <string name="lyrics">Lyrics</string>
     <string name="made_with_love">Made with ❤️ in India</string>
@@ -367,7 +367,7 @@
     <string name="other_settings_summary">Advanced testing features</string>
     <string name="others">Other</string>
     <string name="over_cover">Over Cover</string>
-    <string name="password">Password</string>
+    <string name="password">密码</string>
     <string name="past_three_months">Past 3 months</string>
     <string name="paste_lyrics_here">Paste Lyrics Here</string>
     <string name="paste_timeframe_lyrics_here">Paste timeframe lyrics here</string>
@@ -394,9 +394,9 @@
     <string name="playlist_name_empty">Playlist name</string>
     <string name="playlists">Playlists</string>
     <string name="private_music">云端音乐</string>
-    <string name="display_name">Display name</string>
-    <string name="music_server">MusicServer</string>
-    <string name="register">Register</string>
+    <string name="display_name">显示名称</string>
+    <string name="music_server">云端音乐</string>
+    <string name="register">注册</string>
     <string name="upload_avatar">Upload avatar</string>
     <string name="upload_music">上传音乐</string>
     <string name="action_refresh">Refresh</string>
@@ -406,7 +406,7 @@
     <string name="empty_private_music">No private music uploaded yet</string>
     <string name="empty_favorites">No favorites yet</string>
     <string name="empty_playlist_tracks">This playlist has no tracks</string>
-    <string name="hint_username_password_required">Username and password are required</string>
+    <string name="hint_username_password_required">请输入用户名和密码</string>
     <string name="hint_play_local_first">Play a local song first</string>
     <string name="hint_create_playlist_first">Create a playlist first</string>
     <string name="hint_playlist_name_required">Playlist name is required</string>
@@ -671,7 +671,7 @@
     <string name="updating">Updating</string>
     <string name="user_images_description">User image</string>
     <string name="user_name">User name</string>
-    <string name="username">Username</string>
+    <string name="username">用户名</string>
     <string name="version">Version</string>
     <string name="vertical_flip">Vertical flip</string>
     <string name="view_on_telegram">View on Telegram</string>
