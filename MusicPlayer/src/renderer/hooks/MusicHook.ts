@@ -516,41 +516,12 @@ const setupAudioListeners = () => {
     }
   });
 
-  const replayMusic = async (retryCount = 0) => {
-    const MAX_REPLAY_RETRIES = 3;
-    try {
-      if (getPlayerStore().playMusicUrl && playMusic.value) {
-        await audioService.play(getPlayerStore().playMusicUrl, playMusic.value);
-        sound.value = audioService.getCurrentSound();
-        setupAudioListeners();
-      } else {
-        console.error('单曲循环：无可用 URL 或歌曲数据');
-        const { usePlaylistStore } = await import('@/store/modules/playlist');
-        usePlaylistStore().nextPlayOnEnd();
-      }
-    } catch (error) {
-      console.error('单曲循环重播失败:', error);
-      if (retryCount < MAX_REPLAY_RETRIES) {
-        setTimeout(() => replayMusic(retryCount + 1), 1000 * (retryCount + 1));
-      } else {
-        const { usePlaylistStore } = await import('@/store/modules/playlist');
-        usePlaylistStore().nextPlayOnEnd();
-      }
-    }
-  };
-
   // 监听结束
   audioService.on('end', async () => {
     console.log('音频播放结束事件触发');
     clearInterval();
 
-    if (getPlayerStore().playMode === 1) {
-      // 单曲循环模式
-      replayMusic();
-      return;
-    }
-
-    // 其他模式（FM/顺序/列表循环/随机）：交给 playlist store 路由
+    // 顺序、列表循环与随机播放均由播放列表路由；列表循环会在末尾回到第一首。
     const { usePlaylistStore } = await import('@/store/modules/playlist');
     usePlaylistStore().nextPlayOnEnd();
   });
