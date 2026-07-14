@@ -152,7 +152,7 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <code.name.monkey.retromusic.views.insets.InsetsRecyclerView
+        <com.ch.music.views.insets.InsetsRecyclerView
             android:id="@+id/songList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -14,7 +14,7 @@
     android:paddingEnd="20dp"
     android:paddingBottom="20dp">
 
-    <code.name.monkey.retromusic.views.RetroShapeableImageView
+    <com.ch.music.views.RetroShapeableImageView
         android:id="@+id/drawerAvatar"
         android:layout_width="56dp"
         android:layout_height="56dp"

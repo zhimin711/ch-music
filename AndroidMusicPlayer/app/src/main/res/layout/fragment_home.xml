@@ -21,7 +21,7 @@
             android:layout_height="@dimen/tab_height"
             android:background="?attr/colorSurface"><!-- 顶栏（含 Tab、头像、搜索）常驻，不随内容滚动 -->
 
-            <code.name.monkey.retromusic.views.RetroShapeableImageView
+            <com.ch.music.views.RetroShapeableImageView
                 android:id="@+id/userImage"
                 android:layout_width="32dp"
                 android:layout_height="32dp"

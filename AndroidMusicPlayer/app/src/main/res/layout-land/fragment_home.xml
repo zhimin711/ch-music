@@ -22,7 +22,7 @@
             android:background="?attr/colorSurface"
             app:layout_scrollFlags="scroll|enterAlways">
 
-            <code.name.monkey.retromusic.views.RetroShapeableImageView
+            <com.ch.music.views.RetroShapeableImageView
                 android:id="@+id/userImage"
                 android:layout_width="32dp"
                 android:layout_height="32dp"

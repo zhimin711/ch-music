@@ -10,7 +10,7 @@ plugins {
 
 android {
     compileSdk = 35
-    namespace = "code.name.monkey.retromusic"
+    namespace = "com.ch.music"
     val configuredMusicServerBaseUrl = providers.gradleProperty("MUSIC_SERVER_BASE_URL")
 
     defaultConfig {

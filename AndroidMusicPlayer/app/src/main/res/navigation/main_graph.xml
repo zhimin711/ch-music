@@ -6,17 +6,17 @@
 
     <fragment
         android:id="@+id/genreDetailsFragment"
-        android:name="code.name.monkey.retromusic.fragments.genres.GenreDetailsFragment"
+        android:name="com.ch.music.fragments.genres.GenreDetailsFragment"
         android:label="GenreDetailsFragment"
         tools:layout="@layout/fragment_playlist_detail">
         <argument
             android:name="extra_genre"
-            app:argType="code.name.monkey.retromusic.model.Genre" />
+            app:argType="com.ch.music.model.Genre" />
     </fragment>
 
     <fragment
         android:id="@+id/playlistDetailsFragment"
-        android:name="code.name.monkey.retromusic.fragments.playlists.PlaylistDetailsFragment"
+        android:name="com.ch.music.fragments.playlists.PlaylistDetailsFragment"
         android:label="PlaylistDetailsFragment"
         tools:layout="@layout/fragment_playlist_detail">
         <argument
@@ -26,7 +26,7 @@
 
     <fragment
         android:id="@+id/albumDetailsFragment"
-        android:name="code.name.monkey.retromusic.fragments.albums.AlbumDetailsFragment"
+        android:name="com.ch.music.fragments.albums.AlbumDetailsFragment"
         android:label="AlbumDetailsFragment"
         tools:layout="@layout/fragment_album_details">
         <argument
@@ -36,7 +36,7 @@
 
     <fragment
         android:id="@+id/artistDetailsFragment"
-        android:name="code.name.monkey.retromusic.fragments.artists.ArtistDetailsFragment"
+        android:name="com.ch.music.fragments.artists.ArtistDetailsFragment"
         android:label="ArtistDetailsFragment"
         tools:layout="@layout/fragment_artist_details">
         <argument
@@ -46,7 +46,7 @@
 
     <fragment
         android:id="@+id/albumArtistDetailsFragment"
-        android:name="code.name.monkey.retromusic.fragments.artists.AlbumArtistDetailsFragment"
+        android:name="com.ch.music.fragments.artists.AlbumArtistDetailsFragment"
         android:label="AlbumArtistDetailsFragment"
         tools:layout="@layout/fragment_artist_details">
         <argument
@@ -56,13 +56,13 @@
 
     <fragment
         android:id="@+id/libraryFragment"
-        android:name="code.name.monkey.retromusic.fragments.library.LibraryFragment"
+        android:name="com.ch.music.fragments.library.LibraryFragment"
         android:label=""
         tools:layout="@layout/fragment_library" />
 
     <fragment
         android:id="@+id/detailListFragment"
-        android:name="code.name.monkey.retromusic.fragments.other.DetailListFragment"
+        android:name="com.ch.music.fragments.other.DetailListFragment"
         android:label="DetailListFragment">
         <argument
             android:name="type"
@@ -71,53 +71,53 @@
 
     <fragment
         android:id="@+id/action_search"
-        android:name="code.name.monkey.retromusic.fragments.search.SearchFragment"
+        android:name="com.ch.music.fragments.search.SearchFragment"
         android:label="SearchFragment"
         tools:layout="@layout/fragment_search" />
 
     <fragment
         android:id="@+id/settings_fragment"
-        android:name="code.name.monkey.retromusic.fragments.settings.SettingsFragment" />
+        android:name="com.ch.music.fragments.settings.SettingsFragment" />
 
     <fragment
         android:id="@+id/action_album"
-        android:name="code.name.monkey.retromusic.fragments.albums.AlbumsFragment"
+        android:name="com.ch.music.fragments.albums.AlbumsFragment"
         tools:layout="@layout/fragment_main_recycler" />
 
     <fragment
         android:id="@+id/action_artist"
-        android:name="code.name.monkey.retromusic.fragments.artists.ArtistsFragment"
+        android:name="com.ch.music.fragments.artists.ArtistsFragment"
         tools:layout="@layout/fragment_main_recycler" />
 
     <fragment
         android:id="@+id/action_song"
-        android:name="code.name.monkey.retromusic.fragments.songs.SongsFragment"
+        android:name="com.ch.music.fragments.songs.SongsFragment"
         tools:layout="@layout/fragment_main_recycler" />
 
     <fragment
         android:id="@+id/action_genre"
-        android:name="code.name.monkey.retromusic.fragments.genres.GenresFragment"
+        android:name="com.ch.music.fragments.genres.GenresFragment"
         tools:layout="@layout/fragment_main_recycler" />
 
     <fragment
         android:id="@+id/action_playlist"
-        android:name="code.name.monkey.retromusic.fragments.playlists.PlaylistsFragment"
+        android:name="com.ch.music.fragments.playlists.PlaylistsFragment"
         tools:layout="@layout/fragment_main_recycler" />
 
     <fragment
         android:id="@+id/action_folder"
-        android:name="code.name.monkey.retromusic.fragments.folder.FoldersFragment"
+        android:name="com.ch.music.fragments.folder.FoldersFragment"
         tools:layout="@layout/fragment_folder" />
 
     <fragment
         android:id="@+id/action_home"
-        android:name="code.name.monkey.retromusic.fragments.home.HomeFragment"
+        android:name="com.ch.music.fragments.home.HomeFragment"
         android:label=""
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/action_notes"
-        android:name="code.name.monkey.retromusic.fragments.misc.PlaceholderFragment"
+        android:name="com.ch.music.fragments.misc.PlaceholderFragment"
         tools:layout="@layout/fragment_placeholder">
         <argument
             android:name="arg_title"
@@ -127,7 +127,7 @@
 
     <fragment
         android:id="@+id/action_mine"
-        android:name="code.name.monkey.retromusic.fragments.misc.PlaceholderFragment"
+        android:name="com.ch.music.fragments.misc.PlaceholderFragment"
         tools:layout="@layout/fragment_placeholder">
         <argument
             android:name="arg_title"
@@ -137,7 +137,7 @@
 
     <fragment
         android:id="@+id/user_info_fragment"
-        android:name="code.name.monkey.retromusic.fragments.other.UserInfoFragment">
+        android:name="com.ch.music.fragments.other.UserInfoFragment">
         <argument
             android:name="defaultTab"
             android:defaultValue="profile"
@@ -146,19 +146,19 @@
 
     <fragment
         android:id="@+id/playing_queue_fragment"
-        android:name="code.name.monkey.retromusic.fragments.queue.PlayingQueueFragment" />
+        android:name="com.ch.music.fragments.queue.PlayingQueueFragment" />
 
     <fragment
         android:id="@+id/lyrics_fragment"
-        android:name="code.name.monkey.retromusic.fragments.lyrics.LyricsFragment" />
+        android:name="com.ch.music.fragments.lyrics.LyricsFragment" />
 
     <fragment
         android:id="@id/songlist_detail_fragment"
-        android:name="code.name.monkey.retromusic.fragments.songlist.SonglistDetailFragment"
+        android:name="com.ch.music.fragments.songlist.SonglistDetailFragment"
         tools:layout="@layout/fragment_songlist_detail" />
 
     <fragment
         android:id="@id/artist_detail_fragment"
-        android:name="code.name.monkey.retromusic.fragments.artistdetail.ArtistDetailFragment"
+        android:name="com.ch.music.fragments.artistdetail.ArtistDetailFragment"
         tools:layout="@layout/fragment_artist_detail" />
 </navigation>

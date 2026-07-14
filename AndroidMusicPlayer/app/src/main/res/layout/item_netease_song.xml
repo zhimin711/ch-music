@@ -10,7 +10,7 @@
     android:paddingHorizontal="16dp"
     android:paddingVertical="10dp">
 
-    <code.name.monkey.retromusic.views.RetroShapeableImageView
+    <com.ch.music.views.RetroShapeableImageView
         android:id="@+id/songImage"
         android:layout_width="48dp"
         android:layout_height="48dp"
