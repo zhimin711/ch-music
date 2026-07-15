@@ -128,8 +128,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "algerkong",
-        "repo": "AlgerMusicPlayer"
+        "owner": "zhimin711",
+        "repo": "ch-music"
       }
     ],
     "extraResources": [

@@ -1,0 +1,139 @@
+name: Release MusicPlayer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release (must match MusicPlayer/package.json, without the v prefix)
+        required: true
+        type: string
+      prerelease:
+        description: Mark the GitHub Release as a prerelease
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: music-player-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        run: |
+          VERSION="${{ inputs.version }}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "version must be a semantic version without the v prefix" >&2
+            exit 1
+          fi
+
+          PACKAGE_VERSION="$(node -p "require('./MusicPlayer/package.json').version")"
+          if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "MusicPlayer/package.json is $PACKAGE_VERSION, but the requested version is $VERSION" >&2
+            exit 1
+          fi
+
+          TAG="v$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.name }} package
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+            command: npm run build:win
+          - os: macos-13
+            name: macos
+            command: npm run build:mac
+          - os: ubuntu-latest
+            name: linux
+            command: npm run build:linux
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: MusicPlayer/package-lock.json
+
+      - name: Install dependencies
+        working-directory: MusicPlayer
+        run: npm ci
+
+      - name: Package application
+        working-directory: MusicPlayer
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: ${{ matrix.command }}
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: music-player-${{ matrix.name }}
+          path: MusicPlayer/dist/**
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Create GitHub Release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+          TARGET_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          RELEASE_ARGS=(--title "MusicPlayer v$VERSION")
+          if [ "$PRERELEASE" = "true" ]; then
+            RELEASE_ARGS+=(--prerelease)
+          fi
+
+          mapfile -d '' FILES < <(find release-assets -type f -print0)
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "No release assets were downloaded" >&2
+            exit 1
+          fi
+
+          gh release create "$TAG" --target "$TARGET_SHA" "${RELEASE_ARGS[@]}" --generate-notes "${FILES[@]}"
