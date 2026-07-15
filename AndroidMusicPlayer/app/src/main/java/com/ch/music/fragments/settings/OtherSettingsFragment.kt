@@ -16,14 +16,12 @@ package com.ch.music.fragments.settings
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.preference.Preference
 import com.ch.appthemehelper.common.prefs.supportv7.ATEListPreference
 import com.ch.music.LANGUAGE_NAME
 import com.ch.music.LAST_ADDED_CUTOFF
-import com.ch.music.NETEASE_API_BASE_URL
 import com.ch.music.R
 import com.ch.music.extensions.installLanguageAndRecreate
 import com.ch.music.fragments.LibraryViewModel
@@ -44,23 +42,6 @@ class OtherSettingsFragment : AbsSettingsFragment() {
             restartActivity()
             return@setOnPreferenceChangeListener true
         }
-        val neteaseUrlPref: Preference? = findPreference(NETEASE_API_BASE_URL)
-        neteaseUrlPref?.setOnPreferenceChangeListener { _, newValue ->
-            val trimmed = (newValue as? String)?.trim().orEmpty()
-            // 保存后提示需要重启应用以重建 Retrofit
-            Toast.makeText(
-                requireContext(),
-                "已保存，重启应用后生效",
-                Toast.LENGTH_LONG
-            ).show()
-            true
-        }
-        // 显示当前已配置的 URL 作为 summary
-        neteaseUrlPref?.summary =
-            (preferenceManager.sharedPreferences
-                ?.getString(NETEASE_API_BASE_URL, null)
-                ?.takeIf { it.isNotBlank() }
-                ?: getString(R.string.pref_netease_api_base_url_summary))
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {

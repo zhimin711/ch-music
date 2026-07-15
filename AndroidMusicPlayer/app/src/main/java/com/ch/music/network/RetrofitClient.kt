@@ -3,9 +3,9 @@ package com.ch.music.network
 import android.content.Context
 import com.ch.music.App
 import com.ch.music.BuildConfig
+import com.ch.music.NETEASE_API_BASE_URL
 import com.ch.music.network.conversion.LyricsConverterFactory
 import com.ch.music.musicserver.MusicServerSession
-import com.ch.music.util.PreferenceUtil
 import com.google.gson.GsonBuilder
 import okhttp3.Cache
 import okhttp3.Interceptor
@@ -145,7 +145,7 @@ fun provideNeteaseRetrofit(client: OkHttpClient): Retrofit {
         .setLenient()
         .create()
     return Retrofit.Builder()
-        .baseUrl(PreferenceUtil.neteaseApiBaseUrl)
+        .baseUrl(NETEASE_API_BASE_URL)
         .addConverterFactory(GsonConverterFactory.create(gson))
         .callFactory { request -> client.newCall(request) }
         .build()

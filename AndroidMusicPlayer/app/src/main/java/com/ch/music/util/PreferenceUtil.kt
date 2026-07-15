@@ -119,8 +119,6 @@ import com.ch.music.transform.VerticalFlipTransformation
 import com.ch.music.transform.VerticalStackTransformer
 import com.ch.music.util.theme.ThemeMode
 import com.ch.music.views.TopAppBarLayout
-import com.ch.music.DEFAULT_NETEASE_API_BASE_URL
-import com.ch.music.NETEASE_API_BASE_URL
 import com.ch.music.helper.SortOrder
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.gson.Gson
@@ -225,26 +223,6 @@ object PreferenceUtil {
         get() = sharedPreferences.getStringOrDefault(SAF_SDCARD_URI, "")
         set(value) = sharedPreferences.edit {
             putString(SAF_SDCARD_URI, value)
-        }
-
-    /**
-     * 网易云 API 服务器地址。
-     * 默认指向公开 Vercel mirror，但国内网络多半无法访问；
-     * 用户可在设置页填本地部署 / 自有服务器地址。
-     */
-    var neteaseApiBaseUrl: String
-        get() {
-            val raw = sharedPreferences.getStringOrDefault(
-                NETEASE_API_BASE_URL,
-                DEFAULT_NETEASE_API_BASE_URL
-            ).trim()
-            val normalized = if (raw.isEmpty()) {
-                DEFAULT_NETEASE_API_BASE_URL
-            } else raw
-            return if (normalized.endsWith("/")) normalized else "$normalized/"
-        }
-        set(value) = sharedPreferences.edit {
-            putString(NETEASE_API_BASE_URL, value)
         }
 
     private val autoDownloadImagesPolicy
