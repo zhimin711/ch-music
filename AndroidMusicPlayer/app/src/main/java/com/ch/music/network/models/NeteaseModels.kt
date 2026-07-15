@@ -11,6 +11,18 @@ data class NeteaseResponse<T>(
 )
 
 // ==================== Banner / 轮播图 ====================
+// ==================== 搜索 ====================
+
+data class NeteaseSearchResponse(
+    val code: Int,
+    val result: NeteaseSearchResult?
+)
+
+data class NeteaseSearchResult(
+    val songs: List<NeteaseSong>?,
+    val songCount: Int?
+)
+
 
 data class NeteaseBannerResponse(
     val code: Int,

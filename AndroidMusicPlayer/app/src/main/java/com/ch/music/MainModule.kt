@@ -13,6 +13,7 @@ import com.ch.music.fragments.playlists.PlaylistDetailsViewModel
 import com.ch.music.model.Genre
 import com.ch.music.viewmodel.HomeViewModel
 import com.ch.music.network.provideDefaultCache
+import com.ch.music.viewmodel.OnlineSearchViewModel
 import com.ch.music.network.provideLastFmRest
 import com.ch.music.network.provideLastFmRetrofit
 import com.ch.music.network.provideNeteaseRest
@@ -206,6 +207,10 @@ private val viewModules = module {
     // 首页 ViewModel（网易云在线音乐）
     viewModel {
         HomeViewModel(get())
+    }
+
+    viewModel {
+        OnlineSearchViewModel(get())
     }
 
     viewModel { (albumId: Long) ->

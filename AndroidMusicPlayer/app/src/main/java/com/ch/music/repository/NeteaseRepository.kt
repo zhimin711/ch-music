@@ -24,6 +24,27 @@ class NeteaseRepository(
     private val neteaseApi: NeteaseCloudApi
 ) {
 
+
+    // ==================== 搜索 ====================
+
+    suspend fun searchSongs(
+        keywords: String,
+        limit: Int = 30,
+        offset: Int = 0
+    ): Result<List<NeteaseSong>> {
+        return try {
+            val response = neteaseApi.searchSongs(keywords, limit = limit, offset = offset)
+            if (response.code == 200 && response.result != null) {
+                Result.Success(response.result.songs.orEmpty())
+            } else {
+                Result.Error(IllegalStateException("Failed to search songs: code ${response.code}"))
+            }
+        } catch (e: Exception) {
+            logE(e)
+            Result.Error(e)
+        }
+    }
+
     // ==================== 首页数据 ====================
 
     suspend fun getBanners(type: Int = 1): Result<List<BannerItem>> {

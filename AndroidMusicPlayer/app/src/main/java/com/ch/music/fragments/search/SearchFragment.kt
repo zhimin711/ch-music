@@ -31,7 +31,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionManager
 import com.ch.music.R
-import com.ch.music.adapter.SearchAdapter
+import androidx.lifecycle.lifecycleScope
+import com.ch.music.adapter.NeteaseSongAdapter
+import com.ch.music.netease.NeteasePlaybackManager
+import com.ch.music.netease.NeteaseSongMapper
+import com.ch.music.network.Result
+import com.ch.music.viewmodel.OnlineSearchViewModel
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.ch.music.databinding.FragmentSearchBinding
 import com.ch.music.extensions.*
 import com.ch.music.fragments.base.AbsMainActivityFragment
@@ -41,7 +48,6 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.transition.MaterialFadeThrough
-import kotlinx.coroutines.Job
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 import java.util.*
 
@@ -55,10 +61,10 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var searchAdapter: SearchAdapter
+    private lateinit var searchAdapter: NeteaseSongAdapter
+    private val searchViewModel: OnlineSearchViewModel by viewModel()
+    private val neteasePlayback: NeteasePlaybackManager by inject()
     private var query: String? = null
-
-    private var job: Job? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -66,14 +72,13 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
         reenterTransition = MaterialFadeThrough().addTarget(view)
         _binding = FragmentSearchBinding.bind(view)
         mainActivity.setSupportActionBar(binding.toolbar)
-        libraryViewModel.clearSearchResult()
         setupRecyclerView()
 
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.voiceSearch.setOnClickListener { startMicSearch() }
         binding.clearText.setOnClickListener {
             binding.searchView.clearText()
-            searchAdapter.swapDataSet(listOf())
+            searchAdapter.swapData(emptyList())
         }
         binding.searchView.apply {
             doAfterTextChanged {
@@ -81,6 +86,7 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
                     search(it.toString())
                 else {
                     TransitionManager.beginDelayedTransition(binding.appBarLayout)
+                    searchViewModel.search("")
                     binding.voiceSearch.isVisible = true
                     binding.clearText.isGone = true
                 }
@@ -96,8 +102,8 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
         if (savedInstanceState != null) {
             query = savedInstanceState.getString(QUERY)
         }
-        libraryViewModel.getSearchResult().observe(viewLifecycleOwner) {
-            showData(it)
+        searchViewModel.songs.observe(viewLifecycleOwner) { result ->
+            showData(result)
         }
         setupChips()
         postponeEnterTransition()
@@ -140,11 +146,19 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
         binding.searchFilterGroup.setOnCheckedStateChangeListener(this)
     }
 
-    private fun showData(data: List<Any>) {
-        if (data.isNotEmpty()) {
-            searchAdapter.swapDataSet(data)
-        } else {
-            searchAdapter.swapDataSet(ArrayList())
+    private fun showData(result: Result<List<com.ch.music.network.models.NeteaseSong>>) {
+        when (result) {
+            is Result.Success -> {
+                searchAdapter.swapData(
+                    result.data.mapIndexed { index, song -> NeteaseSongMapper.toSong(song, trackIndex = index) }
+                )
+                binding.empty.text = getString(R.string.no_results)
+            }
+            is Result.Loading -> binding.empty.isGone = true
+            is Result.Error -> {
+                searchAdapter.swapData(emptyList())
+                binding.empty.text = getString(R.string.failed_to_load)
+            }
         }
     }
 
@@ -157,7 +171,12 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
     }
 
     private fun setupRecyclerView() {
-        searchAdapter = SearchAdapter(requireActivity(), emptyList())
+        searchAdapter = NeteaseSongAdapter(
+            emptyList(),
+            playbackManager = neteasePlayback,
+            lifecycleScope = viewLifecycleOwner.lifecycleScope,
+            onResolveError = { message -> showToast(message ?: getString(R.string.failed_to_load)) }
+        )
         searchAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onChanged() {
                 super.onChanged()
@@ -185,22 +204,9 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
         TransitionManager.beginDelayedTransition(binding.appBarLayout)
         binding.voiceSearch.isGone = query.isNotEmpty()
         binding.clearText.isVisible = query.isNotEmpty()
-        val filter = getFilter()
-        job?.cancel()
-        job = libraryViewModel.search(query, filter)
+        searchViewModel.search(query)
     }
 
-    private fun getFilter(): Filter {
-        return when (binding.searchFilterGroup.checkedChipId) {
-            R.id.chip_audio -> Filter.SONGS
-            R.id.chip_artists -> Filter.ARTISTS
-            R.id.chip_albums -> Filter.ALBUMS
-            R.id.chip_album_artists -> Filter.ALBUM_ARTISTS
-            R.id.chip_genres -> Filter.GENRES
-            R.id.chip_playlists -> Filter.PLAYLISTS
-            else -> Filter.NO_FILTER
-        }
-    }
 
     private fun startMicSearch() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
@@ -260,15 +266,6 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
     override fun onMenuItemSelected(menuItem: MenuItem) = false
 }
 
-enum class Filter {
-    SONGS,
-    ARTISTS,
-    ALBUMS,
-    ALBUM_ARTISTS,
-    GENRES,
-    PLAYLISTS,
-    NO_FILTER
-}
 
 fun TextInputEditText.clearText() {
     text = null

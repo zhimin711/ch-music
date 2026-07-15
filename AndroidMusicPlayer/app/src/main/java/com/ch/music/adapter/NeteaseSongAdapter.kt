@@ -78,10 +78,7 @@ class NeteaseSongAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(song: Song, position: Int) {
             binding.songTitle.text = song.title
-            binding.songMeta.text = listOfNotNull(
-                "超${(40 + position * 7) % 60}%人收藏".takeIf { position % 2 == 0 },
-                song.artistName
-            ).joinToString(" · ")
+            binding.songMeta.text = listOf(song.artistName, song.albumName).joinToString(" · ")
 
             Glide.with(binding.root.context)
                 .load(RetroGlideExtension.getSongModel(song))

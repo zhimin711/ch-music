@@ -6,6 +6,7 @@ import com.ch.music.network.models.NeteaseArtistSongsResponse
 import com.ch.music.network.models.NeteaseToplistResponse
 import com.ch.music.network.models.NeteaseBannerResponse
 import com.ch.music.network.models.NeteasePersonalizedResponse
+import com.ch.music.network.models.NeteaseSearchResponse
 import com.ch.music.network.models.NeteaseHotSingerResponse
 import com.ch.music.network.models.NeteaseNewSongResponse
 import com.ch.music.network.models.NeteasePlaylistCategoryResponse
@@ -21,6 +22,23 @@ import retrofit2.http.Query
  * 对标电脑端 src/renderer/api/home.ts 和 list.ts
  */
 interface NeteaseCloudApi {
+
+
+    // ==================== 搜索相关 ====================
+
+    /**
+     * 搜索网易云歌曲。
+     *
+     * 对应 MusicServer 的 `/api/netease/public/search`，服务端会转发到
+     * 网易云 `/cloudsearch`。type=1 表示单曲，和桌面端默认搜索类型一致。
+     */
+    @GET("search")
+    suspend fun searchSongs(
+        @Query("keywords") keywords: String,
+        @Query("type") type: Int = 1,
+        @Query("limit") limit: Int = 30,
+        @Query("offset") offset: Int = 0
+    ): NeteaseSearchResponse
 
     // ==================== 首页相关 ====================
 
