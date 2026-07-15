@@ -16,9 +16,11 @@ package com.ch.music.fragments.settings
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
+import androidx.navigation.fragment.findNavController as findParentNavController
 import com.ch.appthemehelper.ThemeStore
 import com.ch.appthemehelper.util.VersionUtils
 import com.ch.music.R
@@ -38,18 +40,35 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ColorCallback {
     }
 
     private fun setupToolbar() {
-        val navController: NavController = findNavController(R.id.contentFrame)
+        val settingsNavController: NavController = findNavController(R.id.contentFrame)
         with(binding.appBarLayout.toolbar) {
             setNavigationIcon(R.drawable.ic_arrow_back)
             isTitleCentered = false
             setNavigationOnClickListener {
-                requireActivity().onBackPressedDispatcher.onBackPressed()
+                navigateBack(settingsNavController)
             }
         }
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (!settingsNavController.popBackStack()) {
+                        isEnabled = false
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            }
+        )
 
-        navController.addOnDestinationChangedListener { _, _, _ ->
+        settingsNavController.addOnDestinationChangedListener { _, _, _ ->
             binding.appBarLayout.title =
-                navController.currentDestination?.let { getStringFromDestination(it) }.toString()
+                settingsNavController.currentDestination?.let { getStringFromDestination(it) }.toString()
+        }
+    }
+
+    private fun navigateBack(settingsNavController: NavController) {
+        if (!settingsNavController.popBackStack()) {
+            findParentNavController().navigateUp()
         }
     }
 
