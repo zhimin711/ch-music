@@ -267,6 +267,20 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
 }
 
 
+/**
+ * 本地媒体库的筛选类型，仍由 [LibraryViewModel] 与搜索仓库共享使用。
+ * 在线搜索页不再调用该筛选逻辑。
+ */
+enum class Filter {
+    SONGS,
+    ARTISTS,
+    ALBUMS,
+    ALBUM_ARTISTS,
+    GENRES,
+    PLAYLISTS,
+    NO_FILTER
+}
+
 fun TextInputEditText.clearText() {
     text = null
 }
