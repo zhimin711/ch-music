@@ -63,13 +63,16 @@ object RetroGlideExtension : KoinComponent {
     private fun getSongModel(song: Song, ignoreMediaStore: Boolean): Any {
         musicServerCoverUrl(song)?.let { return it }
 
-        // 优先识别网易云在线歌曲：Song.albumId 是负偏移，MediaStore 拿不到封面，
-        // 直接使用 NeteaseCoverCache 里缓存的 HTTP URL。
-        com.ch.music.netease.NeteaseSongMapper.neteaseIdFromSong(song)?.let { neteaseId ->
-            val coverUrl = com.ch.music.netease.NeteaseCoverCache.get(neteaseId)
+        val neteaseId = com.ch.music.netease.NeteaseSongMapper.neteaseIdFromSong(song)
+        com.ch.music.netease.NeteaseCoverCache.getBySongId(song.id)?.let { return it }
+
+        neteaseId?.let {
+            val coverUrl = com.ch.music.netease.NeteaseCoverCache.get(it)
             if (!coverUrl.isNullOrBlank()) return coverUrl
         }
-        return if (ignoreMediaStore) {
+        if (neteaseId != null) return DEFAULT_SONG_IMAGE
+
+        return if (ignoreMediaStore && song.data.isNotBlank()) {
             AudioFileCover(song.data)
         } else {
             getMediaStoreAlbumCoverUri(song.albumId)

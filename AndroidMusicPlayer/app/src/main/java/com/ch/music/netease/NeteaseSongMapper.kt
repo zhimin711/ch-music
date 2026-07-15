@@ -57,13 +57,14 @@ object NeteaseSongMapper {
         // 优先使用调用方传入的 coverUrl（如 NewSong.picUrl），否则回落到网易云 album.picUrl
         val effectiveCoverUrl = coverUrl?.takeIf { it.isNotBlank() }
             ?: neteaseSong.al?.picUrl?.takeIf { it.isNotBlank() }
-        NeteaseCoverCache.put(neteaseSong.id, effectiveCoverUrl)
+        val localSongId = toLocalId(neteaseSong.id)
+        NeteaseCoverCache.put(neteaseSong.id, localSongId, effectiveCoverUrl)
 
         // 推导并缓存该歌可用的播放音质参数（供 song/url/v1 使用）
         NeteaseQualityCache.put(neteaseSong.id, NeteaseQualityCache.deriveOption(neteaseSong))
 
         return Song(
-            id = toLocalId(neteaseSong.id),
+            id = localSongId,
             title = neteaseSong.name?.takeIf { it.isNotBlank() } ?: UNKNOWN_TITLE,
             trackNumber = trackIndex + 1,
             year = 0,

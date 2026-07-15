@@ -16,20 +16,21 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object NeteaseCoverCache {
 
-    private val cache = ConcurrentHashMap<Long, String>()
+    private val coverUrlsByNeteaseId = ConcurrentHashMap<Long, String>()
+    private val coverUrlsBySongId = ConcurrentHashMap<Long, String>()
 
-    /**
-     * @param neteaseId 网易云原始歌曲 ID（不是 [com.ch.music.model.Song.id]）
-     */
-    fun put(neteaseId: Long, coverUrl: String?) {
+    fun put(neteaseId: Long, songId: Long, coverUrl: String?) {
         if (coverUrl.isNullOrBlank()) return
-        cache[neteaseId] = coverUrl
+        coverUrlsByNeteaseId[neteaseId] = coverUrl
+        coverUrlsBySongId[songId] = coverUrl
     }
 
-    /**
-     * @param neteaseId 网易云原始歌曲 ID
-     */
-    fun get(neteaseId: Long): String? = cache[neteaseId]
+    fun get(neteaseId: Long): String? = coverUrlsByNeteaseId[neteaseId]
 
-    fun clear() = cache.clear()
+    fun getBySongId(songId: Long): String? = coverUrlsBySongId[songId]
+
+    fun clear() {
+        coverUrlsByNeteaseId.clear()
+        coverUrlsBySongId.clear()
+    }
 }
