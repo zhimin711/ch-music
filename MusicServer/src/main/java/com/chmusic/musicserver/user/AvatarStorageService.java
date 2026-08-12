@@ -1,15 +1,8 @@
 package com.chmusic.musicserver.user;
 
-import com.chmusic.musicserver.config.MusicServerProperties;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Set;
-import java.util.UUID;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,12 +12,6 @@ import org.springframework.web.server.ResponseStatusException;
 public class AvatarStorageService {
     private static final long MAX_FILE_SIZE = 5L * 1024 * 1024;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp", "gif");
-
-    private final Path root;
-
-    public AvatarStorageService(MusicServerProperties properties) {
-        this.root = Path.of(properties.getStorage().getRoot()).toAbsolutePath().normalize().resolve("avatars");
-    }
 
     public StoredAvatar store(AppUser user, MultipartFile file) {
         if (file.isEmpty()) {
@@ -40,32 +27,12 @@ public class AvatarStorageService {
         }
 
         try {
-            Path userDir = root.resolve(String.valueOf(user.getId())).normalize();
-            if (!userDir.startsWith(root)) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Avatar path is invalid");
-            }
-            Files.createDirectories(userDir);
-            String storedFilename = UUID.randomUUID() + "." + (extension.isBlank() ? "png" : extension);
-            Path target = userDir.resolve(storedFilename).normalize();
-            try (InputStream input = file.getInputStream()) {
-                Files.copy(input, target);
-            }
-            return new StoredAvatar(storedFilename, file.getContentType(), Files.size(target));
+            String filename = sanitizeFilename(file.getOriginalFilename(), extension);
+            String contentType = file.getContentType() == null ? defaultContentType(extension) : file.getContentType();
+            return new StoredAvatar(filename, contentType, file.getSize(), file.getBytes());
         } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store avatar", ex);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read avatar", ex);
         }
-    }
-
-    public Resource load(Long userId, String filename) {
-        Path path = root.resolve(String.valueOf(userId)).resolve(filename).normalize();
-        if (!path.startsWith(root)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Avatar path is invalid");
-        }
-        Resource resource = new FileSystemResource(path);
-        if (!resource.exists()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Avatar not found");
-        }
-        return resource;
     }
 
     private static boolean isAllowedImage(String contentType, String extension) {
@@ -82,5 +49,23 @@ public class AvatarStorageService {
             return "";
         }
         return filename.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
+    }
+
+    private static String sanitizeFilename(String filename, String extension) {
+        String fallback = "avatar." + (extension.isBlank() ? "png" : extension);
+        if (filename == null || filename.isBlank()) {
+            return fallback;
+        }
+        String sanitized = filename.replaceAll("[\\\\/\\r\\n]", "").trim();
+        return sanitized.isBlank() ? fallback : sanitized;
+    }
+
+    private static String defaultContentType(String extension) {
+        return switch (extension) {
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "webp" -> "image/webp";
+            case "gif" -> "image/gif";
+            default -> "image/png";
+        };
     }
 }

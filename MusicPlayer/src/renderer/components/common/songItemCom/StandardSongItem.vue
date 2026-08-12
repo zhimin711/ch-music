@@ -6,6 +6,7 @@
     :can-remove="canRemove"
     :is-next="isNext"
     :index="index"
+    :manual-play="manualPlay"
     @play="(...args) => $emit('play', ...args)"
     @select="(...args) => $emit('select', ...args)"
     @remove-song="(...args) => $emit('remove-song', ...args)"
@@ -55,6 +56,10 @@
               <span v-if="index < artists.length - 1"> / </span>
             </template>
           </n-ellipsis>
+        </div>
+        <!-- 扩展副标题：本地音乐碟号/曲目号/年份等，不传则不渲染 -->
+        <div v-if="$slots.subtitle" class="song-item-content-subtitle">
+          <slot name="subtitle" />
         </div>
       </div>
     </template>
@@ -113,6 +118,7 @@ const props = withDefaults(
     canRemove?: boolean;
     isNext?: boolean;
     index?: number;
+    manualPlay?: boolean;
   }>(),
   {
     favorite: true,
@@ -120,7 +126,8 @@ const props = withDefaults(
     selected: false,
     canRemove: false,
     isNext: false,
-    index: undefined
+    index: undefined,
+    manualPlay: false
   }
 );
 
@@ -144,6 +151,10 @@ const onToggleFavorite = (event: Event) => {
   baseItem.value?.toggleFavorite(event);
 };
 const onPlayMusic = () => {
+  if (props.manualPlay) {
+    emit('play', props.item);
+    return;
+  }
   baseItem.value?.playMusicEvent(props.item);
   emit('play', props.item);
 };
@@ -171,6 +182,11 @@ const onPlayNext = () => {
 
     &-name {
       @apply text-xs text-gray-500 dark:text-gray-400;
+    }
+
+    &-subtitle {
+      @apply text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate;
+      line-height: 1.2;
     }
   }
 

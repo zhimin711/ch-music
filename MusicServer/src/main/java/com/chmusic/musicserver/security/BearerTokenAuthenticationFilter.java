@@ -16,6 +16,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
+    private static final String PUBLIC_NETEASE_PREFIX = "/api/netease/public/";
+
     private final TokenService tokenService;
 
     public BearerTokenAuthenticationFilter(TokenService tokenService) {
@@ -25,6 +27,11 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        if (isPublicNeteaseRequest(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = resolveBearerToken(request);
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             AppUser user = tokenService.authenticate(token);
@@ -47,5 +54,10 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
 
         String token = request.getParameter("access_token");
         return token == null || token.isBlank() ? null : token.trim();
+    }
+
+    private static boolean isPublicNeteaseRequest(HttpServletRequest request) {
+        return "GET".equalsIgnoreCase(request.getMethod())
+                && request.getRequestURI().startsWith(PUBLIC_NETEASE_PREFIX);
     }
 }

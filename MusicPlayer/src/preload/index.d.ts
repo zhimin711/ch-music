@@ -1,6 +1,27 @@
 import { ElectronAPI } from '@electron-toolkit/preload';
 
 import type { AppUpdateState } from '../shared/appUpdate';
+import type {
+  MusicServerOfflineCacheEntry,
+  MusicServerOfflineCacheRequest,
+  MusicServerOfflineCacheSyncResult
+} from '../renderer/types/musicServer';
+
+type MusicServerOfflineCacheQuery = {
+  serverBaseUrl?: string;
+  userId?: number;
+  musicId?: number;
+  profileId?: string;
+  cacheKey?: string;
+  checksum?: string;
+};
+
+type MusicServerOfflineCachePublicEntry = Omit<
+  MusicServerOfflineCacheEntry,
+  'localPath' | 'streamUrl'
+> & {
+  playbackUrl?: string;
+};
 
 interface API {
   minimize: () => void;
@@ -63,6 +84,36 @@ interface API {
   onDownloadBatchComplete: (cb: (data: any) => void) => void;
   onDownloadRequestUrl: (cb: (data: any) => void) => void;
   removeDownloadListeners: () => void;
+  // MusicServer private offline cache
+  musicServerCacheAdd: (items: MusicServerOfflineCacheRequest[]) => Promise<string[]>;
+  musicServerCachePause: (
+    cacheKey: string
+  ) => Promise<MusicServerOfflineCachePublicEntry | null>;
+  musicServerCacheResume: (
+    cacheKey: string
+  ) => Promise<MusicServerOfflineCachePublicEntry | null>;
+  musicServerCacheRemove: (cacheKey: string) => Promise<boolean>;
+  musicServerCacheGetState: (
+    query: MusicServerOfflineCacheQuery
+  ) => Promise<MusicServerOfflineCachePublicEntry | null>;
+  musicServerCacheGetAll: (
+    query?: MusicServerOfflineCacheQuery
+  ) => Promise<MusicServerOfflineCachePublicEntry[]>;
+  musicServerCacheResolvePlaybackUrl: (
+    query: MusicServerOfflineCacheQuery
+  ) => Promise<string | null>;
+  musicServerCacheSyncIndex: (payload: {
+    serverBaseUrl: string;
+    userId: number;
+    musicList: { id?: number | string; musicId?: number | null; checksum?: string | null }[];
+  }) => Promise<
+    Omit<MusicServerOfflineCacheSyncResult, 'entries'> & {
+      entries: MusicServerOfflineCachePublicEntry[];
+    }
+  >;
+  onMusicServerCacheStateChange: (cb: (data: MusicServerOfflineCachePublicEntry) => void) => void;
+  onMusicServerCacheRemoved: (cb: (cacheKey: string) => void) => void;
+  removeMusicServerCacheListeners: () => void;
 }
 
 // 自定义IPC渲染进程通信接口

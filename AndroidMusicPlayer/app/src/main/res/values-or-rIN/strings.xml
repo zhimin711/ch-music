@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="about_album_label">%s ବିଷୟରେ</string>
-    <string name="about_settings_summary">ଟିମ୍, ସାମାଜିକ ଲିଙ୍କଗୁଡ଼ିକ</string>
     <string name="accent_color">ଆକ୍ସେଣ୍ଟ ରଙ୍ଗ</string>
     <string name="accent_color_desc">ଥିମ୍ ଆକ୍ସେଣ୍ଟ ରଙ୍ଗ, ଡିଫଲ୍ଟ ଭାବରେ ବାଇଗଣୀ</string>
-    <string name="action_about">ବିଷୟରେ</string>
     <string name="action_add_to_blacklist">ବ୍ଲାକଲିଷ୍ଟରେ ଯୋଡନ୍ତୁ</string>
     <string name="action_add_to_favorites">ପସନ୍ଦରେ ଯୋଡ଼ନ୍ତୁ</string>
     <string name="action_add_to_playing_queue">ପ୍ଲେ ହେଉଥିବା କ୍ୟୁରେ ଯୋଡନ୍ତୁ</string>

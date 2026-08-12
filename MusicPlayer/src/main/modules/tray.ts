@@ -373,10 +373,10 @@ function initializeStatusBarTray(mainWindow: BrowserWindow) {
     mainWindow.webContents.send('global-shortcut', 'prevPlay');
   });
 
-  // 创建歌曲信息显示 - 需要使用特殊处理
+  // 创建歌曲信息显示 - 使用状态栏专用音乐图标
   const titleIcon = nativeImage
     .createFromPath(join(app.getAppPath(), 'resources/icons', 'note.png'))
-    .resize({ width: 16, height: 16 });
+    .resize(iconSize);
   titleIcon.setTemplateImage(true);
   songTitleTray = new Tray(titleIcon);
 
@@ -411,6 +411,7 @@ export function initializeTray(iconPath: string, mainWindow: BrowserWindow) {
   const trayIcon = nativeImage
     .createFromPath(join(iconPath, iconFile))
     .resize({ width: iconSize, height: iconSize });
+  trayIcon.setTemplateImage(process.platform === 'darwin');
 
   tray = new Tray(trayIcon);
 

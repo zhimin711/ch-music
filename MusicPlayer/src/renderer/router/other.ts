@@ -140,7 +140,8 @@ const otherRouter = [
       title: 'comp.homeHero.quickNav.myFavorite',
       icon: 'ri-heart-fill',
       keepAlive: true,
-      back: true
+      back: true,
+      requireAuth: true
     },
     component: () => import('@/views/favorite/index.vue')
   },

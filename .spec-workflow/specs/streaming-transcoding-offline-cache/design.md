@@ -392,14 +392,35 @@ music.transcoding.cache-max-size=20GB
 music.transcoding.profiles[0].id=aac-128
 music.transcoding.profiles[0].content-type=audio/aac
 music.transcoding.profiles[0].bitrate-kbps=128
-music.transcoding.profiles[0].extension=aac
+music.transcoding.profiles[0].extension=.aac
 music.transcoding.profiles[0].args=-vn -c:a aac -b:a 128k
+music.transcoding.profiles[0].offline-cacheable=true
 ```
 
 Client settings:
 
 - MusicPlayer: cache root, max size, Wi-Fi only not applicable by default, pinned offline tracks.
 - AndroidMusicPlayer: Wi-Fi only downloads, cache max size, allow mobile streaming transcode preference, pinned offline tracks.
+
+### Runtime Notes
+
+- MusicServer local paths:
+  - H2 database: `MusicServer/.local/musicserver-db`
+  - uploaded originals: `MusicServer/.local/music-storage`
+  - transcode temp files: `MusicServer/.local/transcode-temp`
+  - transcode cache files: `MusicServer/.local/transcode-cache`
+- MusicPlayer private offline cache lives under the Electron app data directory using the `music-server-offline-cache` metadata store and `music-server-private/` files. Renderer code only receives public cache state and playback URLs.
+- Android private offline cache lives in app private storage under `music-server-cache/`. It uses `SharedPreferences` metadata, defaults to Wi-Fi-only downloads, and marks low storage as `STORAGE_LOW`.
+- Cache namespace is always `serverBaseUrl + userId + musicId + profileId`. Logout clears in-memory state only; valid offline files may remain on disk for the same account namespace.
+- Refreshing the private library triggers cache index sync. Missing source music removes or hides matching cache entries; checksum changes mark entries `STALE` so clients can re-download.
+- FFmpeg is optional. When `music.transcoding.enabled=false` or the probe fails, capabilities expose the disabled/unavailable state and clients should continue original Range playback.
+
+### Troubleshooting
+
+- Seek does not work: check `music.streaming.range.enabled=true`, confirm the response includes `Accept-Ranges: bytes`, and ensure any proxy forwards the `Range` header.
+- Transcode remains unavailable: check `music.transcoding.enabled`, `music.transcoding.ffmpeg-path`, configured profiles, and `GET /api/music/transcode-capabilities`.
+- Offline playback falls back online: refresh the client library, verify the cache entry is `READY`, and compare `checksum`/`fileSize` metadata with `/api/music`.
+- Cache from another account appears: treat it as a namespace bug; cache listing must filter by normalized server URL and current user ID before rendering.
 
 ## Error Handling
 

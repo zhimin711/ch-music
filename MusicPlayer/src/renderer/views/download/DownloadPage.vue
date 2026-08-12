@@ -656,7 +656,7 @@ const shortenPath = (path: string) => {
 
 const getLocalFilePath = (path: string) => {
   if (!path) return '';
-  return `local:///${encodeURIComponent(path)}`;
+  return `local://audio?path=${encodeURIComponent(path)}`;
 };
 
 const openDirectory = (path: string) => {

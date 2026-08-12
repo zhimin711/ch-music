@@ -38,6 +38,10 @@
           <playback-tab />
         </div>
 
+        <div v-show="currentSection === 'equalizer'" class="animate-fade-in">
+          <equalizer-tab />
+        </div>
+
         <div v-show="currentSection === 'application'" class="animate-fade-in">
           <application-tab />
         </div>
@@ -48,10 +52,6 @@
 
         <div v-show="currentSection === 'system'" class="animate-fade-in">
           <system-tab />
-        </div>
-
-        <div v-show="currentSection === 'about'" class="animate-fade-in">
-          <about-tab />
         </div>
 
         <div class="h-20"></div>
@@ -71,12 +71,10 @@ import PlayBottom from '@/components/common/PlayBottom.vue';
 import { useSettingsStore } from '@/store/modules/settings';
 import { isElectron } from '@/utils';
 
-import config from '../../../../package.json';
-import { createDefaultAppUpdateState } from '../../../shared/appUpdate';
 import { SETTINGS_DATA_KEY, SETTINGS_DIALOG_KEY, SETTINGS_MESSAGE_KEY } from './keys';
-import AboutTab from './tabs/AboutTab.vue';
 import ApplicationTab from './tabs/ApplicationTab.vue';
 import BasicTab from './tabs/BasicTab.vue';
+import EqualizerTab from './tabs/EqualizerTab.vue';
 import NetworkTab from './tabs/NetworkTab.vue';
 import PlaybackTab from './tabs/PlaybackTab.vue';
 import SystemTab from './tabs/SystemTab.vue';
@@ -134,10 +132,10 @@ type SettingSectionConfig = {
 const settingSections: SettingSectionConfig[] = [
   { id: 'basic' },
   { id: 'playback' },
+  { id: 'equalizer' },
   { id: 'application', electron: true },
   { id: 'network', electron: true },
-  { id: 'system', electron: true },
-  { id: 'about' }
+  { id: 'system', electron: true }
 ];
 
 const navSections = computed(() => {
@@ -153,9 +151,6 @@ const currentSection = ref('basic');
 
 // ==================== 初始化 ====================
 onMounted(() => {
-  if (isElectron && settingsStore.appUpdateState.currentVersion === '') {
-    settingsStore.setAppUpdateState(createDefaultAppUpdateState(config.version));
-  }
   if (setData.value.proxyConfig) {
     // proxy form init moved to NetworkTab
   }

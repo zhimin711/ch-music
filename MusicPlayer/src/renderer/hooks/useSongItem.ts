@@ -35,9 +35,7 @@ export function useSongItem(props: { item: SongResult; canRemove?: boolean }) {
 
   // 收藏与不喜欢状态
   const isFavorite = computed(() => {
-    const favoriteKey =
-      props.item.source === 'musicServer' ? `musicServer:${props.item.id}` : props.item.id;
-    return playerStore.favoriteList.includes(favoriteKey);
+    return playerStore.isFavorite(props.item);
   });
 
   const isDislike = computed(() => {

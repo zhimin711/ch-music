@@ -8,10 +8,16 @@
     :can-remove="canRemove"
     :is-next="isNext"
     :index="index"
+    :manual-play="manualPlay"
     @play="(...args) => $emit('play', ...args)"
     @select="(...args) => $emit('select', ...args)"
     @remove-song="(...args) => $emit('remove-song', ...args)"
-  />
+  >
+    <!-- 自定义副标题插槽（如本地音乐的"碟号/曲目号/年份"） -->
+    <template v-if="$slots.subtitle" #subtitle>
+      <slot name="subtitle" />
+    </template>
+  </component>
 </template>
 
 <script lang="ts" setup>
@@ -38,6 +44,7 @@ const props = withDefaults(
     canRemove?: boolean;
     isNext?: boolean;
     index?: number;
+    manualPlay?: boolean;
   }>(),
   {
     mini: false,
@@ -49,7 +56,8 @@ const props = withDefaults(
     selected: false,
     canRemove: false,
     isNext: false,
-    index: undefined
+    index: undefined,
+    manualPlay: false
   }
 );
 

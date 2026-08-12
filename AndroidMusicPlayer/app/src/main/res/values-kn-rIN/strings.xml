@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="about_album_label">%s ನ ಬಗ್ಗೆ </string>
-    <string name="about_settings_summary">ತಂಡ, ಸಾಮಾಜಿಕ ಮಾಧ್ಯಮ ಲಿಂಕ್‌ಗಳು</string>
     <string name="accent_color">ಪ್ರಧಾನ ಬಣ್ಣ</string>
     <string name="accent_color_desc">ಪ್ರಧಾನ ಬಣ್ಣ, ಇದು ನೇರಳೆ ಬಣ್ಣಕ್ಕೆ ಪೂರ್ವನಿಯೋಜಿತವಾಗಿರುತ್ತದೆ</string>
-    <string name="action_about">ಕುರಿತು</string>
     <string name="action_add_to_blacklist">ಕಪ್ಪುಪಟ್ಟಿಗೆ ಸೇರಿಸಿ</string>
     <string name="action_add_to_favorites">ಮೆಚ್ಚಿನವುಗಳಿಗೆ ಸೇರಿಸಿ</string>
     <string name="action_add_to_playing_queue">ಚಲಿಸುವ ಪಟ್ಟಿಯಲ್ಲಿ ಸೇರಿಸಿ</string>

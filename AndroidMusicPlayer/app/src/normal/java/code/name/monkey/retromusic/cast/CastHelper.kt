@@ -1,11 +1,11 @@
-package code.name.monkey.retromusic.cast
+package com.ch.music.cast
 
 import androidx.core.net.toUri
-import code.name.monkey.retromusic.cast.RetroWebServer.Companion.MIME_TYPE_AUDIO
-import code.name.monkey.retromusic.cast.RetroWebServer.Companion.PART_COVER_ART
-import code.name.monkey.retromusic.cast.RetroWebServer.Companion.PART_SONG
-import code.name.monkey.retromusic.model.Song
-import code.name.monkey.retromusic.util.RetroUtil
+import com.ch.music.cast.RetroWebServer.Companion.MIME_TYPE_AUDIO
+import com.ch.music.cast.RetroWebServer.Companion.PART_COVER_ART
+import com.ch.music.cast.RetroWebServer.Companion.PART_SONG
+import com.ch.music.model.Song
+import com.ch.music.util.RetroUtil
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaInfo.STREAM_TYPE_BUFFERED
 import com.google.android.gms.cast.MediaMetadata

@@ -1,9 +1,9 @@
-package code.name.monkey.retromusic.activities.base
+package com.ch.music.activities.base
 
-import code.name.monkey.retromusic.cast.RetroSessionManagerListener
-import code.name.monkey.retromusic.cast.RetroWebServer
-import code.name.monkey.retromusic.helper.MusicPlayerRemote
-import code.name.monkey.retromusic.service.CastPlayer
+import com.ch.music.cast.RetroSessionManagerListener
+import com.ch.music.cast.RetroWebServer
+import com.ch.music.helper.MusicPlayerRemote
+import com.ch.music.service.CastPlayer
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.common.ConnectionResult

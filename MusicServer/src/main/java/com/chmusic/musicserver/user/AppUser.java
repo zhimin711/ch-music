@@ -9,6 +9,8 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "app_users")
@@ -28,6 +30,20 @@ public class AppUser {
 
     @Column(length = 1000)
     private String avatarUrl;
+
+    @JdbcTypeCode(SqlTypes.VARBINARY)
+    @Column(columnDefinition = "bytea")
+    private byte[] avatarData;
+
+    @Column(length = 120)
+    private String avatarContentType;
+
+    @Column(length = 255)
+    private String avatarFilename;
+
+    private Long avatarSize;
+
+    private Instant avatarUpdatedAt;
 
     @Column(nullable = false)
     private Instant createdAt;
@@ -76,9 +92,38 @@ public class AppUser {
         return avatarUrl;
     }
 
+    public byte[] getAvatarData() {
+        return avatarData;
+    }
+
+    public String getAvatarContentType() {
+        return avatarContentType;
+    }
+
+    public String getAvatarFilename() {
+        return avatarFilename;
+    }
+
+    public Long getAvatarSize() {
+        return avatarSize;
+    }
+
+    public Instant getAvatarUpdatedAt() {
+        return avatarUpdatedAt;
+    }
+
     public void updateProfile(String displayName, String avatarUrl) {
         this.displayName = displayName;
         this.avatarUrl = avatarUrl;
+    }
+
+    public void updateAvatar(String avatarUrl, StoredAvatar avatar) {
+        this.avatarUrl = avatarUrl;
+        this.avatarData = avatar.bytes();
+        this.avatarContentType = avatar.contentType();
+        this.avatarFilename = avatar.filename();
+        this.avatarSize = avatar.fileSize();
+        this.avatarUpdatedAt = Instant.now();
     }
 
     public Instant getCreatedAt() {

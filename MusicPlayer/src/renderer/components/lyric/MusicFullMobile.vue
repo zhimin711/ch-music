@@ -482,9 +482,7 @@ const showPlaylist = () => {
 
 // 喜欢歌曲
 const isFavorite = computed(() => {
-  const favoriteKey =
-    playMusic.value.source === 'musicServer' ? `musicServer:${playMusic.value.id}` : playMusic.value.id;
-  return playerStore.favoriteList.includes(favoriteKey);
+  return playerStore.isFavorite(playMusic.value);
 });
 
 const toggleFavorite = () => {

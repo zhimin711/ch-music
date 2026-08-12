@@ -118,6 +118,32 @@ const api = {
     ipcRenderer.removeAllListeners('download:state-change');
     ipcRenderer.removeAllListeners('download:batch-complete');
     ipcRenderer.removeAllListeners('download:request-url');
+  },
+
+  // MusicServer private offline cache
+  musicServerCacheAdd: (items: any[]) => ipcRenderer.invoke('music-server-cache:add', items),
+  musicServerCachePause: (cacheKey: string) =>
+    ipcRenderer.invoke('music-server-cache:pause', cacheKey),
+  musicServerCacheResume: (cacheKey: string) =>
+    ipcRenderer.invoke('music-server-cache:resume', cacheKey),
+  musicServerCacheRemove: (cacheKey: string) =>
+    ipcRenderer.invoke('music-server-cache:remove', cacheKey),
+  musicServerCacheGetState: (query: any) =>
+    ipcRenderer.invoke('music-server-cache:get-state', query),
+  musicServerCacheGetAll: (query?: any) => ipcRenderer.invoke('music-server-cache:get-all', query),
+  musicServerCacheResolvePlaybackUrl: (query: any) =>
+    ipcRenderer.invoke('music-server-cache:resolve-playback-url', query),
+  musicServerCacheSyncIndex: (payload: any) =>
+    ipcRenderer.invoke('music-server-cache:sync-index', payload),
+  onMusicServerCacheStateChange: (cb: (data: any) => void) => {
+    ipcRenderer.on('music-server-cache:state-change', (_event: any, data: any) => cb(data));
+  },
+  onMusicServerCacheRemoved: (cb: (cacheKey: string) => void) => {
+    ipcRenderer.on('music-server-cache:removed', (_event: any, cacheKey: string) => cb(cacheKey));
+  },
+  removeMusicServerCacheListeners: () => {
+    ipcRenderer.removeAllListeners('music-server-cache:state-change');
+    ipcRenderer.removeAllListeners('music-server-cache:removed');
   }
 };
 

@@ -108,7 +108,8 @@ export const getImgUrl = (url: string | null | undefined, size: string = '') => 
     return normalizedUrl.replace(/thumbnail=\d+y\d+(?!.*thumbnail)/, `thumbnail=${size}`);
   }
 
-  const imgUrl = `${normalizedUrl}?param=${size}`;
+  const separator = normalizedUrl.includes('?') ? '&' : '?';
+  const imgUrl = `${normalizedUrl}${separator}param=${size}`;
   return imgUrl;
 };
 

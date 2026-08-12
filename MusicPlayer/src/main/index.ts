@@ -1,5 +1,5 @@
 import { electronApp, optimizer } from '@electron-toolkit/utils';
-import { app, ipcMain, nativeImage, session } from 'electron';
+import { app, ipcMain, nativeImage, protocol, session } from 'electron';
 import { join } from 'path';
 
 import type { Language } from '../i18n/main';
@@ -13,6 +13,7 @@ import { initializeFonts } from './modules/fonts';
 import { initializeLocalMusicScanner } from './modules/localMusicScanner';
 import { initializeLoginWindow } from './modules/loginWindow';
 import { initLxMusicHttp } from './modules/lxMusicHttp';
+import { initializeMusicServerOfflineCache } from './modules/musicServerOfflineCache';
 import { initializeMpris, updateMprisCurrentSong, updateMprisPlayState } from './modules/mpris';
 import { initializeOtherApi } from './modules/otherApi';
 import { initializeRemoteControl } from './modules/remoteControl';
@@ -48,6 +49,8 @@ function initialize(configStore: any) {
   initializeDownloadManager();
   // 初始化歌词缓存管理
   initializeCacheManager();
+  // 初始化 MusicServer 私有离线缓存
+  initializeMusicServerOfflineCache();
   // 初始化其他 API （搜索建议等）
   initializeOtherApi();
   // 初始化窗口管理
@@ -89,6 +92,23 @@ function initialize(configStore: any) {
   // 初始化更新处理程序
   setupUpdateHandlers(mainWindow);
 }
+
+// 必须在 app.ready 之前调用：将 local 注册为特权 scheme，
+// 这样 renderer 进程的 <audio src="local://..."> 才会被 Chromium 放行并路由到主进程协议 handler
+// 参考：https://www.electronjs.org/docs/latest/api/protocol#protocolregisterschemesasprivilegedcustomschemes
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'local',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+      bypassCSP: true,
+      corsEnabled: true
+    }
+  }
+]);
 
 // 检查是否为第一个实例
 const isSingleInstance = app.requestSingleInstanceLock();

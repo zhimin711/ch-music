@@ -79,14 +79,10 @@ const { t } = useI18n();
 const frequencies = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 const eqValues = ref<{ [key: string]: number }>({});
 const isEnabled = ref(audioService.isEQEnabled());
-const currentPreset = ref(audioService.getCurrentPreset() || 'flat');
+const currentPreset = ref('custom');
 
 // 预设配置
 const presets = {
-  flat: {
-    label: t('player.eq.presets.flat'),
-    values: Object.fromEntries(frequencies.map((f) => [f, 0]))
-  },
   pop: {
     label: t('player.eq.presets.pop'),
     values: {
@@ -162,6 +158,21 @@ const presets = {
       16000: 2.5
     }
   },
+  bassBoost: {
+    label: t('player.eq.presets.bassBoost'),
+    values: {
+      31: 7,
+      62: 6.5,
+      125: 5.5,
+      250: 2.5,
+      500: 0,
+      1000: -1.5,
+      2000: -1,
+      4000: 0.5,
+      8000: 1,
+      16000: 1
+    }
+  },
   vocal: {
     label: t('player.eq.presets.vocal'),
     values: {
@@ -214,6 +225,10 @@ const presetOptions = Object.entries(presets).map(([value, preset]) => ({
   value
 }));
 
+const resolvePresetName = (presetName: string | null) => {
+  return presetName && presetName in presets ? presetName : 'custom';
+};
+
 const toggleEQ = (enabled: boolean) => {
   audioService.setEQEnabled(enabled);
 };
@@ -236,8 +251,9 @@ onMounted(() => {
 
   // 如果有保存的预设，应用该预设
   const savedPreset = audioService.getCurrentPreset();
-  if (savedPreset && presets[savedPreset as keyof typeof presets]) {
-    currentPreset.value = savedPreset;
+  currentPreset.value = resolvePresetName(savedPreset);
+  if (savedPreset && savedPreset !== currentPreset.value) {
+    audioService.setCurrentPreset(currentPreset.value);
   }
 });
 

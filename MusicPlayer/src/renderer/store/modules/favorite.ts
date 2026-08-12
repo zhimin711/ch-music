@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 import type { SongResult } from '@/types/music';
+import type { MusicServerFavorite } from '@/types/musicServer';
 import { getLocalStorageItem, isBilibiliIdMatch, setLocalStorageItem } from '@/utils/playerUtils';
 
 const toFavoriteKey = (songOrId: number | string | SongResult) => {
@@ -24,6 +25,68 @@ const toMusicServerId = (songOrId: number | string | SongResult) => {
 const isMusicServerFavoriteKey = (id: number | string) =>
   typeof id === 'string' && id.startsWith('musicServer:');
 
+const toExternalFavoriteKey = (externalId: number | string) => {
+  return String(externalId);
+};
+
+const toMusicServerFavoriteKey = (favorite: MusicServerFavorite) => {
+  const music = favorite.music;
+  if ((music.source || 'musicServer') === 'musicServer') {
+    return `musicServer:${music.musicId ?? music.id}`;
+  }
+  return toExternalFavoriteKey(music.externalId || music.id);
+};
+
+const toArtistText = (song: SongResult) => {
+  return (song.ar || song.artists || song.song?.artists || [])
+    .map((artist: any) => artist.name)
+    .filter(Boolean)
+    .join(' / ');
+};
+
+const toAlbumText = (song: SongResult) => {
+  return song.al?.name || song.album?.name || song.song?.album?.name || '';
+};
+
+const isLocalSong = (song: SongResult) => song.playMusicUrl?.startsWith('local://');
+
+const toExternalFavoritePayload = (songOrId: number | string | SongResult) => {
+  if (typeof songOrId !== 'object') {
+    if (typeof songOrId === 'number' || /^\d+$/.test(String(songOrId))) {
+      return {
+        source: 'netease',
+        externalId: String(songOrId),
+        title: '未知歌曲'
+      };
+    }
+    return null;
+  }
+
+  if (songOrId.source === 'musicServer' || isLocalSong(songOrId)) return null;
+
+  return {
+    source: songOrId.source || 'netease',
+    externalId: String(songOrId.id),
+    title: songOrId.name || '未知歌曲',
+    artist: toArtistText(songOrId) || null,
+    album: toAlbumText(songOrId) || null,
+    picUrl: songOrId.picUrl || songOrId.al?.picUrl || songOrId.album?.picUrl || null,
+    duration: songOrId.duration || songOrId.dt || null
+  };
+};
+
+const toExternalFavoriteIdentity = (songOrId: number | string | SongResult) => {
+  const payload = toExternalFavoritePayload(songOrId);
+  return payload ? { source: payload.source, externalId: payload.externalId } : null;
+};
+
+const isSameFavoriteKey = (existingId: number | string, key: number | string) => {
+  if (typeof key === 'string' && key.includes('--')) {
+    return isBilibiliIdMatch(existingId, key);
+  }
+  return existingId === key || String(existingId) === String(key);
+};
+
 /**
  * 收藏管理 Store
  * 负责：收藏列表、不喜欢列表的管理
@@ -41,31 +104,35 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const addToFavorite = async (songOrId: number | string | SongResult) => {
     const id = toFavoriteKey(songOrId);
     // 检查是否已存在
-    const isAlreadyInList = favoriteList.value.some((existingId) =>
-      typeof id === 'string' && id.includes('--')
-        ? isBilibiliIdMatch(existingId, id)
-        : existingId === id
-    );
+    const isAlreadyInList = favoriteList.value.some((existingId) => isSameFavoriteKey(existingId, id));
 
     if (!isAlreadyInList) {
       favoriteList.value.push(id);
       setLocalStorageItem('favoriteList', favoriteList.value);
+    }
 
-      const musicServerId = toMusicServerId(songOrId);
-      if (musicServerId) {
-        try {
-          const { addMusicServerFavorite } = await import('@/api/musicServer');
-          const { useMusicServerStore } = await import('./musicServer');
-          const musicServerStore = useMusicServerStore();
-          const { data } = await addMusicServerFavorite(musicServerId);
-          musicServerStore.favorites = data;
-          const nonServerLocal = favoriteList.value.filter((item) => !isMusicServerFavoriteKey(item));
-          const serverList = musicServerStore.favoriteMusicIds.map((item) => `musicServer:${item}`);
-          favoriteList.value = Array.from(new Set([...nonServerLocal, ...serverList]));
-          setLocalStorageItem('favoriteList', favoriteList.value);
-        } catch (error) {
-          console.error('收藏 MusicServer 歌曲失败:', error);
-        }
+    const musicServerId = toMusicServerId(songOrId);
+    const externalFavoritePayload = toExternalFavoritePayload(songOrId);
+    if (localStorage.getItem('musicServerToken') && (musicServerId || externalFavoritePayload)) {
+      try {
+        const { addMusicServerFavorite, addMusicServerExternalFavorite } = await import(
+          '@/api/musicServer'
+        );
+        const { useMusicServerStore } = await import('./musicServer');
+        const musicServerStore = useMusicServerStore();
+        const { data } = musicServerId
+          ? await addMusicServerFavorite(musicServerId)
+          : await addMusicServerExternalFavorite(externalFavoritePayload!);
+        musicServerStore.favorites = data;
+        const serverList = data.map(toMusicServerFavoriteKey);
+        const serverKeySet = new Set(serverList.map(String));
+        const nonServerLocal = favoriteList.value.filter(
+          (item) => !isMusicServerFavoriteKey(item) && !serverKeySet.has(String(item))
+        );
+        favoriteList.value = Array.from(new Set([...nonServerLocal, ...serverList]));
+        setLocalStorageItem('favoriteList', favoriteList.value);
+      } catch (error) {
+        console.error('同步 MusicServer 收藏失败:', error);
       }
     }
   };
@@ -81,21 +148,32 @@ export const useFavoriteStore = defineStore('favorite', () => {
         (existingId) => !isBilibiliIdMatch(existingId, id)
       );
     } else {
-      favoriteList.value = favoriteList.value.filter((existingId) => existingId !== id);
+      favoriteList.value = favoriteList.value.filter((existingId) => !isSameFavoriteKey(existingId, id));
 
       const musicServerId = toMusicServerId(songOrId);
-      if (musicServerId) {
+      const externalFavoriteIdentity = toExternalFavoriteIdentity(songOrId);
+      if (localStorage.getItem('musicServerToken') && (musicServerId || externalFavoriteIdentity)) {
         try {
-          const { removeMusicServerFavorite } = await import('@/api/musicServer');
+          const { removeMusicServerFavorite, removeMusicServerExternalFavorite } = await import(
+            '@/api/musicServer'
+          );
           const { useMusicServerStore } = await import('./musicServer');
           const musicServerStore = useMusicServerStore();
-          const { data } = await removeMusicServerFavorite(musicServerId);
+          const { data } = musicServerId
+            ? await removeMusicServerFavorite(musicServerId)
+            : await removeMusicServerExternalFavorite(
+                externalFavoriteIdentity!.source,
+                externalFavoriteIdentity!.externalId
+              );
           musicServerStore.favorites = data;
-          const nonServerLocal = favoriteList.value.filter((item) => !isMusicServerFavoriteKey(item));
-          const serverList = musicServerStore.favoriteMusicIds.map((item) => `musicServer:${item}`);
+          const serverList = data.map(toMusicServerFavoriteKey);
+          const serverKeySet = new Set(serverList.map(String));
+          const nonServerLocal = favoriteList.value.filter(
+            (item) => !isMusicServerFavoriteKey(item) && !serverKeySet.has(String(item))
+          );
           favoriteList.value = Array.from(new Set([...nonServerLocal, ...serverList]));
         } catch (error) {
-          console.error('取消收藏 MusicServer 歌曲失败:', error);
+          console.error('取消同步 MusicServer 收藏失败:', error);
         }
       }
     }
@@ -132,8 +210,11 @@ export const useFavoriteStore = defineStore('favorite', () => {
         const { useMusicServerStore } = await import('./musicServer');
         const musicServerStore = useMusicServerStore();
         await musicServerStore.loadFavorites();
-        const serverList = musicServerStore.favoriteMusicIds.map((id) => `musicServer:${id}`);
-        const nonServerLocal = localList.filter((id) => !isMusicServerFavoriteKey(id));
+        const serverList = musicServerStore.favorites.map(toMusicServerFavoriteKey);
+        const serverKeySet = new Set(serverList.map(String));
+        const nonServerLocal = localList.filter(
+          (id) => !isMusicServerFavoriteKey(id) && !serverKeySet.has(String(id))
+        );
         favoriteList.value = Array.from(new Set([...nonServerLocal, ...serverList]));
       } catch (error) {
         console.error('获取 MusicServer 收藏列表失败，使用本地数据:', error);
@@ -149,13 +230,9 @@ export const useFavoriteStore = defineStore('favorite', () => {
   /**
    * 检查歌曲是否已收藏
    */
-  const isFavorite = (id: number | string): boolean => {
+  const isFavorite = (id: number | string | SongResult): boolean => {
     const key = toFavoriteKey(id);
-    return favoriteList.value.some((existingId) =>
-      typeof key === 'string' && key.includes('--')
-        ? isBilibiliIdMatch(existingId, key)
-        : existingId === key
-    );
+    return favoriteList.value.some((existingId) => isSameFavoriteKey(existingId, key));
   };
 
   /**

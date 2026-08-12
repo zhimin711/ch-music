@@ -145,14 +145,7 @@
         </template>
         {{ playMusic?.id ? t('player.playBar.lyric') : t('player.playBar.noSongPlaying') }}
       </n-tooltip>
-      <n-tooltip v-if="playMusic?.id && isElectron" trigger="hover" :z-index="9999999">
-        <template #trigger>
-          <reparse-popover v-if="playMusic?.id" />
-        </template>
-        {{ t('player.playBar.reparse') }}
-      </n-tooltip>
-
-      <!-- 高级控制菜单按钮（整合了 EQ、定时关闭、播放速度） -->
+      <!-- 均衡器独立按钮 + 高级控制菜单（定时关闭、播放速度） -->
       <advanced-controls-popover />
 
       <n-tooltip trigger="hover" :z-index="9999999">
@@ -178,7 +171,6 @@ import { useI18n } from 'vue-i18n';
 
 import MusicFullWrapper from '@/components/lyric/MusicFullWrapper.vue';
 import AdvancedControlsPopover from '@/components/player/AdvancedControlsPopover.vue';
-import ReparsePopover from '@/components/player/ReparsePopover.vue';
 import {
   allTime,
   artistList,

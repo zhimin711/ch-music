@@ -87,7 +87,8 @@ const layoutRouter = [
       title: 'comp.history',
       icon: 'icon-a-TicketStar',
       keepAlive: true,
-      isMobile: true
+      isMobile: true,
+      requireAuth: true
     }
   },
   {
@@ -110,7 +111,8 @@ const layoutRouter = [
       title: 'comp.cloudMusic',
       icon: 'ri-cloud-fill',
       keepAlive: true,
-      isMobile: true
+      isMobile: true,
+      requireAuth: true
     },
     component: () => import('@/views/cloud-music/index.vue')
   },
@@ -122,7 +124,8 @@ const layoutRouter = [
       icon: 'icon-Profile',
       keepAlive: true,
       noScroll: true,
-      isMobile: true
+      isMobile: true,
+      requireAuth: true
     },
     component: () => import('@/views/user/index.vue')
   },

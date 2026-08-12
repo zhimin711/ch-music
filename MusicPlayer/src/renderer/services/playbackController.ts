@@ -12,7 +12,7 @@ import { createDiscreteApi } from 'naive-ui';
 
 import i18n from '@/../i18n/renderer';
 import { getParsingMusicUrl } from '@/api/music';
-import { loadLrc, useSongDetail } from '@/hooks/usePlayerHooks';
+import { loadLrcBySong, useSongDetail } from '@/hooks/usePlayerHooks';
 import { audioService } from '@/services/audioService';
 import { playbackRequestManager } from '@/services/playbackRequestManager';
 // preloadService 用于预加载下一首的 URL 验证（triggerPreload 中使用）
@@ -58,6 +58,18 @@ const getSettingsStore = async () => {
   return useSettingsStore();
 };
 
+const cacheMusicServerTrack = async (music: SongResult): Promise<void> => {
+  if (music.source !== 'musicServer') return;
+
+  try {
+    const { useMusicServerStore } = await import('@/store/modules/musicServer');
+    await useMusicServerStore().cachePlayedMusic(music.id);
+  } catch (error) {
+    // 缓存失败不应影响正在进行的在线播放。
+    console.warn('[playbackController] 加入云音乐缓存队列失败:', error);
+  }
+};
+
 // ==================== 内部辅助函数 ====================
 
 /**
@@ -72,13 +84,15 @@ const loadMetadata = async (
 }> => {
   const [lyrics, { backgroundColor, primaryColor }] = await Promise.all([
     (async () => {
-      if (music.source === 'musicServer') {
+      // 本地音乐：内嵌歌词已由 toSongResult 注入（如果没有就是 EMPTY_LYRIC），
+      // 不应再去 loadLrc 调任何远程接口。
+      if (music.source === 'local' || music.playMusicUrl?.startsWith('local://')) {
         return music.lyric || EMPTY_LYRIC;
       }
       if (music.lyric && music.lyric.lrcTimeArray.length > 0) {
         return music.lyric;
       }
-      return await loadLrc(music.id);
+      return await loadLrcBySong(music);
     })(),
     (async () => {
       if (music.backgroundColor && music.primaryColor) {
@@ -179,8 +193,11 @@ export const playTrack = async (
 
   // 如果是新歌曲，重置已尝试的音源
   const playerCore = await getPlayerCoreStore();
-  if (music.id !== playerCore.playMusic.id) {
+  const isNewTrack =
+    music.id !== playerCore.playMusic.id || music.source !== playerCore.playMusic.source;
+  if (isNewTrack) {
     SongSourceConfigManager.clearTriedSources(music.id);
+    window.dispatchEvent(new CustomEvent('music-lyric-clear', { detail: { songId: music.id } }));
   }
 
   // 2. 停止当前音频
@@ -286,6 +303,8 @@ export const playTrack = async (
       playerCore.playMusic.playLoading = false;
       playerCore.playMusic.isFirstPlay = false;
       playbackRequestManager.completeRequest(requestId);
+      // 私有云音乐在确认可播放后异步入队，避免播放列表预处理时缓存整张列表。
+      void cacheMusicServerTrack(playerCore.playMusic);
       console.log(`[playbackController] gen=${gen} 播放成功: ${music.name}`);
       return true;
     } else {
@@ -393,6 +412,10 @@ export const reparseCurrentSong = async (
 export const setupUrlExpiredHandler = (): void => {
   audioService.on('url_expired', async (expiredTrack: SongResult) => {
     if (!expiredTrack) return;
+    if (expiredTrack.source === 'local' || expiredTrack.playMusicUrl?.startsWith('local://')) {
+      console.log('[playbackController] 本地音乐不处理URL过期事件:', expiredTrack.name);
+      return;
+    }
 
     console.log('[playbackController] 检测到URL过期事件，准备重新获取URL', expiredTrack.name);
 
@@ -421,10 +444,22 @@ export const setupUrlExpiredHandler = (): void => {
     }
 
     try {
+      let playMusicUrl = expiredTrack.playMusicUrl;
+      if (expiredTrack.source === 'musicServer') {
+        const { useMusicServerStore } = await import('@/store/modules/musicServer');
+        const resolvedUrl = await useMusicServerStore().resolvePlayedMusicUrl(expiredTrack.id);
+        if (!resolvedUrl) {
+          throw new Error('云音乐库中未找到可用的播放地址');
+        }
+        playMusicUrl = resolvedUrl;
+      } else {
+        playMusicUrl = undefined;
+      }
+
       const trackToPlay: SongResult = {
         ...expiredTrack,
         isFirstPlay: true,
-        playMusicUrl: undefined
+        playMusicUrl
       };
 
       const success = await playTrack(trackToPlay, true);

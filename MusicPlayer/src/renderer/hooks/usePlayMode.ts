@@ -20,7 +20,7 @@ export function usePlayMode() {
       case 0:
         return 'ri-repeat-2-line';
       case 1:
-        return 'ri-repeat-one-line';
+        return 'ri-repeat-2-line';
       case 2:
         return 'ri-shuffle-line';
       default:

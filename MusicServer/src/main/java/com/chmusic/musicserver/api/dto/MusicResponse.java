@@ -1,5 +1,6 @@
 package com.chmusic.musicserver.api.dto;
 
+import com.chmusic.musicserver.favorite.FavoriteTrack;
 import com.chmusic.musicserver.music.MusicFile;
 import com.chmusic.musicserver.playlist.PlaylistTrack;
 import java.time.Instant;
@@ -14,6 +15,7 @@ public record MusicResponse(String id, Long musicId, Long trackId, String source
 
     public static MusicResponse from(MusicFile music) {
         String streamUrl = "/api/music/" + music.getId() + "/stream";
+        String coverUrl = music.getCoverPath() == null ? null : "/api/music/" + music.getId() + "/cover";
         return new MusicResponse(
                 String.valueOf(music.getId()),
                 music.getId(),
@@ -23,8 +25,8 @@ public record MusicResponse(String id, Long musicId, Long trackId, String source
                 music.getTitle(),
                 music.getArtist(),
                 music.getAlbum(),
-                null,
-                null,
+                coverUrl,
+                music.getDuration(),
                 music.getOriginalFilename(),
                 music.getContentType(),
                 music.getFileSize(),
@@ -63,6 +65,33 @@ public record MusicResponse(String id, Long musicId, Long trackId, String source
                 "",
                 track.getCreatedAt(),
                 track.getCreatedAt(),
+                null,
+                PlaybackCapabilities.unavailable());
+    }
+
+    public static MusicResponse from(FavoriteTrack favorite) {
+        MusicFile music = favorite.getMusic();
+        if (music != null) {
+            return from(music);
+        }
+
+        return new MusicResponse(
+                favorite.getExternalId(),
+                null,
+                favorite.getId(),
+                favorite.getExternalSource(),
+                favorite.getExternalId(),
+                favorite.getTitle(),
+                favorite.getArtist(),
+                favorite.getAlbum(),
+                favorite.getPicUrl(),
+                favorite.getDuration(),
+                favorite.getTitle(),
+                "external/" + favorite.getExternalSource(),
+                0,
+                "",
+                favorite.getCreatedAt(),
+                favorite.getCreatedAt(),
                 null,
                 PlaybackCapabilities.unavailable());
     }
