@@ -380,13 +380,16 @@ class UserInfoFragment : Fragment() {
             binding.musicList?.addView(emptyText(getString(R.string.music_server_empty_library)))
             return
         }
-        state.music.forEach { music ->
+        val queue = state.music.map { musicServerRepository.toSong(it) }
+        state.music.forEachIndexed { index, music ->
             binding.musicList?.addView(
                 musicRow(
                     music = music,
                     isFavorite = state.favorites.any { it.music.stableMusicId == music.stableMusicId },
                     showDelete = true,
-                    cacheEntry = state.cacheEntryFor(music)
+                    cacheEntry = state.cacheEntryFor(music),
+                    queue = queue,
+                    queuePosition = index
                 )
             )
         }
@@ -398,13 +401,16 @@ class UserInfoFragment : Fragment() {
             binding.favoriteList?.addView(emptyText(getString(R.string.music_server_empty_favorites)))
             return
         }
-        state.favorites.forEach { favorite ->
+        val queue = state.favorites.map { musicServerRepository.toSong(it.music) }
+        state.favorites.forEachIndexed { index, favorite ->
             binding.favoriteList?.addView(
                 musicRow(
                     music = favorite.music,
                     isFavorite = true,
                     showDelete = false,
-                    cacheEntry = state.cacheEntryFor(favorite.music)
+                    cacheEntry = state.cacheEntryFor(favorite.music),
+                    queue = queue,
+                    queuePosition = index
                 )
             )
         }
@@ -472,7 +478,9 @@ class UserInfoFragment : Fragment() {
         music: MusicServerMusic,
         isFavorite: Boolean,
         showDelete: Boolean,
-        cacheEntry: MusicServerCacheEntry?
+        cacheEntry: MusicServerCacheEntry?,
+        queue: List<Song>,
+        queuePosition: Int
     ): View {
         val ctx = requireContext()
         val row = LayoutInflater.from(ctx)
@@ -527,7 +535,7 @@ class UserInfoFragment : Fragment() {
             showTrackOverflow(anchor, music, song, cacheEntry, showDelete)
         }
 
-        row.setOnClickListener { playSongs(listOf(song)) }
+        row.setOnClickListener { playSongs(queue, queuePosition) }
         return row
     }
 
@@ -735,6 +743,8 @@ class UserInfoFragment : Fragment() {
             orientation = LinearLayout.VERTICAL
             setPadding(dip(16))
         }
+        val playableTracks = playlist.tracks.filter { it.isPrivateMusic }
+        val queue = playableTracks.map { musicServerRepository.toSong(it) }
         if (playlist.tracks.isEmpty()) {
             container.addView(emptyText("No tracks"))
         } else {
@@ -748,7 +758,7 @@ class UserInfoFragment : Fragment() {
                 }
                 if (track.isPrivateMusic) {
                     val play = smallButton(R.string.action_play) {
-                        playSongs(listOf(musicServerRepository.toSong(track)))
+                        playSongs(queue, playableTracks.indexOf(track))
                     }
                     row.addView(buttonRow(play, remove))
                 } else {
@@ -1032,12 +1042,12 @@ class UserInfoFragment : Fragment() {
         }
     }
 
-    private fun playSongs(songs: List<Song>) {
+    private fun playSongs(songs: List<Song>, startPosition: Int = 0) {
         if (songs.isEmpty()) {
             showToast("暂无可播放的私人音乐")
             return
         }
-        MusicPlayerRemote.openQueue(songs, 0, true)
+        MusicPlayerRemote.openQueue(songs, startPosition, true)
     }
 
     private fun runServerAction(

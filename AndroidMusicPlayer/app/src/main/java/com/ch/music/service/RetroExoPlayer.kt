@@ -38,6 +38,7 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
         .build()
     private val musicServerDataSourceFactory by inject<MusicServerDataSourceFactory>()
     override var callbacks: PlaybackCallbacks? = null
+    private var dataSourceCompletion: ((success: Boolean) -> Unit)? = null
 
     /**
      * @return True if the player is ready to go, false otherwise
@@ -59,10 +60,11 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
         completion: (success: Boolean) -> Unit,
     ) {
         isInitialized = false
+        dataSourceCompletion = completion
         val mediaItem = MediaItem.fromUri(song.uri)
         val musicServerMediaSource = musicServerDataSourceFactory.createMediaSource(song)
-        try {
-            Handler(Looper.getMainLooper()).post {
+        Handler(Looper.getMainLooper()).post {
+            try {
                 if (musicServerMediaSource != null) {
                     player.setMediaSource(musicServerMediaSource)
                 } else {
@@ -70,22 +72,12 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
                 }
                 player.setAudioAttributes(audioAttributes, false)
                 player.playbackParameters = PlaybackParameters(playbackSpeed, playbackPitch)
-
-                player.addListener(object : Player.Listener {
-                    override fun onPlaybackStateChanged(state: Int) {
-                        if (state == Player.STATE_READY) {
-                            player.removeListener(this)
-                            isInitialized = true
-                            completion(true)
-                        }
-                    }
-                })
                 player.addListener(this)
                 player.prepare()
+            } catch (error: Exception) {
+                error.printStackTrace()
+                completeDataSource(false)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            completion(false)
         }
     }
 
@@ -225,22 +217,37 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
         get() = player.audioSessionId
 
     override fun onPlaybackStateChanged(state: Int) {
-        if (state == Player.STATE_ENDED) {
-            callbacks?.onTrackEnded()
-        } else {
-            callbacks?.onPlayStateChanged()
+        when (state) {
+            Player.STATE_READY -> {
+                isInitialized = true
+                completeDataSource(true)
+                callbacks?.onPlayStateChanged()
+            }
+            Player.STATE_ENDED -> callbacks?.onTrackEnded()
+            else -> callbacks?.onPlayStateChanged()
         }
     }
 
     override fun onPlayerError(error: PlaybackException) {
         logE(error)
+        val failedWhilePreparing = dataSourceCompletion != null
         isInitialized = false
         player.release()
         player = ExoPlayer.Builder(context)
             .setAudioAttributes(audioAttributes, false)
             .build()
         player.setWakeMode(C.WAKE_MODE_LOCAL)
+        completeDataSource(false)
         context.showToast(R.string.unplayable_file)
+        if (!failedWhilePreparing) {
+            callbacks?.onTrackEnded()
+        }
+    }
+
+    private fun completeDataSource(success: Boolean) {
+        val completion = dataSourceCompletion ?: return
+        dataSourceCompletion = null
+        completion(success)
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {

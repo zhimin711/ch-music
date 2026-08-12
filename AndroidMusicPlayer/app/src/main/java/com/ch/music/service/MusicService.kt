@@ -835,6 +835,10 @@ class MusicService : MediaBrowserServiceCompat(),
     }
 
     fun playSongAt(position: Int) {
+        playSongAt(position, emptySet())
+    }
+
+    private fun playSongAt(position: Int, failedPositions: Set<Int>) {
         // Every chromecast method needs to run on main thread or you are greeted with IllegalStateException
         // So it will use Main dispatcher
         // And by using Default dispatcher for local playback we are reduce the burden of main thread
@@ -843,12 +847,30 @@ class MusicService : MediaBrowserServiceCompat(),
                 if (success) {
                     play()
                 } else {
-                    runOnUiThread {
-                        showToast(R.string.unplayable_file)
+                    val failures = failedPositions + position
+                    val nextPosition = nextPositionAfterFailure(position, failures)
+                    if (nextPosition != null) {
+                        playSongAt(nextPosition, failures)
+                    } else {
+                        runOnUiThread {
+                            showToast(R.string.unplayable_file)
+                        }
                     }
                 }
             }
         }
+    }
+
+    private fun nextPositionAfterFailure(position: Int, failedPositions: Set<Int>): Int? {
+        for (candidate in position + 1 until playingQueue.size) {
+            if (candidate !in failedPositions) return candidate
+        }
+        if (repeatMode != REPEAT_MODE_NONE) {
+            for (candidate in 0 until position) {
+                if (candidate !in failedPositions) return candidate
+            }
+        }
+        return null
     }
 
     @Synchronized
