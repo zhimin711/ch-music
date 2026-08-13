@@ -15,7 +15,7 @@ import java.text.Collator
 
 
 interface RoomRepository {
-    fun historySongs(): List<HistoryEntity>
+    suspend fun historySongs(): List<HistoryEntity>
     fun favoritePlaylistLiveData(favorite: String): LiveData<List<SongEntity>>
     fun observableHistorySongs(): LiveData<List<HistoryEntity>>
     fun getSongs(playListId: Long): LiveData<List<SongEntity>>
@@ -139,7 +139,7 @@ class RealRoomRepository(
     override fun observableHistorySongs(): LiveData<List<HistoryEntity>> =
         historyDao.observableHistorySongs()
 
-    override fun historySongs(): List<HistoryEntity> = historyDao.historySongs()
+    override suspend fun historySongs(): List<HistoryEntity> = historyDao.historySongs()
 
     override fun favoritePlaylistLiveData(favorite: String): LiveData<List<SongEntity>> =
         playlistDao.favoritesSongsLiveData(favorite)

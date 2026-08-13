@@ -21,7 +21,8 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import android.os.Looper;
 import android.text.Layout;
 import android.text.StaticLayout;
@@ -49,6 +50,8 @@ import com.ch.music.R;
  */
 @SuppressLint("StaticFieldLeak")
 public class LrcView extends View {
+
+    private static final ExecutorService sLrcExecutor = Executors.newSingleThreadExecutor();
     private static final long ADJUST_DURATION = 0;
     private static final long TIMELINE_KEEP_TIME = 4 * DateUtils.SECOND_IN_MILLIS;
 
@@ -325,20 +328,15 @@ public class LrcView extends View {
             }
             String flag = sb.toString();
             setFlag(flag);
-            new AsyncTask<File, Integer, List<LrcEntry>>() {
-                @Override
-                protected List<LrcEntry> doInBackground(File... params) {
-                    return LrcUtils.parseLrc(params);
-                }
-
-                @Override
-                protected void onPostExecute(List<LrcEntry> lrcEntries) {
+            sLrcExecutor.execute(() -> {
+                final List<LrcEntry> lrcEntries = LrcUtils.parseLrc(new File[]{mainLrcFile, secondLrcFile});
+                post(() -> {
                     if (getFlag() == flag) {
                         onLrcLoaded(lrcEntries);
                         setFlag(null);
                     }
-                }
-            }.execute(mainLrcFile, secondLrcFile);
+                });
+            });
         });
     }
 
@@ -358,20 +356,15 @@ public class LrcView extends View {
                     }
                     String flag = sb.toString();
                     setFlag(flag);
-                    new AsyncTask<String, Integer, List<LrcEntry>>() {
-                        @Override
-                        protected List<LrcEntry> doInBackground(String... params) {
-                            return LrcUtils.parseLrc(params);
-                        }
-
-                        @Override
-                        protected void onPostExecute(List<LrcEntry> lrcEntries) {
+                    sLrcExecutor.execute(() -> {
+                        final List<LrcEntry> lrcEntries = LrcUtils.parseLrc(new String[]{mainLrcText, secondLrcText});
+                        post(() -> {
                             if (getFlag() == flag) {
                                 onLrcLoaded(lrcEntries);
                                 setFlag(null);
                             }
-                        }
-                    }.execute(mainLrcText, secondLrcText);
+                        });
+                    });
                 });
     }
 

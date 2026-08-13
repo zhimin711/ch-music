@@ -14,7 +14,6 @@
  */
 package com.ch.music.adapter
 
-import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,8 +23,10 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.findFragment
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.ch.music.*
 import com.ch.music.adapter.album.AlbumAdapter
@@ -42,12 +43,22 @@ import com.ch.music.model.Song
 import com.ch.music.util.PreferenceUtil
 
 class HomeAdapter(private val activity: AppCompatActivity) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>(), IArtistClickListener, IAlbumClickListener {
+    ListAdapter<Home, RecyclerView.ViewHolder>(DIFF_CALLBACK), IArtistClickListener, IAlbumClickListener {
 
-    private var list = listOf<Home>()
+    companion object {
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Home>() {
+            override fun areItemsTheSame(oldItem: Home, newItem: Home): Boolean {
+                return oldItem.homeSection == newItem.homeSection
+            }
+
+            override fun areContentsTheSame(oldItem: Home, newItem: Home): Boolean {
+                return oldItem == newItem
+            }
+        }
+    }
 
     override fun getItemViewType(position: Int): Int {
-        return list[position].homeSection
+        return currentList[position].homeSection
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -64,7 +75,7 @@ class HomeAdapter(private val activity: AppCompatActivity) :
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val home = list[position]
+        val home = currentList[position]
         when (getItemViewType(position)) {
             RECENT_ALBUMS -> {
                 val viewHolder = holder as AlbumViewHolder
@@ -124,14 +135,8 @@ class HomeAdapter(private val activity: AppCompatActivity) :
         }
     }
 
-    override fun getItemCount(): Int {
-        return list.size
-    }
-
-    @SuppressLint("NotifyDataSetChanged")
     fun swapData(sections: List<Home>) {
-        list = sections
-        notifyDataSetChanged()
+        submitList(sections)
     }
 
     @Suppress("UNCHECKED_CAST")

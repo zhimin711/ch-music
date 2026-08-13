@@ -28,6 +28,7 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.findNavController
+import androidx.recyclerview.widget.DiffUtil
 import com.ch.music.EXTRA_ALBUM_ID
 import com.ch.music.R
 import com.ch.music.adapter.base.AbsMultiSelectAdapter
@@ -61,7 +62,8 @@ open class SongAdapter(
     showSectionName: Boolean = true
 ) : AbsMultiSelectAdapter<SongAdapter.ViewHolder, Song>(
     activity,
-    R.menu.menu_media_selection
+    R.menu.menu_media_selection,
+    DIFF_CALLBACK
 ), PopupTextProvider {
 
     private var showSectionName = true
@@ -72,8 +74,11 @@ open class SongAdapter(
     }
 
     open fun swapDataSet(dataSet: List<Song>) {
-        this.dataSet = ArrayList(dataSet)
-        notifyDataSetChanged()
+        val newList = ArrayList(dataSet)
+        // Keep [dataSet] as the visible state: it is swapped atomically when the
+        // DiffUtil result is committed, so reads (binding, item ids, playback)
+        // always match what the RecyclerView currently shows.
+        submitList(newList) { this.dataSet = newList }
     }
 
     override fun getItemId(position: Int): Long {
@@ -171,10 +176,6 @@ open class SongAdapter(
         return song.albumName
     }
 
-    override fun getItemCount(): Int {
-        return dataSet.size
-    }
-
     override fun getIdentifier(position: Int): Song? {
         return dataSet[position]
     }
@@ -258,5 +259,16 @@ open class SongAdapter(
 
     companion object {
         val TAG: String = SongAdapter::class.java.simpleName
+
+        val DIFF_CALLBACK: DiffUtil.ItemCallback<Song> = object : DiffUtil.ItemCallback<Song>() {
+            override fun areItemsTheSame(oldItem: Song, newItem: Song): Boolean {
+                return oldItem.id == newItem.id
+            }
+
+            override fun areContentsTheSame(oldItem: Song, newItem: Song): Boolean {
+                // Song.equals compares all key fields (title, artist, album, etc.)
+                return oldItem == newItem
+            }
+        }
     }
 }

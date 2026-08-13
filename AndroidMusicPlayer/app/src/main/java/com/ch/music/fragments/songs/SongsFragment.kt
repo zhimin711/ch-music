@@ -83,12 +83,18 @@ class SongsFragment : AbsRecyclerViewCustomGridSizeFragment<SongAdapter, GridLay
     }
 
     override fun createAdapter(): SongAdapter {
-        val dataSet = if (adapter == null) mutableListOf() else adapter!!.dataSet
-        return SongAdapter(
+        val previousSongs = adapter?.dataSet
+        val newAdapter = SongAdapter(
             requireActivity(),
-            dataSet,
+            mutableListOf(),
             itemLayoutRes()
         )
+        // Restore the currently shown songs through submitList so the ListAdapter
+        // state stays in sync with what the RecyclerView renders.
+        if (!previousSongs.isNullOrEmpty()) {
+            newAdapter.swapDataSet(previousSongs)
+        }
+        return newAdapter
     }
 
     override fun loadGridSize(): Int {

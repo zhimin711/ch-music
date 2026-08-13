@@ -84,6 +84,16 @@ class GenreDetailsFragment : AbsMainActivityFragment(R.layout.fragment_playlist_
                 super.onChanged()
                 checkIsEmpty()
             }
+
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(positionStart, itemCount)
+                checkIsEmpty()
+            }
+
+            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+                super.onItemRangeRemoved(positionStart, itemCount)
+                checkIsEmpty()
+            }
         })
     }
 

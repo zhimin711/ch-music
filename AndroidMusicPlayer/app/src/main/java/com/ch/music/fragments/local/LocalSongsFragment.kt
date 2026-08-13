@@ -41,6 +41,14 @@ class LocalSongsFragment : Fragment(R.layout.fragment_local_list) {
             override fun onChanged() {
                 updateEmpty()
             }
+
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                updateEmpty()
+            }
+
+            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+                updateEmpty()
+            }
         })
 
         binding.recyclerView.apply {

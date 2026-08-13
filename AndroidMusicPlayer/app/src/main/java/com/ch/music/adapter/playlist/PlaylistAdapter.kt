@@ -24,6 +24,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isGone
 import androidx.core.view.setPadding
 import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.DiffUtil
 import com.ch.appthemehelper.util.ATHUtil
 import com.ch.appthemehelper.util.TintHelper
 import com.ch.music.R
@@ -52,7 +53,22 @@ class PlaylistAdapter(
     private val listener: IPlaylistClickListener
 ) : AbsMultiSelectAdapter<PlaylistAdapter.ViewHolder, PlaylistWithSongs>(
     activity,
-    R.menu.menu_playlists_selection
+    R.menu.menu_playlists_selection,
+    object : DiffUtil.ItemCallback<PlaylistWithSongs>() {
+        override fun areItemsTheSame(
+            oldItem: PlaylistWithSongs,
+            newItem: PlaylistWithSongs
+        ): Boolean {
+            return oldItem.playlistEntity.playListId == newItem.playlistEntity.playListId
+        }
+
+        override fun areContentsTheSame(
+            oldItem: PlaylistWithSongs,
+            newItem: PlaylistWithSongs
+        ): Boolean {
+            return oldItem == newItem
+        }
+    }
 ), PopupTextProvider {
 
     init {

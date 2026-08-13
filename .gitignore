@@ -57,3 +57,5 @@ target
 *.log
 .snapshots
 Implementation Logs/
+
+.chkb/

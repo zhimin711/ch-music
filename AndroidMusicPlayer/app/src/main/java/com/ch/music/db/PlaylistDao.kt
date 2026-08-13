@@ -26,7 +26,7 @@ interface PlaylistDao {
     suspend fun renamePlaylist(playlistId: Long, name: String)
 
     @Query("SELECT * FROM PlaylistEntity WHERE playlist_name = :name")
-    fun playlist(name: String): List<PlaylistEntity>
+    suspend fun playlist(name: String): List<PlaylistEntity>
 
     @Query("SELECT * FROM PlaylistEntity")
     suspend fun playlists(): List<PlaylistEntity>
@@ -68,7 +68,7 @@ interface PlaylistDao {
     fun favoritesSongsLiveData(playlistName: String): LiveData<List<SongEntity>>
 
     @Query("SELECT * FROM SongEntity WHERE playlist_creator_id= :playlistId")
-    fun favoritesSongs(playlistId: Long): List<SongEntity>
+    suspend fun favoritesSongs(playlistId: Long): List<SongEntity>
 
     @Query("SELECT EXISTS(SELECT * FROM PlaylistEntity WHERE playlist_id = :playlistId)")
     fun checkPlaylistExists(playlistId: Long): LiveData<Boolean>

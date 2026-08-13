@@ -23,6 +23,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.DiffUtil
 import com.ch.music.R
 import com.ch.music.adapter.base.AbsMultiSelectAdapter
 import com.ch.music.adapter.base.MediaEntryViewHolder
@@ -48,7 +49,19 @@ class ArtistAdapter(
     var itemLayoutRes: Int,
     val IArtistClickListener: IArtistClickListener,
     val IAlbumArtistClickListener: IAlbumArtistClickListener? = null
-) : AbsMultiSelectAdapter<ArtistAdapter.ViewHolder, Artist>(activity, R.menu.menu_media_selection),
+) : AbsMultiSelectAdapter<ArtistAdapter.ViewHolder, Artist>(
+    activity,
+    R.menu.menu_media_selection,
+    object : DiffUtil.ItemCallback<Artist>() {
+        override fun areItemsTheSame(oldItem: Artist, newItem: Artist): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Artist, newItem: Artist): Boolean {
+            return oldItem == newItem
+        }
+    }
+),
     PopupTextProvider {
 
     var albumArtistsOnly = false

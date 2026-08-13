@@ -30,7 +30,7 @@ import com.ch.music.util.logE
 
 interface Repository {
 
-    fun historySong(): List<HistoryEntity>
+    suspend fun historySong(): List<HistoryEntity>
     fun favorites(): LiveData<List<SongEntity>>
     fun observableHistorySongs(): LiveData<List<Song>>
     fun albumById(albumId: Long): Album
@@ -298,7 +298,7 @@ class RealRepository(
             it.fromHistoryToSongs()
         }
 
-    override fun historySong(): List<HistoryEntity> =
+    override suspend fun historySong(): List<HistoryEntity> =
         roomRepository.historySongs()
 
     override fun favorites(): LiveData<List<SongEntity>> =

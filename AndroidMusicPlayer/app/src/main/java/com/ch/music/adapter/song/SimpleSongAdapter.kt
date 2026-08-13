@@ -26,11 +26,6 @@ class SimpleSongAdapter(
     layoutRes: Int
 ) : SongAdapter(context, songs, layoutRes) {
 
-    override fun swapDataSet(dataSet: List<Song>) {
-        this.dataSet = dataSet.toMutableList()
-        notifyDataSetChanged()
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(LayoutInflater.from(activity).inflate(itemLayoutRes, parent, false))
     }

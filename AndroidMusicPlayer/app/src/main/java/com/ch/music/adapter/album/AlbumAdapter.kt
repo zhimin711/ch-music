@@ -21,6 +21,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.DiffUtil
 import com.ch.music.R
 import com.ch.music.adapter.base.AbsMultiSelectAdapter
 import com.ch.music.adapter.base.MediaEntryViewHolder
@@ -46,7 +47,16 @@ open class AlbumAdapter(
     val listener: IAlbumClickListener?
 ) : AbsMultiSelectAdapter<AlbumAdapter.ViewHolder, Album>(
     activity,
-    R.menu.menu_media_selection
+    R.menu.menu_media_selection,
+    object : DiffUtil.ItemCallback<Album>() {
+        override fun areItemsTheSame(oldItem: Album, newItem: Album): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Album, newItem: Album): Boolean {
+            return oldItem == newItem
+        }
+    }
 ), PopupTextProvider {
 
     init {

@@ -52,7 +52,7 @@ object RetroGlideExtension : KoinComponent {
         get() = R.drawable.material_design_default
 
     private val DEFAULT_DISK_CACHE_STRATEGY_ARTIST = DiskCacheStrategy.RESOURCE
-    private val DEFAULT_DISK_CACHE_STRATEGY = DiskCacheStrategy.NONE
+    private val DEFAULT_DISK_CACHE_STRATEGY = DiskCacheStrategy.DATA
 
     private const val DEFAULT_ANIMATION = android.R.anim.fade_in
 

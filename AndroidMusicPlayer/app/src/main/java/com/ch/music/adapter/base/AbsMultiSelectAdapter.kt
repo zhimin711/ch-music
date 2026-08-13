@@ -7,14 +7,17 @@ import android.view.MenuItem
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.MenuRes
 import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.ch.music.R
 import com.ch.music.databinding.NumberRollViewBinding
 import com.ch.music.views.NumberRollView
 
-abstract class AbsMultiSelectAdapter<V : RecyclerView.ViewHolder?, I>(
+abstract class AbsMultiSelectAdapter<V : RecyclerView.ViewHolder, I>(
     open val activity: FragmentActivity, @MenuRes menuRes: Int,
-) : RecyclerView.Adapter<V>(), ActionMode.Callback {
+    diffCallback: DiffUtil.ItemCallback<I>,
+) : ListAdapter<I, V>(diffCallback), ActionMode.Callback {
     var actionMode: ActionMode? = null
     private val checked: MutableList<I>
     private var menuRes: Int

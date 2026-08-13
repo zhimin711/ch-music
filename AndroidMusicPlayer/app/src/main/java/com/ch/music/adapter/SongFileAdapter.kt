@@ -21,6 +21,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
 import com.ch.appthemehelper.util.ATHUtil
 import com.ch.music.R
 import com.ch.music.adapter.base.AbsMultiSelectAdapter
@@ -45,7 +46,16 @@ class SongFileAdapter(
     private val itemLayoutRes: Int,
     private val iCallbacks: ICallbacks?
 ) : AbsMultiSelectAdapter<SongFileAdapter.ViewHolder, File>(
-    activity, R.menu.menu_media_selection
+    activity, R.menu.menu_media_selection,
+    object : DiffUtil.ItemCallback<File>() {
+        override fun areItemsTheSame(oldItem: File, newItem: File): Boolean {
+            return oldItem.absolutePath == newItem.absolutePath
+        }
+
+        override fun areContentsTheSame(oldItem: File, newItem: File): Boolean {
+            return oldItem == newItem
+        }
+    }
 ), PopupTextProvider {
 
     init {

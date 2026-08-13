@@ -84,9 +84,17 @@ class PlayingQueueAdapter(
     }
 
     fun swapDataSet(dataSet: List<Song>, position: Int) {
-        this.dataSet = dataSet.toMutableList()
         current = position
-        notifyDataSetChanged()
+        val newList = ArrayList(dataSet)
+        submitList(newList) { this@PlayingQueueAdapter.dataSet = newList }
+    }
+
+    /**
+     * Item count reflects the locally managed data set, which is additionally
+     * updated manually outside of submitList (setCurrent, drag & drop, swipe).
+     */
+    override fun getItemCount(): Int {
+        return dataSet.size
     }
 
     fun setCurrent(current: Int) {

@@ -19,6 +19,7 @@ import androidx.preference.PreferenceManager
 import cat.ereza.customactivityoncrash.config.CaocConfig
 import com.ch.appthemehelper.ThemeStore
 import com.ch.appthemehelper.util.VersionUtils
+import com.google.android.material.color.DynamicColors
 import com.ch.music.activities.ErrorActivity
 import com.ch.music.activities.MainActivity
 import com.ch.music.appshortcuts.DynamicShortcutManager
@@ -47,6 +48,8 @@ class App : Application() {
                 .coloredNavigationBar(true)
                 .commit()
         }
+        // Apply Material You dynamic colors to all activities (API 31+ only, no-op on older devices)
+        DynamicColors.applyToActivitiesIfAvailable(this)
         wallpaperAccentManager.init()
 
         if (VersionUtils.hasNougatMR())

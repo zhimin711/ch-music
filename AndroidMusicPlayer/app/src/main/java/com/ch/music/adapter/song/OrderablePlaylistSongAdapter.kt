@@ -150,8 +150,11 @@ class OrderablePlaylistSongAdapter(
 
     fun saveSongs(playlistEntity: PlaylistEntity) {
         onFilter(null)
+        // fullDataSet is kept up to date synchronously (drag & drop mutates it
+        // through the dataSet alias), so persist it directly instead of relying
+        // on the asynchronous submitList commit.
         activity.lifecycleScope.launch(Dispatchers.IO) {
-            libraryViewModel.insertSongs(dataSet.toSongsEntity(playlistEntity))
+            libraryViewModel.insertSongs(fullDataSet.toSongsEntity(playlistEntity))
         }
     }
 
@@ -160,13 +163,16 @@ class OrderablePlaylistSongAdapter(
         filter = text
         if (text.isNullOrEmpty()) {
             filtered = false
-            dataSet = fullDataSet
+            // Alias dataSet to fullDataSet on commit so drag & drop mutations
+            // stay visible to both the differ and saveSongs().
+            submitList(fullDataSet) { dataSet = fullDataSet }
         } else {
             filtered = true
-            dataSet = fullDataSet.filter { song -> song.title.contains(text, ignoreCase = true) }
+            val filteredSongs = fullDataSet
+                .filter { song -> song.title.contains(text, ignoreCase = true) }
                 .toMutableList()
+            submitList(filteredSongs) { dataSet = filteredSongs }
         }
-        notifyDataSetChanged()
     }
 
     fun hasSongs(): Boolean {

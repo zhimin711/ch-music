@@ -54,9 +54,19 @@ abstract class AbsOffsetSongAdapter(
         return if (positionFinal < 0) null else super.getIdentifier(positionFinal)
     }
 
+    /**
+     * This adapter prepends an offset (quick actions) item at position 0, so
+     * list indices and adapter positions do not align. DiffUtil dispatches are
+     * position-based and would land on the wrong items, therefore this adapter
+     * swaps its data manually instead of using submitList.
+     */
+    override fun swapDataSet(dataSet: List<Song>) {
+        this.dataSet = ArrayList(dataSet)
+        notifyDataSetChanged()
+    }
+
     override fun getItemCount(): Int {
-        val superItemCount = super.getItemCount()
-        return if (superItemCount == 0) 0 else superItemCount + 1
+        return if (dataSet.isEmpty()) 0 else dataSet.size + 1
     }
 
     override fun getItemViewType(position: Int): Int {
