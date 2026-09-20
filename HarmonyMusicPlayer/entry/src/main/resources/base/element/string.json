@@ -1,0 +1,7 @@
+{
+  "string": [
+    { "name": "app_name", "value": "CH Music" },
+    { "name": "module_desc", "value": "CH Music HarmonyOS NEXT client" },
+    { "name": "ability_desc", "value": "CH Music main ability" }
+  ]
+}
