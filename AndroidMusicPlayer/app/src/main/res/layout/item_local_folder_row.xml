@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="10dp">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/folderRowTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextViewBody1"
+        android:textColor="?android:attr/textColorPrimary"
+        tools:text="Internal Storage" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/folderRowSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textAppearance="@style/TextViewCaption"
+        android:textColor="?android:attr/textColorSecondary"
+        tools:text="/storage/emulated/0" />
+
+</LinearLayout>

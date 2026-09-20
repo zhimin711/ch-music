@@ -4,7 +4,7 @@
     @contextmenu.prevent="handleContextMenu"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
-    @dblclick.stop="playMusicEvent(item)"
+    @dblclick.stop="handlePlay"
   >
     <slot name="index"></slot>
     <slot name="select" v-if="selectable"></slot>
@@ -22,7 +22,7 @@
       :is-dislike="isDislike"
       :can-remove="canRemove"
       @update:show="showDropdown = $event"
-      @play="playMusicEvent(item)"
+      @play="handlePlay"
       @play-next="handlePlayNext"
       @download="downloadMusic(item)"
       @download-lyric="downloadLyric(item)"
@@ -47,6 +47,7 @@ const props = defineProps<{
   canRemove?: boolean;
   isNext?: boolean;
   index?: number;
+  manualPlay?: boolean;
 }>();
 
 const emits = defineEmits(['play', 'select', 'remove-song']);
@@ -88,12 +89,21 @@ const toggleSelect = () => {
   emits('select', props.item.id, !props.selected);
 };
 
+const handlePlay = () => {
+  if (props.manualPlay) {
+    emits('play', props.item);
+    return;
+  }
+  playMusicEvent(props.item);
+};
+
 // 把图片处理、艺术家处理等公共方法暴露给子组件
 defineExpose({
   imageLoad,
   toggleSelect,
   handleArtistClick,
   handleMenuClick,
+  handlePlay,
   playMusicEvent,
   toggleFavorite,
   handlePlayNext,

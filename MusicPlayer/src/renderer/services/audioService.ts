@@ -1,6 +1,6 @@
 import type { AudioOutputDevice } from '@/types/audio';
 import type { SongResult } from '@/types/music';
-import { isElectron } from '@/utils';
+import { getImgUrl, isElectron } from '@/utils';
 
 class AudioService {
   private audio: HTMLAudioElement;
@@ -146,7 +146,7 @@ class AudioService {
         : track.song.artists?.map((a) => a.name);
       const album = track.al ? track.al.name : track.song.album.name;
       const artwork = ['96', '128', '192', '256', '384', '512'].map((size) => ({
-        src: `${track.picUrl}?param=${size}y${size}`,
+        src: getImgUrl(track.picUrl, `${size}y${size}`),
         type: 'image/jpg',
         sizes: `${size}x${size}`
       }));
@@ -327,8 +327,10 @@ class AudioService {
 
   public setEQFrequencyGain(frequency: string, gain: number) {
     const filterIndex = this.frequencies.findIndex((f) => f.toString() === frequency);
-    if (filterIndex !== -1 && this.filters[filterIndex]) {
-      this.filters[filterIndex].gain.setValueAtTime(gain, this.context?.currentTime || 0);
+    if (filterIndex !== -1) {
+      if (this.filters[filterIndex]) {
+        this.filters[filterIndex].gain.setValueAtTime(gain, this.context?.currentTime || 0);
+      }
       this.saveEQSettings(frequency, gain);
     }
   }
@@ -487,7 +489,9 @@ class AudioService {
             console.log(`Retrying playback (${retryCount}/${maxRetries})...`);
             setTimeout(tryPlay, 1000 * retryCount);
           } else {
-            this.emit('url_expired', track);
+            if (track.source !== 'local' && !track.playMusicUrl?.startsWith('local://')) {
+              this.emit('url_expired', track);
+            }
             this.releaseOperationLock();
             reject(new Error('音频加载失败，请尝试切换其他歌曲'));
           }
@@ -500,6 +504,8 @@ class AudioService {
 
         this.audio.addEventListener('canplay', onCanPlay, { once: true });
         this.audio.addEventListener('error', onError, { once: true });
+
+        this.audio.crossOrigin = 'anonymous';
 
         // Change source and load
         this.audio.src = url;

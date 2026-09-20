@@ -10,6 +10,10 @@ class PreloadService {
   private validatedUrls: Map<string | number, string> = new Map();
   private loadingPromises: Map<string | number, Promise<string>> = new Map();
 
+  private getCacheKey(song: SongResult): string {
+    return `${song.source || 'netease'}:${song.id}`;
+  }
+
   /**
    * 验证歌曲 URL 可用性
    * 通过 HEAD 请求检查 URL 是否可访问，并缓存验证结果
@@ -23,30 +27,36 @@ class PreloadService {
       throw new Error('歌曲没有 URL');
     }
 
+    if (song.source === 'local' || song.playMusicUrl.startsWith('local://')) {
+      return song.playMusicUrl;
+    }
+
+    const cacheKey = this.getCacheKey(song);
+
     // 已验证过的 URL
-    if (this.validatedUrls.has(song.id)) {
+    if (this.validatedUrls.has(cacheKey)) {
       console.log(`[PreloadService] 歌曲 ${song.name} URL 已验证，直接使用`);
-      return this.validatedUrls.get(song.id)!;
+      return this.validatedUrls.get(cacheKey)!;
     }
 
     // 正在验证中
-    if (this.loadingPromises.has(song.id)) {
+    if (this.loadingPromises.has(cacheKey)) {
       console.log(`[PreloadService] 歌曲 ${song.name} 正在验证中，复用现有请求`);
-      return this.loadingPromises.get(song.id)!;
+      return this.loadingPromises.get(cacheKey)!;
     }
 
     console.log(`[PreloadService] 开始验证歌曲: ${song.name}`);
 
     const url = song.playMusicUrl;
     const loadPromise = this._validate(url, song);
-    this.loadingPromises.set(song.id, loadPromise);
+    this.loadingPromises.set(cacheKey, loadPromise);
 
     try {
       const validatedUrl = await loadPromise;
-      this.validatedUrls.set(song.id, validatedUrl);
+      this.validatedUrls.set(cacheKey, validatedUrl);
       return validatedUrl;
     } finally {
-      this.loadingPromises.delete(song.id);
+      this.loadingPromises.delete(cacheKey);
     }
   }
 

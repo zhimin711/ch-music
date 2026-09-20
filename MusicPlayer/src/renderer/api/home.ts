@@ -6,6 +6,20 @@ import { IPlayListSort } from '@/types/playlist';
 import { IHotSearch, ISearchKeyword } from '@/types/search';
 import { IHotSinger } from '@/types/singer';
 import request from '@/utils/request';
+import {
+  getMusicServerNeteaseAlbumNewest,
+  getMusicServerNeteaseBanner,
+  getMusicServerNeteasePersonalized,
+  getMusicServerNeteasePersonalizedDjprogram,
+  getMusicServerNeteasePersonalizedMv,
+  getMusicServerNeteasePersonalizedNewsong,
+  getMusicServerNeteasePersonalizedPrivatecontent,
+  getMusicServerNeteasePlaylistCatlist,
+  getMusicServerNeteaseSearchDefault,
+  getMusicServerNeteaseSearchHotDetail,
+  getMusicServerNeteaseTopAlbum,
+  getMusicServerNeteaseTopArtists
+} from './musicServer';
 
 interface IHotSingerParams {
   offset: number;
@@ -18,27 +32,27 @@ interface IRecommendMusicParams {
 
 // 获取热门歌手
 export const getHotSinger = (params: IHotSingerParams) => {
-  return request.get<IHotSinger>('/top/artists', { params });
+  return getMusicServerNeteaseTopArtists(params) as Promise<{ data: IHotSinger }>;
 };
 
 // 获取搜索推荐词
 export const getSearchKeyword = () => {
-  return request.get<ISearchKeyword>('/search/default');
+  return getMusicServerNeteaseSearchDefault() as Promise<{ data: ISearchKeyword }>;
 };
 
 // 获取热门搜索
 export const getHotSearch = () => {
-  return request.get<IHotSearch>('/search/hot/detail');
+  return getMusicServerNeteaseSearchHotDetail() as Promise<{ data: IHotSearch }>;
 };
 
 // 获取歌单分类
 export const getPlaylistCategory = () => {
-  return request.get<IPlayListSort>('/playlist/catlist');
+  return getMusicServerNeteasePlaylistCatlist() as Promise<{ data: IPlayListSort }>;
 };
 
 // 获取推荐音乐
 export const getRecommendMusic = (params: IRecommendMusicParams) => {
-  return request.get<IRecommendMusic>('/personalized/newsong', { params });
+  return getMusicServerNeteasePersonalizedNewsong(params) as Promise<{ data: IRecommendMusic }>;
 };
 
 // 获取每日推荐
@@ -48,17 +62,17 @@ export const getDayRecommend = () => {
 
 // 获取最新专辑推荐
 export const getNewAlbum = () => {
-  return request.get<IAlbumNew>('/album/newest');
+  return getMusicServerNeteaseAlbumNewest() as Promise<{ data: IAlbumNew }>;
 };
 
 // 获取轮播图
 export const getBanners = (type: number = 0) => {
-  return request.get<any>('/banner', { params: { type } });
+  return getMusicServerNeteaseBanner(type);
 };
 
 // 获取推荐歌单
 export const getPersonalizedPlaylist = (limit: number = 30) => {
-  return request.get<any>('/personalized', { params: { limit } });
+  return getMusicServerNeteasePersonalized(limit);
 };
 
 // 获取私人漫游（request 拦截器已自动添加 timestamp）
@@ -68,20 +82,20 @@ export const getPersonalFM = () => {
 
 // 获取独家放送
 export const getPrivateContent = () => {
-  return request.get<any>('/personalized/privatecontent');
+  return getMusicServerNeteasePersonalizedPrivatecontent();
 };
 
 // 获取推荐MV
 export const getPersonalizedMV = () => {
-  return request.get<any>('/personalized/mv');
+  return getMusicServerNeteasePersonalizedMv();
 };
 
 // 获取新碟上架
 export const getTopAlbum = (params?: { limit?: number; offset?: number; area?: string }) => {
-  return request.get<any>('/top/album', { params });
+  return getMusicServerNeteaseTopAlbum(params);
 };
 
 // 获取推荐电台
 export const getPersonalizedDJ = () => {
-  return request.get<any>('/personalized/djprogram');
+  return getMusicServerNeteasePersonalizedDjprogram();
 };

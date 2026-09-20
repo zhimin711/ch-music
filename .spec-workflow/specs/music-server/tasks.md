@@ -36,19 +36,19 @@
   - Purpose: Make the service easy to run in a restricted local environment.
   - _Requirements: 5.1_
 
-- [ ] 7. Add focused integration tests
+- [x] 7. Add focused integration tests
   - Files: `src/test/java/...`
   - Cover register/login, upload, playlist add/remove, favorite add/remove, and owner isolation.
   - Purpose: Lock the API contract before MusicPlayer integration.
   - _Requirements: All_
 
-- [ ] 8. Integrate MusicPlayer client
+- [x] 8. Integrate MusicPlayer client
   - Files: `MusicPlayer/src/**`
   - Add server config, login flow, token persistence, upload UI, library sync calls, playlist sync, and favorite sync.
   - Purpose: Connect the desktop client to MusicServer.
   - _Requirements: All_
 
-- [ ] 9. Production hardening
+- [x] 9. Production hardening
   - Files: `MusicServer/src/main/resources/db/migration/**`, deployment docs
   - Add Flyway migrations, PostgreSQL profile, upload quotas, metadata extraction, range-request tests, and deployment guide.
   - Purpose: Move from local initialization to durable self-hosted operation.

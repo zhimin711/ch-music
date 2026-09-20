@@ -7,8 +7,8 @@
     <div id="layout-main" class="layout-main">
       <title-bar />
       <div class="layout-main-page">
-        <!-- 侧边菜单栏 -->
-        <app-menu v-if="!settingsStore.isMobile" class="menu" :menus="menuStore.menus" />
+        <!-- 侧边菜单只保留顶部导航没有覆盖的入口 -->
+        <app-menu v-if="!settingsStore.isMobile" class="menu" :menus="sideMenus" />
         <div class="main">
           <!-- 搜索栏 -->
           <search-bar class="search-bar" />
@@ -106,6 +106,8 @@ const menuStore = useMenuStore();
 
 const isPlay = computed(() => playerStore.playMusic && playerStore.playMusic.id);
 const route = useRoute();
+const topMenuPaths = new Set(['/', '/list', '/album', '/toplist', '/mv', '/local-music']);
+const sideMenus = computed(() => menuStore.menus.filter((item: any) => !topMenuPaths.has(item.path)));
 
 // 判断当前路由是否应该在移动端显示AppMenu
 const shouldShowMobileMenu = computed(() => {

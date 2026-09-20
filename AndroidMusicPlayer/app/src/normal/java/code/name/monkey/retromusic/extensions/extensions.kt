@@ -1,11 +1,11 @@
-package code.name.monkey.retromusic.extensions
+package com.ch.music.extensions
 
 import android.content.Context
 import android.content.Intent
 import android.view.Menu
 import androidx.fragment.app.FragmentActivity
-import code.name.monkey.retromusic.R
-import code.name.monkey.retromusic.activities.PurchaseActivity
+import com.ch.music.R
+import com.ch.music.activities.PurchaseActivity
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.play.core.splitcompat.SplitCompat
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory

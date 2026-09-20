@@ -1,6 +1,6 @@
 import type { MusicServerMusic } from '@/types/musicServer';
 import type { Artist, SongResult } from '@/types/music';
-import { buildMusicServerStreamUrl } from '@/api/musicServer';
+import { buildMusicServerAssetUrl, buildMusicServerStreamUrl } from '@/api/musicServer';
 import { DEFAULT_COVER_URL } from '@/utils';
 
 const UNKNOWN_ARTIST = '未知艺术家';
@@ -21,7 +21,11 @@ const createArtist = (name: string): Artist => ({
   topicPerson: 0
 });
 
-export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
+export function toMusicServerSongResult(
+  music: MusicServerMusic,
+  optionsOrIndex: { playMusicUrl?: string; profileId?: string } | number = {}
+): SongResult {
+  const options = typeof optionsOrIndex === 'number' ? {} : optionsOrIndex;
   const artistName = music.artist || UNKNOWN_ARTIST;
   const albumName = music.album || UNKNOWN_ALBUM;
   const artist = createArtist(artistName);
@@ -29,7 +33,7 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
   const isPrivateMusic = source === 'musicServer';
   const musicId = music.musicId ?? music.id;
   const externalId = music.externalId || String(music.id);
-  const picUrl = music.picUrl || DEFAULT_COVER_URL;
+  const picUrl = buildMusicServerAssetUrl(music.picUrl) || DEFAULT_COVER_URL;
 
   return {
     id: isPrivateMusic ? Number(musicId) : externalId,
@@ -71,7 +75,9 @@ export function toMusicServerSongResult(music: MusicServerMusic): SongResult {
       artists: [artist],
       album: { name: albumName, picUrl }
     },
-    playMusicUrl: isPrivateMusic ? buildMusicServerStreamUrl(Number(musicId)) : undefined,
+    playMusicUrl: isPrivateMusic
+      ? options.playMusicUrl || buildMusicServerStreamUrl(Number(musicId), options.profileId)
+      : undefined,
     source: isPrivateMusic ? 'musicServer' : 'netease',
     count: 0,
     duration: music.duration || undefined,

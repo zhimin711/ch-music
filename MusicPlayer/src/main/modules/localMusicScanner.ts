@@ -35,6 +35,20 @@ type LocalMusicMeta = {
   fileSize: number;
   /** 文件修改时间戳 */
   modifiedTime: number;
+  /** 专辑艺术家，无则为空字符串 */
+  albumArtist: string;
+  /** 作曲者，无则为空字符串 */
+  composer: string;
+  /** 曲目号（1-based），无则 0 */
+  trackNumber: number;
+  /** 曲目总数，无则 0 */
+  trackTotal: number;
+  /** 碟号，无则 0 */
+  discNumber: number;
+  /** 发行年份，无则 0 */
+  year: number;
+  /** 风格/流派，无则为空字符串 */
+  genre: string;
 };
 
 type ScannedMusicFile = {
@@ -237,13 +251,21 @@ async function parseMetadata(filePath: string): Promise<LocalMusicMeta> {
     cover: null,
     lyrics: null,
     fileSize,
-    modifiedTime
+    modifiedTime,
+    albumArtist: '',
+    composer: '',
+    trackNumber: 0,
+    trackTotal: 0,
+    discNumber: 0,
+    year: 0,
+    genre: ''
   };
 
   try {
     const metadata = await mm.parseFile(filePath);
     const { common, format } = metadata;
 
+    // 曲目号 / 碟号可能是数字或 "1/12" 字符串，music-metadata 已归一为 { no, of }
     return {
       filePath,
       title: common.title || fallback.title,
@@ -253,7 +275,14 @@ async function parseMetadata(filePath: string): Promise<LocalMusicMeta> {
       cover: extractCoverAsDataUrl(common.picture?.[0]),
       lyrics: extractLyrics(common.lyrics),
       fileSize,
-      modifiedTime
+      modifiedTime,
+      albumArtist: common.albumartist || '',
+      composer: common.composer?.[0] || '',
+      trackNumber: common.track?.no ?? 0,
+      trackTotal: common.track?.of ?? 0,
+      discNumber: common.disk?.no ?? 0,
+      year: common.year ?? 0,
+      genre: common.genre?.[0] || ''
     };
   } catch (error) {
     // 解析失败使用 fallback，不中断流程

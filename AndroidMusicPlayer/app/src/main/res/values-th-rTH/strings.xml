@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="about_album_label">เกี่ยวกับ %s</string>
-    <string name="about_settings_summary">ทีมงาน, โซเชียลลิงค์</string>
     <string name="accent_color">สีที่ใช้เน้น</string>
     <string name="accent_color_desc">ธีมของสีที่ใช้เน้น, ค่าเริ่มต้น คือ สีม่วง</string>
-    <string name="action_about">เกี่ยวกับเรา</string>
     <string name="action_add_to_blacklist">เพิ่มเข้ารายชื่อแบล็คลิสต์</string>
     <string name="action_add_to_favorites">เพิ่มเข้าเพลงโปรด</string>
     <string name="action_add_to_playing_queue">เพิ่มเข้าคิวเพลง</string>

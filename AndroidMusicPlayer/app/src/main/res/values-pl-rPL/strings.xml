@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="about_album_label">O %s</string>
-    <string name="about_settings_summary">Zespół, media społecznościowe</string>
     <string name="accent_color">Kolor wiodący</string>
     <string name="accent_color_desc">Kolor wiodący motywu, domyślnie morski</string>
-    <string name="action_about">O aplikacji</string>
     <string name="action_add_to_blacklist">Dodaj do ignorowanych</string>
     <string name="action_add_to_favorites">Dodaj do ulubionych</string>
     <string name="action_add_to_playing_queue">Dodaj do kolejki</string>

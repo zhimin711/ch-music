@@ -22,23 +22,42 @@ const getMessage = () => {
   return _message;
 };
 
+const isLocalSong = (song: SongResult | undefined) =>
+  song?.source === 'local' || Boolean(song?.playMusicUrl?.startsWith('local://'));
+
+const minifyAlbum = (s: SongResult) => ({
+  ...s.al,
+  picUrl: isLocalSong(s) && s.al?.picUrl?.startsWith('data:') ? '' : s.al?.picUrl,
+  artist: s.al?.artist
+    ? {
+        ...s.al.artist,
+        picUrl: isLocalSong(s) && s.al.artist.picUrl?.startsWith('data:') ? '' : s.al.artist.picUrl
+      }
+    : s.al?.artist
+});
+
 /**
- * 精简 SongResult 对象，只保留持久化必要字段
- * 排除大体积字段：lyric, song, playMusicUrl, backgroundColor, primaryColor
+ * 精简 SongResult 对象，只保留持久化必要字段。
+ * 本地音乐必须保留 playMusicUrl，否则恢复后会拿本地递增 id 去请求远程歌曲 URL。
  */
 const minifySong = (s: SongResult) => ({
   id: s.id,
   name: s.name,
-  picUrl: s.picUrl,
+  picUrl: isLocalSong(s) && s.picUrl?.startsWith('data:') ? '' : s.picUrl,
   ar: s.ar?.map((a) => ({ id: a.id, name: a.name })),
-  al: s.al,
+  al: minifyAlbum(s),
   source: s.source,
-  dt: s.dt
+  dt: s.dt,
+  duration: s.duration,
+  playMusicUrl: isLocalSong(s) ? s.playMusicUrl : undefined,
+  expiredAt: isLocalSong(s) ? s.expiredAt : undefined,
+  createdAt: isLocalSong(s) ? s.createdAt : undefined
 });
 
 const minifySongList = (list: SongResult[] | undefined) => list?.map(minifySong) ?? [];
 
-const getSongSource = (song: SongResult | undefined) => song?.source || 'netease';
+const getSongSource = (song: SongResult | undefined) =>
+  isLocalSong(song) ? 'local' : song?.source || 'netease';
 
 const isSameSong = (a: SongResult | undefined, b: SongResult | undefined) =>
   Boolean(a && b && a.id === b.id && getSongSource(a) === getSongSource(b));
@@ -113,6 +132,10 @@ export const usePlaylistStore = defineStore(
         const detailedSongs = await Promise.all(
           songs.map(async (song: SongResult) => {
             try {
+              // 本地音乐（local:// 协议）始终跳过远程详情获取
+              if (song.playMusicUrl?.startsWith('local://')) {
+                return song;
+              }
               if (!song.playMusicUrl || (song.source === 'netease' && !song.backgroundColor)) {
                 return await getSongDetail(song);
               }
@@ -128,6 +151,7 @@ export const usePlaylistStore = defineStore(
         if (
           nextSong &&
           nextSong.source !== 'musicServer' &&
+          !isLocalSong(nextSong) &&
           !(nextSong.lyric && nextSong.lyric.lrcTimeArray.length > 0)
         ) {
           try {
@@ -152,7 +176,7 @@ export const usePlaylistStore = defineStore(
           if (nextSong.playMusicUrl) {
             preloadService.load(nextSong);
           }
-          if (nextSong.picUrl) {
+          if (nextSong.picUrl && !nextSong.picUrl.startsWith('data:')) {
             preloadCoverImage(nextSong.picUrl, getImgUrl);
           }
         }
@@ -375,17 +399,16 @@ export const usePlaylistStore = defineStore(
       const playerCore = usePlayerCoreStore();
 
       audioService.pause();
-      setTimeout(() => {
-        playerCore.playMusic = {} as SongResult;
-        playerCore.playMusicUrl = '';
-        playList.value = [];
-        playListIndex.value = 0;
-        originalPlayList.value = [];
-        // 只清除 playerCore 的 localStorage（这些由 playerCore store 管理）
-        localStorage.removeItem('currentPlayMusic');
-        localStorage.removeItem('currentPlayMusicUrl');
-        // playlist 状态由 pinia-plugin-persistedstate 自动管理
-      }, 500);
+      playerCore.setIsPlay(false);
+      playerCore.userPlayIntent = false;
+      playerCore.playMusic = {} as SongResult;
+      playerCore.playMusicUrl = '';
+      playList.value = [];
+      playListIndex.value = 0;
+      originalPlayList.value = [];
+      playListDrawerVisible.value = false;
+      localStorage.removeItem('currentPlayMusic');
+      localStorage.removeItem('currentPlayMusicUrl');
     };
 
     /**
@@ -630,7 +653,7 @@ export const usePlaylistStore = defineStore(
 
         // Check URL expiration
         if (song.expiredAt && song.expiredAt < Date.now()) {
-          if (!song.playMusicUrl?.startsWith('local://')) {
+          if (!song.playMusicUrl?.startsWith('local://') && song.source !== 'musicServer') {
             console.info(`歌曲URL已过期，重新获取: ${song.name}`);
             song.playMusicUrl = undefined;
             song.expiredAt = undefined;
@@ -677,9 +700,7 @@ export const usePlaylistStore = defineStore(
         if (song.isFirstPlay) song.isFirstPlay = false;
 
         // Update playlist index
-        const songIndex = playList.value.findIndex(
-          (item: SongResult) => item.id === song.id && item.source === song.source
-        );
+        let songIndex = playList.value.findIndex((item: SongResult) => isSameSong(item, song));
         if (songIndex !== -1 && songIndex !== playListIndex.value) {
           console.log('歌曲索引不匹配，更新为:', songIndex);
           playListIndex.value = songIndex;
@@ -690,6 +711,19 @@ export const usePlaylistStore = defineStore(
 
         if (success) {
           playerCore.isPlay = true;
+          if (songIndex === -1) {
+            const nextSong = playerCore.playMusic?.id ? playerCore.playMusic : song;
+            const insertIndex =
+              playList.value.length === 0
+                ? 0
+                : Math.min(playListIndex.value + 1, playList.value.length);
+            const nextList = [...playList.value];
+            nextList.splice(insertIndex, 0, nextSong);
+            playList.value = nextList;
+            playListIndex.value = insertIndex;
+            originalPlayList.value = [];
+            songIndex = insertIndex;
+          }
           if (songIndex !== -1) {
             setTimeout(() => preloadNextSongs(playListIndex.value), 3000);
           }

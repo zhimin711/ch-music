@@ -12,6 +12,10 @@ export type SupportedAudioFormat = (typeof SUPPORTED_AUDIO_FORMATS)[number];
 /**
  * 主进程返回的原始音乐元数据
  * 由主进程扫描模块解析音乐文件后生成
+ *
+ * 字段对照 AndroidMusicPlayer 的 Song 模型：
+ * - trackNumber / trackTotal / discNumber / year / albumArtist / composer / genre
+ *   来自 music-metadata 的 common 标签，与 Android MediaStore 暴露的元数据对齐
  */
 export type LocalMusicMeta = {
   /** 文件绝对路径 */
@@ -32,6 +36,20 @@ export type LocalMusicMeta = {
   fileSize: number;
   /** 文件修改时间戳 */
   modifiedTime: number;
+  /** 专辑艺术家（合辑场景下与 artist 不同），无则为空字符串 */
+  albumArtist: string;
+  /** 作曲者，无则为空字符串 */
+  composer: string;
+  /** 曲目号（1-based），无则 0 */
+  trackNumber: number;
+  /** 曲目总数（如 12），无则 0 */
+  trackTotal: number;
+  /** 碟号（多碟专辑用），无则 0 */
+  discNumber: number;
+  /** 发行年份，无则 0 */
+  year: number;
+  /** 风格/流派，无则为空字符串 */
+  genre: string;
 };
 
 /**

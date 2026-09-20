@@ -59,6 +59,7 @@ const router = createRouter({
 // 添加全局前置守卫
 router.beforeEach((to, _, next) => {
   const settingsStore = getSettingsStore();
+  const userStore = useUserStore();
 
   // 如果是迷你模式
   if (settingsStore.isMiniMode) {
@@ -70,6 +71,8 @@ router.beforeEach((to, _, next) => {
     }
   } else if (to.path === '/mini') {
     // 如果不是迷你模式但想访问 /mini 路由，重定向到首页
+    next('/');
+  } else if (to.meta.requireAuth && !userStore.user) {
     next('/');
   } else {
     // 其他情况正常导航

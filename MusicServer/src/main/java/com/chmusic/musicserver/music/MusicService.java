@@ -1,6 +1,7 @@
 package com.chmusic.musicserver.music;
 
 import com.chmusic.musicserver.api.dto.MusicResponse;
+import com.chmusic.musicserver.config.MusicServerProperties;
 import com.chmusic.musicserver.user.AppUser;
 import java.nio.file.Path;
 import java.util.List;
@@ -17,20 +18,30 @@ public class MusicService {
     private final MusicFileRepository musicRepository;
     private final MusicStorageService storageService;
     private final TranscodeCacheService transcodeCacheService;
+    private final MusicServerProperties properties;
+    private final MusicMetadataExtractor metadataExtractor;
 
     public MusicService(MusicFileRepository musicRepository, MusicStorageService storageService,
-            TranscodeCacheService transcodeCacheService) {
+            TranscodeCacheService transcodeCacheService, MusicServerProperties properties,
+            MusicMetadataExtractor metadataExtractor) {
         this.musicRepository = musicRepository;
         this.storageService = storageService;
         this.transcodeCacheService = transcodeCacheService;
+        this.properties = properties;
+        this.metadataExtractor = metadataExtractor;
     }
 
     @Transactional
     public MusicResponse upload(AppUser owner, MultipartFile file, String title, String artist, String album) {
+        validateUploadQuota(owner, file.getSize());
         StoredMusicFile stored = storageService.store(file);
-        String resolvedTitle = title == null || title.isBlank() ? stripExtension(stored.originalFilename()) : title.trim();
-        MusicFile music = new MusicFile(owner, stored.originalFilename(), stored.storagePath(), resolvedTitle,
-                blankToNull(artist), blankToNull(album), stored.contentType(), stored.fileSize(), stored.checksum());
+        MusicMetadata extracted = metadataExtractor.extract(storageService.pathOf(stored));
+        StoredCover cover = storageService.storeCover(stored, extracted.cover());
+        ResolvedMetadata metadata = resolveMetadata(stored.originalFilename(), title, artist, album, extracted);
+        MusicFile music = new MusicFile(owner, stored.originalFilename(), stored.storagePath(), metadata.title(),
+                metadata.artist(), metadata.album(), cover == null ? null : cover.storagePath(),
+                cover == null ? null : cover.contentType(), metadata.duration(), stored.contentType(),
+                stored.fileSize(), stored.checksum());
         return MusicResponse.from(musicRepository.save(music));
     }
 
@@ -58,6 +69,16 @@ public class MusicService {
         return resource;
     }
 
+    @Transactional(readOnly = true)
+    public Resource cover(AppUser owner, Long musicId) {
+        MusicFile music = requireOwnedMusic(owner, musicId);
+        return storageService.coverOf(music);
+    }
+
+    public Resource cover(MusicFile music) {
+        return storageService.coverOf(music);
+    }
+
     @Transactional
     public void delete(AppUser owner, Long musicId) {
         MusicFile music = requireOwnedMusic(owner, musicId);
@@ -70,8 +91,60 @@ public class MusicService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    private void validateUploadQuota(AppUser owner, long incomingSize) {
+        long maxTotalSize = properties.getUpload().getMaxTotalSize().toBytes();
+        if (maxTotalSize <= 0) {
+            return;
+        }
+        long usedSize = musicRepository.sumFileSizeByOwner(owner);
+        if (usedSize >= maxTotalSize || incomingSize > maxTotalSize - usedSize) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Music upload quota exceeded");
+        }
+    }
+
+    private static ResolvedMetadata resolveMetadata(String filename, String title, String artist, String album,
+            MusicMetadata extracted) {
+        FilenameMetadata filenameMetadata = parseFilename(stripExtension(filename));
+        String resolvedTitle = firstNonBlank(title, extracted.title(), filenameMetadata.title());
+        String resolvedArtist = firstNonBlank(artist, extracted.artist(), filenameMetadata.artist());
+        String resolvedAlbum = firstNonBlank(album, extracted.album());
+        return new ResolvedMetadata(resolvedTitle, resolvedArtist, resolvedAlbum, extracted.duration());
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            String cleaned = blankToNull(value);
+            if (cleaned != null) {
+                return cleaned;
+            }
+        }
+        return null;
+    }
+
+    private static FilenameMetadata parseFilename(String filenameWithoutExtension) {
+        String fallbackTitle = filenameWithoutExtension == null || filenameWithoutExtension.isBlank()
+                ? "Untitled"
+                : filenameWithoutExtension.trim();
+        int separatorIndex = fallbackTitle.indexOf(" - ");
+        if (separatorIndex <= 0 || separatorIndex >= fallbackTitle.length() - 3) {
+            return new FilenameMetadata(fallbackTitle, null);
+        }
+        String artist = fallbackTitle.substring(0, separatorIndex).trim();
+        String title = fallbackTitle.substring(separatorIndex + 3).trim();
+        if (artist.isBlank() || title.isBlank()) {
+            return new FilenameMetadata(fallbackTitle, null);
+        }
+        return new FilenameMetadata(title, artist);
+    }
+
     private static String stripExtension(String filename) {
         int dotIndex = filename.lastIndexOf('.');
         return dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
+    }
+
+    private record ResolvedMetadata(String title, String artist, String album, Long duration) {
+    }
+
+    private record FilenameMetadata(String title, String artist) {
     }
 }

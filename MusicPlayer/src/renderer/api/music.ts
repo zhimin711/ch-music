@@ -1,9 +1,15 @@
 import { musicDB } from '@/hooks/MusicHook';
 import { useSettingsStore, useUserStore } from '@/store';
-import type { ILyric } from '@/types/lyric';
 import type { SongResult } from '@/types/music';
 import request from '@/utils/request';
 
+import {
+  getMusicServerNeteaseAlbum,
+  getMusicServerNeteaseLyric,
+  getMusicServerNeteasePlaylistDetail,
+  getMusicServerNeteaseSongDetail,
+  getMusicServerNeteaseSongUrl
+} from './musicServer';
 import { MusicParser, type MusicParseResult } from './musicParser';
 
 const { addData, getData, deleteData } = musicDB;
@@ -45,18 +51,16 @@ export const getMusicUrl = async (id: number, isDownloaded: boolean = false) => 
     console.error('error', error);
   }
 
-  return await request.get('/song/url/v1', {
-    params: {
-      id,
-      level: settingStore.setData.musicQuality || 'higher',
-      encodeType: settingStore.setData.musicQuality == 'lossless' ? 'aac' : 'flac'
-    }
-  });
+  return await getMusicServerNeteaseSongUrl(
+    id,
+    settingStore.setData.musicQuality || 'higher',
+    settingStore.setData.musicQuality == 'lossless' ? 'aac' : 'flac'
+  );
 };
 
 // 获取歌曲详情
 export const getMusicDetail = (ids: Array<number>) => {
-  return request.get('/song/detail', { params: { ids: ids.join(',') } });
+  return getMusicServerNeteaseSongDetail(ids);
 };
 
 // 根据音乐Id获取音乐歌词
@@ -71,7 +75,7 @@ export const getMusicLrc = async (id: number) => {
     }
 
     // 获取新的歌词数据
-    const res = await request.get<ILyric>('/lyric/new', { params: { id } });
+    const res = await getMusicServerNeteaseLyric(id);
 
     // 只有在成功获取新数据后才删除旧缓存并添加新缓存
     if (res?.data) {
@@ -152,13 +156,7 @@ export function getMusicListByType(type: string, id: string) {
  * @param id 专辑ID
  */
 export function getAlbumDetail(id: string) {
-  return request({
-    url: '/album',
-    method: 'get',
-    params: {
-      id
-    }
-  });
+  return getMusicServerNeteaseAlbum(id);
 }
 
 /**
@@ -166,13 +164,7 @@ export function getAlbumDetail(id: string) {
  * @param id 歌单ID
  */
 export function getPlaylistDetail(id: string) {
-  return request({
-    url: '/playlist/detail',
-    method: 'get',
-    params: {
-      id
-    }
-  });
+  return getMusicServerNeteasePlaylistDetail(id);
 }
 
 export function subscribePlaylist(params: { t: number; id: number }) {

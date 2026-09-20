@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="about_album_label">За албума %s</string>
-    <string name="about_settings_summary">Връзки към екип и социални медии</string>
     <string name="accent_color">Акцентен цвят</string>
     <string name="accent_color_desc">Основният цвят, лилав по подразбиране</string>
-    <string name="action_about">За програмата</string>
     <string name="action_add_to_blacklist">Добави към черния списък</string>
     <string name="action_add_to_favorites">Добави в любими</string>
     <string name="action_add_to_playing_queue">Добави към опашката за възпроизвеждане</string>

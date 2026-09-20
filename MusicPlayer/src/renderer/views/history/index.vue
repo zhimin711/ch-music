@@ -48,7 +48,7 @@
           <template v-if="currentCategory === 'songs'">
             <div
               v-for="(item, index) in displayList"
-              :key="item.id"
+              :key="`${item.source || 'netease'}:${item.id}`"
               class="group flex items-center justify-between rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors p-1"
               :class="setAnimationClass('animate__bounceInRight')"
               :style="setAnimationDelay(index, 30)"
@@ -275,6 +275,11 @@ const getCurrentList = (): any[] => {
   return [];
 };
 
+const shouldUseStoredSong = (song: SongResult) =>
+  song.source === 'musicServer' ||
+  song.playMusicUrl?.startsWith('local://') ||
+  typeof song.id === 'string';
+
 // 处理分类切换
 const handleCategoryChange = async (value: 'songs' | 'playlists' | 'albums' | 'podcasts') => {
   currentCategory.value = value;
@@ -387,16 +392,9 @@ const loadHistoryData = async () => {
     // 根据分类处理不同的数据
     if (currentCategory.value === 'songs') {
       // 区分本地歌曲和云歌曲
-      const localItems: any[] = [];
-      const neteaseItems: any[] = [];
-
-      currentPageItems.forEach((item) => {
-        if (item.playMusicUrl?.startsWith('local://') || typeof item.id === 'string') {
-          localItems.push(item);
-        } else if (item.source !== 'bilibili') {
-          neteaseItems.push(item);
-        }
-      });
+      const neteaseItems = currentPageItems.filter(
+        (item) => !shouldUseStoredSong(item) && item.source !== 'bilibili'
+      );
 
       // 获取歌曲详情
       let neteaseSongs: SongResult[] = [];
@@ -423,7 +421,7 @@ const loadHistoryData = async () => {
       // 按原始顺序合并结果
       const newSongs = currentPageItems
         .map((item) => {
-          if (item.playMusicUrl?.startsWith('local://') || typeof item.id === 'string') {
+          if (shouldUseStoredSong(item)) {
             // 本地歌曲直接使用历史记录中的数据
             return item as SongResult;
           }

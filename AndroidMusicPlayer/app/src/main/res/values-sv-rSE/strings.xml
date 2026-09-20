@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="about_album_label">Om %s</string>
-    <string name="about_settings_summary">Vårt team, länkar</string>
     <string name="accent_color">Accentfärg</string>
     <string name="accent_color_desc">Temats accentfärg, standard är lila</string>
-    <string name="action_about">Om</string>
     <string name="action_add_to_blacklist">Add to Blacklist</string>
     <string name="action_add_to_favorites">Lägg till i favoriter</string>
     <string name="action_add_to_playing_queue">Lägg till i spelkön</string>

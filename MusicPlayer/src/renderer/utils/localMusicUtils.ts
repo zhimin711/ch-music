@@ -51,7 +51,14 @@ export function buildFallbackMeta(filePath: string): LocalMusicMeta {
     cover: null,
     lyrics: null,
     fileSize: 0,
-    modifiedTime: 0
+    modifiedTime: 0,
+    albumArtist: '',
+    composer: '',
+    trackNumber: 0,
+    trackTotal: 0,
+    discNumber: 0,
+    year: 0,
+    genre: ''
   };
 }
 
@@ -112,6 +119,12 @@ export function toSongResult(entry: LocalMusicEntry): SongResult {
   // 解析内嵌歌词为 ILyric 对象
   const lyric = parseLrcToILyric(entry.lyrics);
 
+  // 专辑艺术家：合辑时与 entry.artist 不同，优先用它作专辑所属艺术家
+  const albumArtistName = entry.albumArtist || entry.artist;
+
+  // 年份：发布时间的近似（不是真实时间戳，但前端按年份显示够用）
+  const publishTimeMs = entry.year > 0 ? entry.year : 0;
+
   return {
     id: entry.id,
     name: entry.title,
@@ -142,13 +155,13 @@ export function toSongResult(entry: LocalMusicEntry): SongResult {
       companyId: 0,
       pic: 0,
       picUrl: entry.cover || DEFAULT_COVER_URL,
-      publishTime: 0,
+      publishTime: publishTimeMs,
       description: '',
       tags: '',
       company: '',
       briefDesc: '',
       artist: {
-        name: entry.artist,
+        name: albumArtistName,
         id: 0,
         picId: 0,
         img1v1Id: 0,
@@ -177,10 +190,10 @@ export function toSongResult(entry: LocalMusicEntry): SongResult {
       artists: [{ name: entry.artist }],
       album: { name: entry.album }
     },
-    playMusicUrl: `local:///${entry.filePath}`,
+    playMusicUrl: `local://audio?path=${encodeURIComponent(entry.filePath)}`,
     duration: entry.duration,
     dt: entry.duration,
-    source: 'netease' as const,
+    source: 'local',
     count: 0,
     // 内嵌歌词（如果有）
     lyric: lyric ?? undefined,
@@ -203,7 +216,7 @@ export function coverToDataUrl(buffer: Buffer, mime: string): string {
 
 /**
  * 按关键词搜索过滤本地音乐列表
- * 不区分大小写，匹配歌曲标题或艺术家名称
+ * 不区分大小写，匹配歌曲标题、艺术家、专辑、专辑艺术家、作曲者
  * 空关键词返回完整列表
  * @param list 本地音乐列表
  * @param keyword 搜索关键词
@@ -217,8 +230,37 @@ export function filterByKeyword(list: LocalMusicEntry[], keyword: string): Local
   return list.filter((entry) => {
     return (
       entry.title.toLowerCase().includes(lowerKeyword) ||
-      entry.artist.toLowerCase().includes(lowerKeyword)
+      entry.artist.toLowerCase().includes(lowerKeyword) ||
+      entry.album.toLowerCase().includes(lowerKeyword) ||
+      entry.albumArtist.toLowerCase().includes(lowerKeyword) ||
+      entry.composer.toLowerCase().includes(lowerKeyword) ||
+      entry.genre.toLowerCase().includes(lowerKeyword)
     );
+  });
+}
+
+/**
+ * 默认本地音乐排序：按 (碟号, 曲目号, 文件名) 升序
+ * - 优先使用音乐标签中的碟号 + 曲目号（与 AndroidMusicPlayer SortOrder 一致）
+ * - 缺失标签时回退到文件路径排序，保证稳定性
+ * @param list 本地音乐列表
+ * @returns 排序后的列表（不修改原数组）
+ */
+export function sortByTrackOrder(list: LocalMusicEntry[]): LocalMusicEntry[] {
+  return [...list].sort((a, b) => {
+    // 碟号缺省视为 1（大多数单碟专辑没写 disc）
+    const discA = a.discNumber || 1;
+    const discB = b.discNumber || 1;
+    if (discA !== discB) {
+      return discA - discB;
+    }
+    // 曲目号缺省视为 0，会被排到最前；再按标题兜底
+    const trackA = a.trackNumber || 0;
+    const trackB = b.trackNumber || 0;
+    if (trackA !== trackB) {
+      return trackA - trackB;
+    }
+    return a.filePath.localeCompare(b.filePath);
   });
 }
 

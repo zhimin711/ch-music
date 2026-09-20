@@ -93,14 +93,50 @@ export const useLocalMusicStore = defineStore(
     }
 
     /**
-     * 移除文件夹路径
-     * @param path 要移除的文件夹路径
+     * 移除文件夹路径，并删除该目录下所有已缓存的音乐条目
+     * @param path 文件夹路径
+     * @returns 被删除的音乐条目数（0 表示目录里没缓存歌）
      */
-    function removeFolder(path: string): void {
+    async function removeFolder(path: string): Promise<number> {
+      // 1. 从 folderPaths 移除
       const index = folderPaths.value.indexOf(path);
       if (index !== -1) {
         folderPaths.value.splice(index, 1);
       }
+
+      // 2. 计算该目录下的所有条目（基于 filePath 前缀）
+      //    把 \ 和 / 都视为分隔符，避免在 Windows 上漏判
+      const sepRegex = /[\\/]/;
+      const folderHasSep = sepRegex.test(path);
+      const lowerPrefix = (folderHasSep ? path : path + '/').toLowerCase();
+
+      const toRemove = musicList.value.filter((entry) => {
+        const fp = entry.filePath.toLowerCase();
+        return fp === lowerPrefix.slice(0, folderHasSep ? undefined : -1) ||
+          fp.startsWith(lowerPrefix);
+      });
+
+      if (toRemove.length === 0) {
+        return 0;
+      }
+
+      // 3. 从 IndexedDB 批量删除
+      try {
+        const localDB = await getDB();
+        for (const entry of toRemove) {
+          await localDB.deleteData(LOCAL_MUSIC_STORE, entry.id);
+        }
+      } catch (error) {
+        console.error('删除文件夹关联歌曲失败:', error);
+        message.error('删除文件夹关联歌曲失败');
+        // 即使 IndexedDB 删除失败，也要从内存中清掉，避免 UI 与数据库不一致
+      }
+
+      // 4. 刷新内存中的列表
+      const removeIds = new Set(toRemove.map((e) => e.id));
+      musicList.value = musicList.value.filter((entry) => !removeIds.has(entry.id));
+
+      return toRemove.length;
     }
 
     /**

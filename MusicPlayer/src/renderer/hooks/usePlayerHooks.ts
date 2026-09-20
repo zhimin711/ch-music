@@ -3,6 +3,7 @@ import { createDiscreteApi } from 'naive-ui';
 
 import i18n from '@/../i18n/renderer';
 import { getMusicLrc, getMusicUrl, getParsingMusicUrl } from '@/api/music';
+import { getSearch } from '@/api/search';
 import { playbackRequestManager } from '@/services/playbackRequestManager';
 import { SongSourceConfigManager } from '@/services/SongSourceConfigManager';
 import type { ILyric, ILyricText, IWordData, SongResult } from '@/types/music';
@@ -11,6 +12,14 @@ import { getImageLinearBackground } from '@/utils/linearColor';
 import { parseLyrics as parseYrcLyrics } from '@/utils/yrcParser';
 
 const { message } = createDiscreteApi(['message']);
+
+const EMPTY_LYRIC: ILyric = {
+  lrcTimeArray: [],
+  lrcArray: [],
+  hasWordByWord: false
+};
+
+const lyricSearchCache = new Map<string, ILyric>();
 
 type DiskCacheResolveResult = {
   url?: string;
@@ -28,6 +37,74 @@ const getSongArtistText = (songData: SongResult): string => {
   }
 
   return '';
+};
+
+const normalizeLyricSearchText = (value?: string | null) =>
+  (value || '')
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/（[^）]*）/g, ' ')
+    .replace(/\[[^\]]*]/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getBaseSongName = (value?: string | null) =>
+  (value || '')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/（[^）]*）/g, ' ')
+    .replace(/\[[^\]]*]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getCandidateArtists = (candidate: any) =>
+  (candidate?.ar || candidate?.artists || [])
+    .map((artist: any) => artist?.name)
+    .filter(Boolean) as string[];
+
+const getCandidateDuration = (candidate: any) =>
+  Number(candidate?.dt || candidate?.duration || candidate?.song?.duration || 0);
+
+const hasLyricContent = (lyric: ILyric) => lyric.lrcArray.some((item) => item.text?.trim());
+
+const scoreLyricCandidate = (song: SongResult, candidate: any) => {
+  const songName = normalizeLyricSearchText(song.name);
+  const candidateName = normalizeLyricSearchText(candidate?.name);
+  const songArtists = getSongArtistText(song)
+    .split('/')
+    .map(normalizeLyricSearchText)
+    .filter(Boolean);
+  const candidateArtists = getCandidateArtists(candidate).map(normalizeLyricSearchText);
+  const songDuration = Number(song.dt || song.duration || 0);
+  const candidateDuration = getCandidateDuration(candidate);
+
+  let score = 0;
+  if (candidateName === songName) score += 60;
+  else if (candidateName && (candidateName.includes(songName) || songName.includes(candidateName))) {
+    score += 35;
+  }
+
+  if (
+    songArtists.some((artist) =>
+      candidateArtists.some(
+        (candidateArtist) =>
+          candidateArtist === artist ||
+          candidateArtist.includes(artist) ||
+          artist.includes(candidateArtist)
+      )
+    )
+  ) {
+    score += 25;
+  }
+
+  if (songDuration > 0 && candidateDuration > 0) {
+    const diff = Math.abs(songDuration - candidateDuration);
+    if (diff <= 2000) score += 20;
+    else if (diff <= 5000) score += 12;
+    else if (diff <= 15000) score += 5;
+  }
+
+  return score;
 };
 
 const resolveCachedPlaybackUrl = async (
@@ -67,6 +144,19 @@ export const getSongUrl = async (
   requestId?: string
 ) => {
   const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+
+  // 本地音乐（local:// 协议）始终早返回：本地文件不会过期、不需要远程拉 URL。
+  // 必须放在 musicServer 短路之前，避免任何"source/source 链"被错认导致去请求 musicserver。
+  if (songData.source === 'local') {
+    if (!songData.playMusicUrl?.startsWith('local://')) {
+      throw new Error('Local music is missing file URL');
+    }
+    return songData.playMusicUrl;
+  }
+
+  if (songData.playMusicUrl?.startsWith('local://')) {
+    return songData.playMusicUrl;
+  }
 
   if (songData.source === 'musicServer' && songData.playMusicUrl) {
     return songData.playMusicUrl;
@@ -271,6 +361,9 @@ const parseLyrics = (lyricsString: string): { lyrics: ILyricText[]; times: numbe
 export const loadLrc = async (id: string | number): Promise<ILyric> => {
   try {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (!Number.isFinite(numericId)) {
+      return { ...EMPTY_LYRIC };
+    }
     let lyricData: any;
 
     if (isElectron) {
@@ -360,19 +453,94 @@ export const loadLrc = async (id: string | number): Promise<ILyric> => {
     };
   } catch (err) {
     console.error('Error loading lyrics:', err);
-    return {
-      lrcTimeArray: [],
-      lrcArray: [],
-      hasWordByWord: false
-    };
+    return { ...EMPTY_LYRIC };
   }
+};
+
+export const loadLrcBySong = async (song: SongResult): Promise<ILyric> => {
+  if (song.lyric && hasLyricContent(song.lyric)) {
+    return song.lyric;
+  }
+
+  const cacheKey = `${song.source || 'netease'}:${song.id}:${song.name}:${getSongArtistText(song)}`;
+  const cached = lyricSearchCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  if (song.source !== 'musicServer') {
+    const directLyric = await loadLrc(song.id);
+    if (hasLyricContent(directLyric)) {
+      lyricSearchCache.set(cacheKey, directLyric);
+      return directLyric;
+    }
+  }
+
+  const artistText = getSongArtistText(song).replace(/\s*\/\s*/g, ' ');
+  const baseName = getBaseSongName(song.name);
+  const queries = Array.from(
+    new Set([
+      `${song.name} ${artistText}`.trim(),
+      `${baseName} ${artistText}`.trim(),
+      song.name.trim(),
+      baseName
+    ])
+  ).filter(Boolean);
+  const candidateMap = new Map<number, any>();
+
+  for (const keywords of queries) {
+    try {
+      const { data } = await getSearch({ keywords, type: 1, limit: 20 });
+      const songs = data?.result?.songs || [];
+      console.log(`[Lyrics] 搜索歌词候选: "${keywords}", 命中 ${songs.length} 首`);
+      songs.forEach((candidate: any) => {
+        const candidateId = Number(candidate?.id);
+        if (Number.isFinite(candidateId)) {
+          candidateMap.set(candidateId, candidate);
+        }
+      });
+    } catch (error) {
+      console.warn('按歌曲信息搜索歌词失败:', keywords, error);
+    }
+  }
+
+  const candidates = [...candidateMap.values()]
+    .map((candidate) => ({ candidate, score: scoreLyricCandidate(song, candidate) }))
+    .filter((item) => item.score >= 35)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8);
+
+  console.log(
+    `[Lyrics] 歌词候选评分: ${song.name}`,
+    candidates.map(({ candidate, score }) => ({
+      id: candidate.id,
+      name: candidate.name,
+      artists: getCandidateArtists(candidate).join('/'),
+      score
+    }))
+  );
+
+  for (const { candidate, score } of candidates) {
+    const candidateId = Number(candidate.id);
+    const lyric = await loadLrc(candidateId);
+    if (hasLyricContent(lyric)) {
+      console.log(
+        `[Lyrics] 云音乐库歌词匹配成功: ${song.name} -> ${candidate.name}(${candidateId}), score=${score}`
+      );
+      lyricSearchCache.set(cacheKey, lyric);
+      return lyric;
+    }
+  }
+
+  console.warn(`[Lyrics] 未匹配到可用歌词: ${song.name} - ${artistText || '未知艺术家'}`);
+  return { ...EMPTY_LYRIC };
 };
 
 /**
  * useLyrics hook（兼容旧代码）
  */
 export const useLyrics = () => {
-  return { loadLrc, parseLyrics };
+  return { loadLrc, loadLrcBySong, parseLyrics };
 };
 
 /**
@@ -386,6 +554,14 @@ export const useSongDetail = () => {
     if (requestId && !playbackRequestManager.isRequestValid(requestId)) {
       console.log(`[getSongDetail] 请求已失效: ${requestId}`);
       throw new Error('Request cancelled');
+    }
+
+    // 本地音乐（local:// 协议）直接返回：不需要任何远程 URL 拉取、不需要过期重算
+    if (playMusic.source === 'local' || playMusic.playMusicUrl?.startsWith('local://')) {
+      if (!playMusic.playMusicUrl?.startsWith('local://')) {
+        throw new Error('Local music is missing file URL');
+      }
+      return playMusic;
     }
 
     if (playMusic.expiredAt && playMusic.expiredAt < Date.now()) {

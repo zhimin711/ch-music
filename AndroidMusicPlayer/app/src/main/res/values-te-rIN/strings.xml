@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
-    <string name="about_settings_summary">బృందం, సామాజిక లింకులు</string>
     <string name="accent_color">యాస రంగు</string>
     <string name="accent_color_desc">థీమ్ యాస రంగు పర్పుల్ రంగుకు డిఫాల్ట్ అవుతుంది</string>
-    <string name="action_about">గురించి</string>
     <string name="action_add_to_favorites">ఇష్టమైన వాటికి జోడించండి</string>
     <string name="action_add_to_playing_queue">క్యూ ఆడటానికి జోడించండి</string>
     <string name="action_add_to_playlist">పాటల క్రమంలో చేర్చు</string>
