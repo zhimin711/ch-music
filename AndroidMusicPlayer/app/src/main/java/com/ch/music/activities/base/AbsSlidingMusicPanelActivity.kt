@@ -211,6 +211,18 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
         setContentView(binding.root)
         binding.root.setOnApplyWindowInsetsListener { _, insets ->
             windowInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
+            if (::bottomSheetBehavior.isInitialized) {
+                hideBottomSheet(MusicPlayerRemote.playingQueue.isEmpty() || currentFragment(R.id.fragment_container) is PlayingQueueFragment)
+            }
+            insets
+        }
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNavigation) { bar, insets ->
+            val bottomInset = insets.getBottomInsets()
+            val sideInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            bar.setPadding(sideInsets.left, bar.paddingTop, sideInsets.right, bottomInset)
+            bar.updateLayoutParams<ViewGroup.LayoutParams> {
+                height = dimen(R.dimen.bottom_nav_height) + bottomInset
+            }
             insets
         }
         chooseFragmentForTheme()
@@ -296,7 +308,7 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
             }
 
             TAB_TEXT_MODE -> {
-                // Bottom navigation removed; no-op.
+                // The primary navigation always uses visible labels.
             }
 
             TOGGLE_FULL_SCREEN -> {
@@ -323,6 +335,7 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
 
     private fun setMiniPlayerAlphaProgress(progress: Float) {
         if (progress < 0) return
+        binding.bottomNavigation.visibility = if (bottomNavRequested && progress <= 0f) View.VISIBLE else View.INVISIBLE
         val alpha = 1 - progress
         miniPlayerFragment?.view?.alpha = 1 - (progress / 0.2F)
         miniPlayerFragment?.view?.isGone = alpha == 0f
@@ -347,6 +360,7 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
 
     open fun onPanelCollapsed() {
         setMiniPlayerAlphaProgress(0F)
+        binding.bottomNavigation.bringToFront()
         // restore values
         animateNavigationBarColor(surfaceColor())
         setLightStatusBarAuto()
@@ -384,12 +398,12 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
 
     val slidingPanel get() = binding.slidingPanel
 
-    /** Bottom navigation was removed; this flag always reports false. */
-    val isBottomNavVisible: Boolean get() = false
+    private var bottomNavRequested = true
+    val isBottomNavVisible: Boolean get() = bottomNavRequested
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        hideBottomSheet(false)
+        hideBottomSheet(MusicPlayerRemote.playingQueue.isEmpty() || currentFragment(R.id.fragment_container) is PlayingQueueFragment)
     }
 
     override fun onQueueChanged() {
@@ -448,7 +462,7 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
     }
 
     fun updateTabs() {
-        // Bottom navigation was removed — no menu to populate.
+        // The three primary destinations are defined by bottom_navigation_main.xml.
     }
 
     private fun updateColor() {
@@ -463,17 +477,20 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
         animate: Boolean = false,
         hideBottomSheet: Boolean = MusicPlayerRemote.playingQueue.isEmpty(),
     ) {
+        bottomNavRequested = visible
+        binding.bottomNavigation.visibility = if (visible && panelState != STATE_EXPANDED) View.VISIBLE else View.INVISIBLE
+        binding.bottomNavigation.bringToFront()
         hideBottomSheet(
             hide = hideBottomSheet,
             animate = animate,
-            isBottomNavVisible = false
+            isBottomNavVisible = visible
         )
     }
 
     fun hideBottomSheet(
         hide: Boolean,
         animate: Boolean = false,
-        isBottomNavVisible: Boolean = false,
+        isBottomNavVisible: Boolean = this.isBottomNavVisible,
     ) {
         val heightOfBar = windowInsets.getBottomInsets() + dimen(R.dimen.mini_player_height)
         val heightOfBarWithTabs = heightOfBar + dimen(R.dimen.bottom_nav_height)

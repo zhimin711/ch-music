@@ -25,6 +25,15 @@
         <item name="elevationOverlayColor">@color/elevationOverlay</item>
         <item name="popupMenuBackground">@drawable/popup_background</item>
         <item name="windowActionModeOverlay">true</item>
+        <item name="chPageBackground">@color/ch_page</item>
+        <item name="chCardBackground">@color/ch_card</item>
+        <item name="chHeroStart">@color/ch_hero</item>
+        <item name="colorPrimary">@color/ch_blue</item>
+        <item name="colorSecondary">@color/ch_blue</item>
+        <item name="colorSurface">@color/ch_page</item>
+        <item name="colorOnSurface">@color/ch_text</item>
+        <item name="android:textColorPrimary">@color/ch_text</item>
+        <item name="android:textColorSecondary">@color/ch_secondary</item>
     </style>
 
     <style name="Theme.RetroMusic.Base" parent="Theme.Material3.Dark.NoActionBar">
@@ -35,12 +44,20 @@
         <item name="materialAlertDialogTheme">@style/MaterialAlertDialogTheme</item>
         <item name="materialButtonStyle">@style/MaterialButtonTheme</item>
         <!--Manual setting colors-->
-        <item name="colorSurface">@color/darkColorSurface</item>
         <item name="android:windowBackground">?colorSurface</item>
         <item name="materialCardViewStyle">@style/Widget.Material3.CardView.Elevated</item>
         <item name="elevationOverlayColor">@color/elevationOverlay</item>
         <item name="popupMenuBackground">@drawable/popup_background</item>
         <item name="windowActionModeOverlay">true</item>
+        <item name="chPageBackground">@color/ch_dark_page</item>
+        <item name="chCardBackground">@color/ch_dark_card</item>
+        <item name="chHeroStart">@color/ch_dark_hero</item>
+        <item name="colorPrimary">@color/ch_blue_dark</item>
+        <item name="colorSecondary">@color/ch_blue_dark</item>
+        <item name="colorSurface">@color/ch_dark_page</item>
+        <item name="colorOnSurface">#F2F5FA</item>
+        <item name="android:textColorPrimary">#F2F5FA</item>
+        <item name="android:textColorSecondary">#A6B1C2</item>
     </style>
 
     <style name="Theme.RetroMusic.Base.Light" parent="Theme.Material3.Light.NoActionBar">
@@ -55,5 +72,14 @@
         <item name="elevationOverlayColor">@color/elevationOverlayLight</item>
         <item name="popupMenuBackground">@drawable/popup_background</item>
         <item name="windowActionModeOverlay">true</item>
+        <item name="chPageBackground">#F5F7FB</item>
+        <item name="chCardBackground">#FFFFFF</item>
+        <item name="chHeroStart">#E8F1FF</item>
+        <item name="colorPrimary">@color/ch_blue</item>
+        <item name="colorSecondary">@color/ch_blue</item>
+        <item name="colorSurface">#F5F7FB</item>
+        <item name="colorOnSurface">#172033</item>
+        <item name="android:textColorPrimary">#172033</item>
+        <item name="android:textColorSecondary">#667085</item>
     </style>
 </resources>

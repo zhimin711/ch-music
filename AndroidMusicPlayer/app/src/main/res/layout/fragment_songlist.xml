@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurface">
+    android:background="?attr/chPageBackground">
 
     <!-- 歌单分类 Tab -->
     <com.google.android.material.tabs.TabLayout
@@ -24,7 +24,9 @@
         android:id="@+id/playlistGrid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingTop="8dp"
+        android:paddingTop="12dp"
+        android:paddingHorizontal="12dp"
+        android:clipToPadding="false"
         android:paddingBottom="@dimen/bottom_nav_mini_player_height"
         tools:itemCount="18"
         tools:listitem="@layout/item_home_playlist_card" />

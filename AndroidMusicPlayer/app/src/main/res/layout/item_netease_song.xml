@@ -7,7 +7,7 @@
     android:background="?attr/rectSelector"
     android:clickable="true"
     android:focusable="true"
-    android:paddingHorizontal="16dp"
+    android:paddingHorizontal="20dp"
     android:paddingVertical="10dp">
 
     <com.ch.music.views.RetroShapeableImageView
@@ -18,7 +18,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:retroCornerSize="6dp"
+        app:retroCornerSize="12dp"
         tools:srcCompat="@tools:sample/avatars" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -29,7 +29,7 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="?android:attr/textColorPrimary"
-        android:textSize="15sp"
+        android:textSize="16sp"
         app:layout_constraintEnd_toStartOf="@id/songPlay"
         app:layout_constraintStart_toEndOf="@id/songImage"
         app:layout_constraintTop_toTopOf="@id/songImage"
@@ -41,11 +41,11 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginTop="4dp"
-        android:alpha="0.65"
+
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="?android:attr/textColorSecondary"
-        android:textSize="11sp"
+        android:textSize="13sp"
         app:layout_constraintEnd_toStartOf="@id/songPlay"
         app:layout_constraintStart_toEndOf="@id/songImage"
         app:layout_constraintTop_toBottomOf="@id/songTitle"
@@ -53,13 +53,19 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/songPlay"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:contentDescription="@string/ch_play"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:background="?roundSelector"
-        android:padding="4dp"
+        android:padding="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/songMore"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_play_arrow_outline"
         app:tint="?attr/colorPrimary" />
+    <androidx.appcompat.widget.AppCompatImageView android:id="@+id/songMore"
+        android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp"
+        android:contentDescription="@string/abc_action_menu_overflow_description" android:background="?roundSelector"
+        app:srcCompat="@drawable/ic_more_vert" app:tint="?android:attr/textColorSecondary"
+        app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

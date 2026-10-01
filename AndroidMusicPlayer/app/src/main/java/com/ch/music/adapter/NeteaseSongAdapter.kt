@@ -6,6 +6,10 @@
 package com.ch.music.adapter
 
 import android.view.LayoutInflater
+import androidx.core.view.isVisible
+import com.ch.music.R
+import com.ch.music.extensions.resolveColor
+import com.ch.music.extensions.textColorPrimary
 import android.view.ViewGroup
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView
@@ -24,6 +28,16 @@ class NeteaseSongAdapter(
     private val onResolveError: ((String?) -> Unit)? = null,
     private val onLongClick: ((Song) -> Unit)? = null
 ) : RecyclerView.Adapter<NeteaseSongAdapter.ViewHolder>() {
+
+    private var playingSongId = MusicPlayerRemote.currentSong.id
+
+    fun refreshPlayback() {
+        val previousId = playingSongId
+        playingSongId = MusicPlayerRemote.currentSong.id
+        songs.forEachIndexed { index, song ->
+            if (song.id == previousId || song.id == playingSongId) notifyItemChanged(index)
+        }
+    }
 
     fun swapData(newData: List<Song>) {
         songs = newData
@@ -67,8 +81,11 @@ class NeteaseSongAdapter(
                 return@launch
             }
             // 同步 UI：把当前项替换成解析过的版本
-            songs = songs.toMutableList().apply { set(startIndex, resolved) }
-            notifyItemChanged(startIndex)
+            val currentIndex = songs.indexOfFirst { it.id == clicked.id }
+            if (currentIndex >= 0) {
+                songs = songs.toMutableList().apply { set(currentIndex, resolved) }
+                notifyItemChanged(currentIndex)
+            }
             MusicPlayerRemote.openQueue(arrayListOf(resolved), 0, true)
         }
     }
@@ -78,10 +95,24 @@ class NeteaseSongAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(song: Song, position: Int) {
             binding.songTitle.text = song.title
+            binding.songTitle.setTextColor(
+                if (song.id == playingSongId) binding.root.context.resolveColor(com.google.android.material.R.attr.colorPrimary)
+                else binding.root.context.textColorPrimary()
+            )
+            binding.songPlay.setImageResource(
+                if (song.id == playingSongId) R.drawable.ic_volume_up else R.drawable.ic_play_arrow_outline
+            )
+            binding.songMore.isVisible = onLongClick != null
+            binding.songMore.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) onLongClick?.invoke(songs[pos])
+            }
             binding.songMeta.text = listOf(song.artistName, song.albumName).joinToString(" · ")
 
             Glide.with(binding.root.context)
                 .load(RetroGlideExtension.getSongModel(song))
+                .placeholder(R.drawable.default_album_art)
+                .error(R.drawable.default_album_art)
                 .into(binding.songImage)
 
             binding.root.setOnClickListener {

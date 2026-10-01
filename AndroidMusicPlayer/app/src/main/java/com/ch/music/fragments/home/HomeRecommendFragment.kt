@@ -5,7 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
+import com.ch.music.fragments.base.AbsMusicServiceFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,6 +19,7 @@ import com.ch.music.netease.NeteasePlaybackManager
 import com.ch.music.network.Result
 import com.ch.music.network.models.PersonalizedPlaylist
 import com.ch.music.viewmodel.HomeViewModel
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -26,7 +27,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  * 首页推荐 Tab
  * 包含 Hero 区域、快捷入口、推荐歌单、热门歌手、新歌推荐、新碟上架
  */
-class HomeRecommendFragment : Fragment() {
+class HomeRecommendFragment : AbsMusicServiceFragment(R.layout.fragment_home_recommend) {
 
     private var _binding: FragmentHomeRecommendBinding? = null
     private val binding get() = _binding!!
@@ -74,8 +75,7 @@ class HomeRecommendFragment : Fragment() {
             state = SectionState.LOADING
         )
 
-        // 触发数据加载（ViewModel init 已自动加载，此处确保刷新）
-        homeViewModel.loadHomeData()
+        // HomeViewModel starts the initial load once.
     }
 
     private fun setupRecyclerViews() {
@@ -125,7 +125,18 @@ class HomeRecommendFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        // 每日推荐 / 快捷入口已移除，占位以便后续扩展
+        binding.playlistsEmpty.setOnClickListener {
+            setSectionState(binding.recommendedPlaylists, binding.playlistsProgress, binding.playlistsEmpty, SectionState.LOADING)
+            viewLifecycleOwner.lifecycleScope.launch { homeViewModel.loadPersonalizedPlaylists() }
+        }
+        binding.artistsEmpty.setOnClickListener {
+            setSectionState(binding.hotArtists, binding.artistsProgress, binding.artistsEmpty, SectionState.LOADING)
+            viewLifecycleOwner.lifecycleScope.launch { homeViewModel.loadHotArtists() }
+        }
+        binding.newSongsEmpty.setOnClickListener {
+            setSectionState(binding.newSongs, binding.newSongsProgress, binding.newSongsEmpty, SectionState.LOADING)
+            viewLifecycleOwner.lifecycleScope.launch { homeViewModel.loadNewSongs() }
+        }
     }
 
     private fun observeViewModel() {
@@ -298,6 +309,8 @@ class HomeRecommendFragment : Fragment() {
         state: SectionState,
         message: String? = null
     ) {
+        empty.isClickable = state == SectionState.ERROR
+        empty.isFocusable = state == SectionState.ERROR
         when (state) {
             SectionState.LOADING -> {
                 progress.visibility = View.VISIBLE
@@ -319,9 +332,17 @@ class HomeRecommendFragment : Fragment() {
                 progress.visibility = View.GONE
                 recycler.visibility = View.GONE
                 empty.visibility = View.VISIBLE
-                empty.text = message ?: "加载失败"
+                empty.text = "${message.orEmpty()}\n${getString(R.string.ch_retry)}"
             }
         }
+    }
+
+    override fun onServiceConnected() {
+        songAdapter?.refreshPlayback()
+    }
+
+    override fun onPlayingMetaChanged() {
+        songAdapter?.refreshPlayback()
     }
 
     override fun onDestroyView() {

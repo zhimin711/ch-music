@@ -1,0 +1,32 @@
+<resources>
+    <attr name="chPageBackground" format="color" />
+    <attr name="chCardBackground" format="color" />
+    <attr name="chHeroStart" format="color" />
+    <color name="ch_blue">#1677FF</color>
+    <color name="ch_blue_dark">#6AA9FF</color>
+    <color name="ch_page">#F5F7FB</color>
+    <color name="ch_card">#FFFFFF</color>
+    <color name="ch_hero">#E8F1FF</color>
+    <color name="ch_text">#172033</color>
+    <color name="ch_secondary">#667085</color>
+    <color name="ch_dark_page">#10141C</color>
+    <color name="ch_dark_card">#1B2230</color>
+    <color name="ch_dark_hero">#1D304B</color>
+    <style name="ChSectionTitle" parent="TextViewHeadline6">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
+    <style name="ChEntry" parent="Widget.Material3.Button.TextButton">
+        <item name="android:minHeight">64dp</item>
+        <item name="android:gravity">start|center_vertical</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="iconPadding">16dp</item>
+        <item name="iconTint">?attr/colorPrimary</item>
+        <item name="cornerRadius">16dp</item>
+    </style>
+</resources>

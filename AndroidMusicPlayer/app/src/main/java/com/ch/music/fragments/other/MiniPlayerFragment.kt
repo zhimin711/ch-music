@@ -17,19 +17,13 @@ package com.ch.music.fragments.other
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
-import android.text.SpannableStringBuilder
-import android.text.style.ForegroundColorSpan
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.text.toSpannable
 import androidx.core.view.isVisible
 import com.ch.music.R
 import com.ch.music.databinding.FragmentMiniPlayerBinding
-import com.ch.music.extensions.accentColor
 import com.ch.music.extensions.show
-import com.ch.music.extensions.textColorPrimary
-import com.ch.music.extensions.textColorSecondary
 import com.ch.music.fragments.base.AbsMusicServiceFragment
 import com.ch.music.glide.RetroGlideExtension
 import com.ch.music.glide.RetroGlideExtension.songCoverOptions
@@ -83,7 +77,10 @@ open class MiniPlayerFragment : AbsMusicServiceFragment(R.layout.fragment_mini_p
 
     private fun setUpMiniPlayer() {
         setUpPlayPauseButton()
-        binding.progressBar.accentColor()
+        binding.actionQueue.setOnClickListener {
+            androidx.navigation.Navigation.findNavController(requireActivity(), R.id.fragment_container)
+                .navigate(R.id.playing_queue_fragment)
+        }
     }
 
     private fun setUpPlayPauseButton() {
@@ -93,20 +90,8 @@ open class MiniPlayerFragment : AbsMusicServiceFragment(R.layout.fragment_mini_p
     private fun updateSongTitle() {
         val song = MusicPlayerRemote.currentSong
 
-        val builder = SpannableStringBuilder()
-
-        val title = song.title.toSpannable()
-        title.setSpan(ForegroundColorSpan(textColorPrimary()), 0, title.length, 0)
-
-        // Format artist names using ArtistSeparator
-        val formattedArtistName = ArtistSeparator.split(song.artistName).joinToString(", ")
-        val text = formattedArtistName.toSpannable()
-        text.setSpan(ForegroundColorSpan(textColorSecondary()), 0, text.length, 0)
-
-        builder.append(title).append(" • ").append(text)
-
-        binding.miniPlayerTitle.isSelected = true
-        binding.miniPlayerTitle.text = builder
+        binding.miniPlayerTitle.text = song.title
+        binding.miniPlayerArtist.text = ArtistSeparator.split(song.artistName).joinToString(", ")
     }
 
     private fun updateSongCover() {
@@ -149,6 +134,9 @@ open class MiniPlayerFragment : AbsMusicServiceFragment(R.layout.fragment_mini_p
     }
 
     protected fun updatePlayPauseDrawableState() {
+        binding.miniPlayerPlayPauseButton.contentDescription = getString(
+            if (MusicPlayerRemote.isPlaying) R.string.ch_pause else R.string.ch_play
+        )
         if (MusicPlayerRemote.isPlaying) {
             binding.miniPlayerPlayPauseButton.setImageResource(R.drawable.ic_pause)
         } else {

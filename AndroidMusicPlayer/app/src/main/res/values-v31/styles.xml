@@ -10,6 +10,10 @@
         <item name="popupMenuBackground">@drawable/popup_background</item>
         <item name="android:windowBackground">?attr/colorSurface</item>
         <item name="windowActionModeOverlay">true</item>
+
+        <item name="chPageBackground">@color/ch_page</item>
+        <item name="chCardBackground">@color/ch_card</item>
+        <item name="chHeroStart">@color/ch_hero</item>
     </style>
 
     <style name="Theme.RetroMusic.MD3.Black" parent="@style/Theme.RetroMusic.MD3" />

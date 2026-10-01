@@ -125,15 +125,9 @@
             app:argType="string" />
     </fragment>
 
-    <fragment
-        android:id="@+id/action_mine"
-        android:name="com.ch.music.fragments.misc.PlaceholderFragment"
-        tools:layout="@layout/fragment_placeholder">
-        <argument
-            android:name="arg_title"
-            android:defaultValue="Mine"
-            app:argType="string" />
-    </fragment>
+    <fragment android:id="@+id/action_mine"
+        android:name="com.ch.music.fragments.misc.MineFragment"
+        tools:layout="@layout/fragment_mine" />
 
     <fragment
         android:id="@+id/user_info_fragment"

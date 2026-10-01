@@ -14,6 +14,7 @@
  */
 package com.ch.music.fragments.player.adaptive
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
@@ -23,6 +24,7 @@ import com.ch.appthemehelper.util.ColorUtil
 import com.ch.appthemehelper.util.MaterialValueHelper
 import com.ch.appthemehelper.util.TintHelper
 import com.ch.music.R
+import com.ch.music.SHOW_LYRICS
 import com.ch.music.databinding.FragmentAdaptivePlayerPlaybackControlsBinding
 import com.ch.music.extensions.*
 import com.ch.music.fragments.base.AbsPlayerControlsFragment
@@ -32,7 +34,8 @@ import com.ch.music.util.color.MediaNotificationProcessor
 import com.google.android.material.slider.Slider
 
 class AdaptivePlaybackControlsFragment :
-    AbsPlayerControlsFragment(R.layout.fragment_adaptive_player_playback_controls) {
+    AbsPlayerControlsFragment(R.layout.fragment_adaptive_player_playback_controls),
+    SharedPreferences.OnSharedPreferenceChangeListener {
 
     private var _binding: FragmentAdaptivePlayerPlaybackControlsBinding? = null
     private val binding get() = _binding!!
@@ -63,9 +66,34 @@ class AdaptivePlaybackControlsFragment :
         _binding = FragmentAdaptivePlayerPlaybackControlsBinding.bind(view)
 
         setUpPlayPauseFab()
+        syncCoverMode()
+        binding.coverMode.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) PreferenceUtil.showLyrics = checkedId == R.id.showLyrics
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        PreferenceUtil.registerOnSharedPreferenceChangedListener(this)
+        syncCoverMode()
+    }
+
+    override fun onPause() {
+        PreferenceUtil.unregisterOnSharedPreferenceChangedListener(this)
+        super.onPause()
+    }
+
+    override fun onSharedPreferenceChanged(preferences: SharedPreferences, key: String?) {
+        if (key == SHOW_LYRICS && _binding != null) syncCoverMode()
+    }
+
+    private fun syncCoverMode() {
+        binding.coverMode.check(if (PreferenceUtil.showLyrics) R.id.showLyrics else R.id.showCover)
     }
 
     private fun updateSong() {
+        binding.trackTitle.text = MusicPlayerRemote.currentSong.title
+        binding.trackArtist.text = MusicPlayerRemote.currentSong.artistName
         if (PreferenceUtil.isSongInfo) {
             binding.songInfo.text = getSongInfo(MusicPlayerRemote.currentSong)
             binding.songInfo.show()
@@ -152,6 +180,7 @@ class AdaptivePlaybackControlsFragment :
     }
 
     private fun updatePlayPauseDrawableState() {
+        binding.playPauseButton.contentDescription = getString(if (MusicPlayerRemote.isPlaying) R.string.ch_pause else R.string.ch_play)
         if (MusicPlayerRemote.isPlaying) {
             binding.playPauseButton.setImageResource(R.drawable.ic_pause)
         } else {

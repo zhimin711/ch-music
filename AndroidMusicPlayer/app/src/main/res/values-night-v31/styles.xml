@@ -1,6 +1,7 @@
 <resources>
     <style name="Theme.RetroMusic.MD3.Black" parent="@style/Theme.RetroMusic.MD3">
         <item name="colorSurface">@color/blackColorSurface</item>
+        <item name="chPageBackground">@color/blackColorSurface</item>
     </style>
 
     <style name="Theme.AppWidget" parent="@android:style/Theme.DeviceDefault.DayNight">

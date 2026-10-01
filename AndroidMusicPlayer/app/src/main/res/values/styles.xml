@@ -15,6 +15,10 @@
         <item name="rectSelector">@drawable/rect_selector</item>
         <item name="materialCardViewStyle">@style/Widget.Material3.CardView.Elevated</item>
         <item name="materialButtonStyle">@style/MaterialButtonTheme</item>
+
+        <item name="chPageBackground">@color/ch_page</item>
+        <item name="chCardBackground">@color/ch_card</item>
+        <item name="chHeroStart">@color/ch_hero</item>
     </style>
 
     <style name="Theme.RetroMusic.Notification" parent="@android:style/TextAppearance.StatusBar.EventContent" />
@@ -155,7 +159,7 @@
     </style>
 
     <style name="MaterialButtonTheme" parent="Widget.Material3.Button">
-        <item name="cornerRadius">6dp</item>
+        <item name="cornerRadius">16dp</item>
         <item name="iconGravity">textStart</item>
         <item name="iconTint">?attr/colorControlNormal</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>

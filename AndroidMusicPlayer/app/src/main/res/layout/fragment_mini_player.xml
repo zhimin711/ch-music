@@ -1,96 +1,41 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="@dimen/mini_player_height"
-    android:background="@drawable/bg_netease_mini_player"
-    android:clickable="true"
-    android:focusable="true"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingStart="8dp"
-    android:paddingEnd="8dp">
-
-    <com.ch.music.views.RetroShapeableImageView
-        android:id="@+id/image"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:scaleType="centerCrop"
-        app:retroCornerSize="4dp"
-        tools:srcCompat="@tools:sample/backgrounds/scenic" />
-
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/miniPlayerTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_weight="1"
-        android:ellipsize="marquee"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:freezesText="true"
-        android:gravity="start|center_vertical"
-        android:marqueeRepeatLimit="marquee_forever"
-        android:scrollHorizontally="true"
-        android:singleLine="true"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="13sp"
-        tools:text="@tools:sample/lorem/random" />
-
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/actionPrevious"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:background="?roundSelector"
-        android:padding="6dp"
-        app:srcCompat="@drawable/ic_skip_previous"
-        app:tint="?attr/colorControlNormal" />
-
-    <FrameLayout
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="2dp">
-
-        <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/progressBar"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            app:indicatorSize="36dp"
-            app:trackColor="#1F000000"
-            app:trackCornerRadius="16dp"
-            app:trackThickness="2dp"
-            tools:progress="10" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/miniPlayerPlayPauseButton"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:background="?roundSelector"
-            android:scaleType="center"
-            app:srcCompat="@drawable/ic_pause"
-            app:tint="?attr/colorPrimary"
-            tools:ignore="ContentDescription" />
-    </FrameLayout>
-
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/actionNext"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:background="?roundSelector"
-        android:padding="6dp"
-        app:srcCompat="@drawable/ic_skip_next"
-        app:tint="?attr/colorControlNormal" />
-
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/actionQueue"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:background="?roundSelector"
-        android:padding="6dp"
-        app:srcCompat="@drawable/ic_queue_music"
-        app:tint="?attr/colorControlNormal" />
+    android:layout_width="match_parent" android:layout_height="@dimen/mini_player_height"
+    android:background="@drawable/bg_netease_mini_player" android:orientation="vertical"
+    android:clickable="true" android:focusable="true" android:paddingHorizontal="12dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:gravity="center_vertical">
+        <com.ch.music.views.RetroShapeableImageView android:id="@+id/image"
+            android:layout_width="44dp" android:layout_height="44dp" android:scaleType="centerCrop"
+            android:importantForAccessibility="no" app:retroCornerSize="12dp" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:layout_marginStart="12dp" android:orientation="vertical">
+            <TextView android:id="@+id/miniPlayerTitle" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1"
+                android:textSize="14sp" android:textStyle="bold" android:textColor="?android:attr/textColorPrimary" />
+            <TextView android:id="@+id/miniPlayerArtist" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1"
+                android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" />
+        </LinearLayout>
+        <androidx.appcompat.widget.AppCompatImageView android:id="@+id/actionPrevious"
+            android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp"
+            android:background="?roundSelector" android:contentDescription="@string/ch_previous"
+            app:srcCompat="@drawable/ic_skip_previous" app:tint="?attr/colorControlNormal" />
+        <androidx.appcompat.widget.AppCompatImageView android:id="@+id/miniPlayerPlayPauseButton"
+            android:layout_width="48dp" android:layout_height="48dp" android:padding="10dp"
+            android:background="?roundSelector" android:contentDescription="@string/ch_play"
+            app:srcCompat="@drawable/ic_play_arrow" app:tint="?attr/colorPrimary" />
+        <androidx.appcompat.widget.AppCompatImageView android:id="@+id/actionNext"
+            android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp"
+            android:background="?roundSelector" android:contentDescription="@string/ch_next"
+            app:srcCompat="@drawable/ic_skip_next" app:tint="?attr/colorControlNormal" />
+        <androidx.appcompat.widget.AppCompatImageView android:id="@+id/actionQueue"
+            android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp"
+            android:background="?roundSelector" android:contentDescription="@string/ch_queue"
+            app:srcCompat="@drawable/ic_queue_music" app:tint="?attr/colorControlNormal" />
+    </LinearLayout>
+    <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/progressBar"
+        android:layout_width="match_parent" android:layout_height="2dp" android:layout_marginBottom="2dp"
+        app:indicatorColor="?attr/colorPrimary" app:trackColor="?attr/chHeroStart" app:trackThickness="2dp"
+        app:trackCornerRadius="1dp" />
 </LinearLayout>

@@ -8,7 +8,7 @@
         android:id="@+id/localTabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
+        android:background="?attr/chPageBackground"
         app:tabGravity="fill"
         app:tabIndicatorColor="?attr/colorPrimary"
         app:tabIndicatorFullWidth="false"

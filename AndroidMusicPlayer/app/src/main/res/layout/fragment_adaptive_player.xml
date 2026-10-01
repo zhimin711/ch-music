@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?colorSurface"
+    android:background="@drawable/ch_hero"
     android:clickable="true"
     android:focusable="true">
 
@@ -42,7 +42,7 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1">
 
             <androidx.fragment.app.FragmentContainerView
@@ -51,14 +51,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:layout="@layout/fragment_album_full_card_cover" />
-
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/cover_lyrics"
-                android:name="com.ch.music.fragments.player.CoverLyricsFragment"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:elevation="20dp" />
         </FrameLayout>
 
         <androidx.fragment.app.FragmentContainerView

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurface"
+    android:background="?attr/chPageBackground"
     android:paddingBottom="@dimen/bottom_nav_mini_player_height">
 
     <!-- 页面标题 -->

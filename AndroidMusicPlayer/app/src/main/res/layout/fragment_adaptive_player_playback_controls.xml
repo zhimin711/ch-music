@@ -3,8 +3,26 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical">
+
+    <TextView android:id="@+id/trackTitle" android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp" android:textSize="22sp" android:textStyle="bold" android:maxLines="2" android:ellipsize="end"
+        android:textColor="?android:attr/textColorPrimary" app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
+    <TextView android:id="@+id/trackArtist" android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp" android:layout_marginTop="4dp" android:textSize="14sp" android:maxLines="1" android:ellipsize="end"
+        android:textColor="?android:attr/textColorSecondary" app:layout_constraintTop_toBottomOf="@id/trackTitle"
+        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
+    <com.google.android.material.button.MaterialButtonToggleGroup android:id="@+id/coverMode"
+        android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp"
+        app:singleSelection="true" app:selectionRequired="true" app:layout_constraintTop_toBottomOf="@id/trackArtist"
+        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+        <com.google.android.material.button.MaterialButton android:id="@+id/showCover" style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content" android:minWidth="80dp" android:layout_height="wrap_content" android:minHeight="48dp" android:paddingHorizontal="16dp" android:text="@string/ch_cover" android:textSize="13sp" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/showLyrics" style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content" android:minWidth="80dp" android:layout_height="wrap_content" android:minHeight="48dp" android:paddingHorizontal="16dp" android:text="@string/ch_lyrics" android:textSize="13sp" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/songCurrentProgress"
@@ -25,10 +43,10 @@
         style="@style/Widget.Retro.Slider"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:maxHeight="2dp"
+        android:contentDescription="@string/ch_seek"
         app:layout_constraintEnd_toStartOf="@id/songTotalTime"
         app:layout_constraintStart_toEndOf="@id/songCurrentProgress"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/coverMode" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/songTotalTime"
@@ -46,6 +64,7 @@
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/repeatButton"
+        android:contentDescription="@string/ch_repeat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/roundSelector"
@@ -62,6 +81,7 @@
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/previousButton"
+        android:contentDescription="@string/ch_previous"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/roundSelector"
@@ -77,6 +97,7 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/playPauseButton"
+        android:contentDescription="@string/ch_play"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -87,11 +108,13 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/previousButton"
         app:layout_constraintTop_toBottomOf="@+id/progressSlider"
+        app:fabCustomSize="64dp"
         app:srcCompat="@drawable/ic_pause_white_64dp"
         tools:tint="@color/md_black_1000" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/nextButton"
+        android:contentDescription="@string/ch_next"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/roundSelector"
@@ -107,6 +130,7 @@
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/shuffleButton"
+        android:contentDescription="@string/ch_shuffle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/roundSelector"

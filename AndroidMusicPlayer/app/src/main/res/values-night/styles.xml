@@ -21,10 +21,18 @@
         <item name="roundSelector">@drawable/round_selector</item>
         <item name="rectSelector">@drawable/rect_selector</item>
         <item name="android:actionOverflowButtonStyle">@style/Widget.ActionButton.Overflow</item>
-        <item name="colorPrimary">@color/darkColorPrimary</item>
-        <item name="colorSurface">@color/darkColorSurface</item>
         <item name="materialCardViewStyle">@style/Widget.Material3.CardView.Elevated</item>
         <item name="popupMenuBackground">@drawable/popup_background</item>
         <item name="windowActionModeOverlay">true</item>
+
+        <item name="chPageBackground">@color/ch_dark_page</item>
+        <item name="chCardBackground">@color/ch_dark_card</item>
+        <item name="chHeroStart">@color/ch_dark_hero</item>
+        <item name="colorPrimary">@color/ch_blue_dark</item>
+        <item name="colorSecondary">@color/ch_blue_dark</item>
+        <item name="colorSurface">@color/ch_dark_page</item>
+        <item name="colorOnSurface">#F2F5FA</item>
+        <item name="android:textColorPrimary">#F2F5FA</item>
+        <item name="android:textColorSecondary">#A6B1C2</item>
     </style>
 </resources>

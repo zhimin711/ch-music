@@ -15,50 +15,32 @@
         app:elevation="0dp"
         app:liftOnScroll="true">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/topBar"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/tab_height"
-            android:background="?attr/colorSurface"
-            app:layout_scrollFlags="scroll|enterAlways">
-
-            <com.ch.music.views.RetroShapeableImageView
-                android:id="@+id/userImage"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="12dp"
-                android:scaleType="centerCrop"
-                android:transitionName="user_image"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:retroCornerSize="16dp"
-                tools:src="@tools:sample/avatars" />
-
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/ch_hero">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:gravity="center_vertical" android:paddingHorizontal="20dp" android:paddingVertical="8dp">
+                <com.ch.music.views.RetroShapeableImageView
+                    android:id="@+id/userImage" android:layout_width="48dp" android:layout_height="48dp"
+                    android:padding="4dp" android:scaleType="centerCrop" app:retroCornerSize="24dp"
+                    android:contentDescription="@string/ch_open_menu" android:background="?roundSelector" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/searchInput" android:layout_width="0dp" android:layout_height="48dp"
+                    android:layout_weight="1" android:layout_marginStart="12dp"
+                    android:background="@drawable/ch_search" android:foreground="?attr/selectableItemBackground"
+                    android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp" android:drawablePadding="10dp"
+                    app:drawableStartCompat="@drawable/ic_search" app:drawableTint="?attr/colorPrimary"
+                    android:text="@string/ch_search_hint" android:textSize="14sp"
+                    android:textColor="?android:attr/textColorSecondary" />
+            </LinearLayout>
             <com.google.android.material.tabs.TabLayout
-                android:id="@+id/topTabLayout"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:background="@android:color/transparent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/userImage"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tabBackground="@android:color/transparent"
-                app:tabGravity="start"
-                app:tabIndicator="@drawable/bg_netease_tab_indicator"
-                app:tabIndicatorColor="?attr/colorPrimary"
-                app:tabIndicatorFullWidth="false"
-                app:tabIndicatorHeight="3dp"
-                app:tabMinWidth="48dp"
-                app:tabMode="scrollable"
-                app:tabPaddingEnd="14dp"
-                app:tabPaddingStart="14dp"
-                app:tabRippleColor="@android:color/transparent"
-                app:tabSelectedTextColor="?attr/colorOnSurface"
-                app:tabTextAppearance="@style/TextViewHeadline6"
-                app:tabTextColor="?android:attr/textColorSecondary" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                android:id="@+id/topTabLayout" android:layout_width="match_parent" android:layout_height="48dp"
+                android:background="@android:color/transparent" android:paddingHorizontal="12dp"
+                app:tabMode="scrollable" app:tabGravity="start" app:tabMinWidth="64dp" app:tabIndicatorFullWidth="false"
+                app:tabIndicator="@drawable/bg_netease_tab_indicator" app:tabIndicatorHeight="3dp"
+                app:tabIndicatorColor="?attr/colorPrimary" app:tabSelectedTextColor="?attr/colorPrimary"
+                app:tabTextColor="?android:attr/textColorSecondary" app:tabTextAppearance="@style/ChSectionTitle" />
+        </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.viewpager2.widget.ViewPager2

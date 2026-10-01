@@ -799,7 +799,7 @@ object PreferenceUtil {
     val isCrossfadeEnabled get() = crossFadeDuration > 0
 
     val materialYou
-        get() = sharedPreferences.getBoolean(MATERIAL_YOU, VersionUtils.hasS())
+        get() = sharedPreferences.getBoolean(MATERIAL_YOU, false)
 
     val isCustomFont
         get() = sharedPreferences.getBoolean(CUSTOM_FONT, false)

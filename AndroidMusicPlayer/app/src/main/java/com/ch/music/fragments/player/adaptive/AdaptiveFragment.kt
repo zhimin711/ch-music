@@ -15,6 +15,7 @@
 package com.ch.music.fragments.player.adaptive
 
 import android.os.Bundle
+import com.ch.music.util.ArtworkGradient
 import android.view.View
 import androidx.appcompat.widget.Toolbar
 import com.ch.appthemehelper.util.ToolbarContentTintHelper
@@ -80,10 +81,9 @@ class AdaptiveFragment : AbsPlayerFragment(R.layout.fragment_adaptive_player) {
     }
 
     private fun updateSong() {
-        val song = MusicPlayerRemote.currentSong
         binding.playerToolbar.apply {
-            title = song.title
-            subtitle = song.artistName
+            title = getString(R.string.now_playing)
+            subtitle = null
         }
     }
 
@@ -99,6 +99,8 @@ class AdaptiveFragment : AbsPlayerFragment(R.layout.fragment_adaptive_player) {
     }
 
     override fun onColorChanged(color: MediaNotificationProcessor) {
+        if (_binding == null) return
+        binding.root.background = ArtworkGradient.create(requireContext(), color.backgroundColor)
         playbackControlsFragment.setColor(color)
         lastColor = color.primaryTextColor
         libraryViewModel.updateColor(color.primaryTextColor)

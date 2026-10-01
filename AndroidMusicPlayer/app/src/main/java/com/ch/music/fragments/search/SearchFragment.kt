@@ -126,6 +126,14 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
             MaterialShapeDrawable.createWithElevationOverlay(requireContext())
     }
 
+    override fun onServiceConnected() {
+        if (::searchAdapter.isInitialized) searchAdapter.refreshPlayback()
+    }
+
+    override fun onPlayingMetaChanged() {
+        if (::searchAdapter.isInitialized) searchAdapter.refreshPlayback()
+    }
+
     private fun setupChips() {
         val chips = binding.searchFilterGroup.children.map { it as Chip }
         if (!PreferenceUtil.materialYou) {
@@ -152,7 +160,7 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
                 searchAdapter.swapData(
                     result.data.mapIndexed { index, song -> NeteaseSongMapper.toSong(song, trackIndex = index) }
                 )
-                binding.empty.text = getString(R.string.no_results)
+                binding.empty.setText(if (binding.searchView.text.isNullOrBlank()) R.string.ch_search_empty else R.string.ch_search_no_results)
             }
             is Result.Loading -> binding.empty.isGone = true
             is Result.Error -> {
@@ -175,7 +183,8 @@ class SearchFragment : AbsMainActivityFragment(R.layout.fragment_search),
             emptyList(),
             playbackManager = neteasePlayback,
             lifecycleScope = viewLifecycleOwner.lifecycleScope,
-            onResolveError = { message -> showToast(message ?: getString(R.string.failed_to_load)) }
+            onResolveError = { message -> showToast(message ?: getString(R.string.failed_to_load)) },
+            onLongClick = { song -> com.ch.music.netease.NeteaseAddToPlaylistDialog.show(this, song) }
         )
         searchAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onChanged() {

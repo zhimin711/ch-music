@@ -6,8 +6,9 @@
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <ImageView
+    <com.ch.music.views.RetroShapeableImageView
         android:id="@+id/playlistCover"
+        app:retroCornerSize="16dp"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:scaleType="centerCrop"
@@ -34,11 +35,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:alpha="0.65"
+
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="?android:attr/textColorSecondary"
-        android:textSize="11sp"
+        android:textSize="12sp"
         app:layout_constraintTop_toBottomOf="@id/playlistTitle"
         tools:text="128万次播放" />
 

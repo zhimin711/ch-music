@@ -30,8 +30,7 @@ class PlaceholderFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val title = arguments?.getString(ARG_TITLE) ?: ""
-        binding.title.text = title
+        binding.title.setText(com.ch.music.R.string.ch_notes_title)
     }
 
     override fun onDestroyView() {

@@ -1,6 +1,11 @@
 package com.ch.music.fragments.songlist
 
 import android.graphics.Color
+import androidx.core.view.isVisible
+import com.ch.music.glide.RetroGlideExtension.asBitmapPalette
+import com.ch.music.glide.ZhaohuaColoredTarget
+import com.ch.music.util.ArtworkGradient
+import com.ch.music.util.color.MediaNotificationProcessor
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.doOnPreDraw
@@ -80,6 +85,13 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
 
         setUpRecyclerView()
         setupButtons()
+        binding.title.setOnClickListener {
+            binding.title.maxLines = if (binding.title.maxLines == 3) Int.MAX_VALUE else 3
+        }
+        binding.description.setOnClickListener {
+            binding.description.maxLines = if (binding.description.maxLines == 2) Int.MAX_VALUE else 2
+        }
+        binding.errorInfo.setOnClickListener { homeViewModel.loadPlaylistDetail(playlistId) }
         observeViewModel()
 
         // 加载歌单详情
@@ -168,7 +180,7 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
                     showContent()
                 }
                 is Result.Error -> {
-                    showError(result.error)
+                    showError()
                 }
                 is Result.Loading -> {
                     showLoading()
@@ -181,12 +193,22 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
         playlistDetail = detail
 
         // 加载封面
+        val currentBinding = binding
         Glide.with(this)
+            .asBitmapPalette()
             .load(detail.coverImgUrl)
             .placeholder(R.drawable.default_album_art)
-            .into(binding.image)
+            .error(R.drawable.default_album_art)
+            .into(object : ZhaohuaColoredTarget(binding.image) {
+                override fun onColorReady(colors: MediaNotificationProcessor) {
+                    if (_binding !== currentBinding) return
+                    currentBinding.appBarLayout.background = ArtworkGradient.create(requireContext(), colors.backgroundColor)
+                }
+            })
 
         // 设置标题
+        binding.description.text = detail.description
+        binding.description.isVisible = !detail.description.isNullOrBlank()
         binding.title.text = detail.name
         binding.collapsingAppBarLayout.title = detail.name
 
@@ -199,6 +221,8 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
         // 转换歌曲列表并显示
         val songs = convertNeteaseSongsToLocalSongs(detail.tracks ?: emptyList())
         songAdapter.swapDataSet(songs)
+        binding.playButton.isEnabled = songs.isNotEmpty()
+        binding.shuffleButton.isEnabled = songs.isNotEmpty()
     }
 
     /**
@@ -225,11 +249,11 @@ class SonglistDetailFragment : Fragment(R.layout.fragment_songlist_detail) {
         binding.errorInfo.visibility = View.GONE
     }
 
-    private fun showError(exception: Exception) {
+    private fun showError() {
         binding.progressIndicator.visibility = View.GONE
         binding.recyclerView.visibility = View.GONE
         binding.errorInfo.visibility = View.VISIBLE
-        binding.errorMessage.text = getString(R.string.failed_to_load_playlist, exception.message)
+        binding.errorMessage.setText(R.string.ch_retry)
     }
 
     /**

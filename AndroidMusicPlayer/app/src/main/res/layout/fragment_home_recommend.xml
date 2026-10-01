@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:overScrollMode="@integer/overScrollMode"
-    android:background="?attr/colorSurface">
+    android:background="?attr/chPageBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,6 +14,15 @@
         android:orientation="vertical"
         android:paddingBottom="@dimen/bottom_nav_mini_player_height">
 
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="20dp" android:background="@drawable/ch_hero">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/ch_discover_title" android:textSize="24sp" android:textStyle="bold"
+                android:textColor="?android:attr/textColorPrimary" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:text="@string/ch_discover_subtitle"
+                android:textSize="14sp" android:textColor="?android:attr/textColorSecondary" />
+        </LinearLayout>
         <!-- Section: 推荐歌单 -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -24,11 +33,11 @@
             <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
+                android:layout_marginStart="20dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/recommended_playlists"
                 android:textColor="?android:attr/textColorPrimary"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <FrameLayout
@@ -50,6 +59,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
+                    android:minHeight="48dp"
+                    android:padding="16dp"
                     android:layout_marginVertical="24dp"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="14sp"
@@ -60,7 +71,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:nestedScrollingEnabled="false"
-                    android:paddingHorizontal="8dp"
+                    android:paddingHorizontal="12dp"
                     tools:itemCount="9"
                     tools:listitem="@layout/item_home_playlist_card" />
             </FrameLayout>
@@ -76,11 +87,11 @@
             <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
+                android:layout_marginStart="20dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/hot_artists"
                 android:textColor="?android:attr/textColorPrimary"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <FrameLayout
@@ -102,6 +113,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
+                    android:minHeight="48dp"
+                    android:padding="16dp"
                     android:layout_marginVertical="24dp"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="14sp"
@@ -112,7 +125,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clipToPadding="false"
-                    android:paddingHorizontal="8dp"
+                    android:paddingHorizontal="12dp"
                     tools:itemCount="10"
                     tools:listitem="@layout/item_home_artist" />
             </FrameLayout>
@@ -128,11 +141,11 @@
             <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
+                android:layout_marginStart="20dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/new_songs"
                 android:textColor="?android:attr/textColorPrimary"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <FrameLayout
@@ -154,6 +167,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
+                    android:minHeight="48dp"
+                    android:padding="16dp"
                     android:layout_marginVertical="24dp"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="14sp"
