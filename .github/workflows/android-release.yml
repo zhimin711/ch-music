@@ -1,0 +1,183 @@
+name: Android Package and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish signed APKs to GitHub Release
+        type: boolean
+        default: false
+      prerelease:
+        description: Mark the release as a prerelease
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'android-v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+    defaults:
+      run:
+        working-directory: AndroidMusicPlayer
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle and validate wrapper
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate version and release tag
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          PUBLISH: ${{ inputs.publish }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          VERSION=$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts)
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || {
+            echo "::error::Cannot read a valid versionName from app/build.gradle.kts"
+            exit 1
+          }
+          TAG="android-v$VERSION"
+          if [[ "$EVENT_NAME" == "push" && "$REF_NAME" != "$TAG" ]]; then
+            echo "::error::Tag must match Android versionName: $TAG"
+            exit 1
+          fi
+          if [[ "$EVENT_NAME" == "push" || "$PUBLISH" == "true" ]]; then
+            # Fail on API errors as well as existing tags; never move a release tag.
+            TAG_INFO=$(gh api "repos/$GH_REPO/git/matching-refs/tags/$TAG")
+            EXACT_TAG=$(printf '%s' "$TAG_INFO" | jq -r --arg ref "refs/tags/$TAG" '.[] | select(.ref == $ref) | .object.sha')
+            if [[ "$EVENT_NAME" == "workflow_dispatch" && -n "$EXACT_TAG" ]]; then
+              echo "::error::Tag $TAG already exists. Increment versionName/versionCode or publish through the existing tag."
+              exit 1
+            fi
+            RELEASES=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100")
+            if printf '%s' "$RELEASES" | jq -e --arg tag "$TAG" '.[] | select(.tag_name == $tag)' >/dev/null; then
+              echo "::error::Release $TAG already exists."
+              exit 1
+            fi
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Restore release signing
+        env:
+          SIGNING_KEYSTORE_GITHUB: ${{ secrets.SIGNING_KEYSTORE_GITHUB }}
+          SIGNING_PROPERTIES_GITHUB: ${{ secrets.SIGNING_PROPERTIES_GITHUB }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$SIGNING_KEYSTORE_GITHUB" || -z "$SIGNING_PROPERTIES_GITHUB" ]]; then
+            echo "::error::Configure SIGNING_KEYSTORE_GITHUB and SIGNING_PROPERTIES_GITHUB repository secrets."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$SIGNING_KEYSTORE_GITHUB" | base64 --decode > retro.keystore
+          printf '%s' "$SIGNING_PROPERTIES_GITHUB" | base64 --decode > retro.properties
+          test -s retro.keystore
+          test -s retro.properties
+
+      - name: Build signed release APKs
+        env:
+          MUSIC_SERVER_BASE_URL: ${{ vars.MUSIC_SERVER_BASE_URL }}
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ARGS=()
+          if [[ -n "$MUSIC_SERVER_BASE_URL" ]]; then
+            URL_PATTERN='^https?://[^[:space:]"\]+$'
+            [[ "$MUSIC_SERVER_BASE_URL" =~ $URL_PATTERN ]] || {
+              echo "::error::MUSIC_SERVER_BASE_URL must be an HTTP(S) URL without quotes, spaces or backslashes."
+              exit 1
+            }
+            ARGS+=("-PMUSIC_SERVER_BASE_URL=$MUSIC_SERVER_BASE_URL")
+          fi
+          ./gradlew --no-daemon --stacktrace :app:assembleNormalRelease :app:assembleFdroidRelease "${ARGS[@]}"
+
+      - name: Verify APK signatures and collect packages
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../release-assets
+          for FLAVOR in normal fdroid; do
+            APK="app/build/outputs/apk/$FLAVOR/release/app-$FLAVOR-release.apk"
+            test -s "$APK"
+            "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+            cp "$APK" "../release-assets/ch-music-android-$FLAVOR-$VERSION.apk"
+          done
+          cd ../release-assets
+          sha256sum *.apk > SHA256SUMS.txt
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ch-music-android-${{ steps.version.outputs.version }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f retro.keystore retro.properties
+
+  release:
+    if: github.event_name == 'push' || inputs.publish == true
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ch-music-android-${{ needs.build.outputs.version }}
+          path: release-assets
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
+          TARGET_SHA: ${{ github.sha }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARGS=()
+          if [[ "$PRERELEASE" == "true" || "$VERSION" == *-* ]]; then
+            ARGS+=(--prerelease)
+          fi
+          gh release create "$TAG" --target "$TARGET_SHA" \
+            --title "CH Music Android $VERSION" --generate-notes \
+            "${ARGS[@]}" release-assets/*
+
